@@ -1,26 +1,24 @@
 package main
 
 import (
-	"os"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/joho/godotenv"
 	"github.com/rpsoftech/bullion-server/src/env"
+	"github.com/rpsoftech/bullion-server/src/mongodb"
 )
 
-func init() {
-	godotenv.Load()
+func deferMainFunc() {
+	println("Closing...")
+	mongodb.DeferFunction()
 }
 
 func main() {
-	port := os.Getenv(env.PORTKey)
-	if port == "" {
-	}
+	defer deferMainFunc()
 	app := fiber.New()
-
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("Hello, World!")
 	})
+	app.Listen(":" + strconv.Itoa(env.Env.PORT))
 
-	app.Listen(":3000")
 }
