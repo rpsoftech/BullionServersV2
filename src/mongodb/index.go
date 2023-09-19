@@ -20,6 +20,12 @@ func init() {
 	}
 	MongoClient = client
 	MongoDatabase = client.Database(env.Env.DB_NAME)
+	go func() {
+		err := client.Ping(MongoCtx, nil)
+		if err != nil {
+			panic(err)
+		}
+	}()
 }
 
 func DeferFunction() {
