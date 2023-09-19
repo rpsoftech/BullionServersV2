@@ -7,9 +7,9 @@ import (
 )
 
 type BaseEntity struct {
-	ID         string    `bson:"id"`
-	CreatedAt  time.Time `bson:"createdAt"`
-	ModifiedAt time.Time `bson:"modifiedAt"`
+	ID         string    `bson:"id" json:"id"`
+	CreatedAt  time.Time `bson:"createdAt" json:"createdAt"`
+	ModifiedAt time.Time `bson:"modifiedAt" json:"modifiedAt"`
 }
 
 func (b *BaseEntity) CreateNewId() (r *BaseEntity) {

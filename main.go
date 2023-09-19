@@ -17,9 +17,13 @@ func deferMainFunc() {
 func main() {
 	defer deferMainFunc()
 	app := fiber.New()
-
+	// repos.BullionSiteInfoRepo.Save(interfaces.CreateNewBullionSiteInfo("Akshat Bullion", "https://akshatbullion.com").AddGeneralUserInfo(true, true))
 	app.Get("/", func(c *fiber.Ctx) error {
-		return c.JSON(repos.BullionSiteInfoRepo.FindOne("14a8c0fd-1d17-4421-af5e-8e12a5115361"))
+		// bull := repos.BullionSiteInfoRepo.FindOne("ad3cee16-e8d7-4a27-a060-46d99c133273")
+		// return c.JSON(bull)
+
+		return c.JSON(repos.BullionSiteInfoRepo.FindOneByDomain("https://akshatgold.com"))
+		// return c.JSON(repos.BullionSiteInfoRepo.FindOneByDomain("https://akshatbullion.com"))
 		// return c.SendString("Hello, World!")
 	})
 
