@@ -11,7 +11,12 @@ import (
 
 const bullionSiteInfoCollectionName = "BullionSiteInfo"
 
-var BullionSiteInfoRepo *bullionSiteInfoRepo
+var (
+	BullionSiteInfoRepo     *bullionSiteInfoRepo
+	findOneAndUpdateOptions = &options.FindOneAndUpdateOptions{
+		Upsert: utility.BoolPointer(true),
+	}
+)
 
 func init() {
 	coll := mongodb.MongoDatabase.Collection(bullionSiteInfoCollectionName)
@@ -20,7 +25,7 @@ func init() {
 	}
 	BullionSiteInfoRepo.collection.Indexes().CreateOne(mongodb.MongoCtx, mongo.IndexModel{
 		// Options.Background: utility.BoolPointer(true),
-		Keys:    bson.D{{Key: "id", Value: -1}},
+		Keys:    bson.D{{Key: "id", Value: 1}},
 		Options: options.Index().SetUnique(true),
 	})
 }
@@ -32,24 +37,13 @@ type bullionSiteInfoRepo struct {
 func (repo *bullionSiteInfoRepo) Save(entity *bullion.BullionSiteInfo) (result *bullion.BullionSiteInfo, err error) {
 	err = repo.collection.FindOneAndUpdate(mongodb.MongoCtx, bson.D{{
 		Key: "_id", Value: entity.ID,
-	}}, bson.D{{Key: "$set", Value: entity}}, &options.FindOneAndUpdateOptions{
-		Upsert: utility.BoolPointer(true),
-	}).Decode(result)
-
+	}}, bson.D{{Key: "$set", Value: entity}}, findOneAndUpdateOptions).Decode(result)
 	return
 }
 
-func (repo *bullionSiteInfoRepo) FindOne(id string) (result bullion.BullionSiteInfo) {
+func (repo *bullionSiteInfoRepo) FindOne(id string) (result *bullion.BullionSiteInfo) {
 	repo.collection.FindOne(mongodb.MongoCtx, bson.D{{
 		Key: "_id", Value: id,
-	}}).Decode(&result)
+	}}).Decode(result)
 	return
-	// if err != nil {
-	// 	if err == mongo.ErrNoDocuments {
-	// 		// This error means your query did not match any documents.
-	// 		return
-	// 	}
-	// 	panic(err)
-	// }
-	// return result
 }

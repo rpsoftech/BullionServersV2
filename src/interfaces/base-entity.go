@@ -19,3 +19,8 @@ func (b *BaseEntity) CreateNewId() (r *BaseEntity) {
 	b.ModifiedAt = time.Now()
 	return b
 }
+
+func (b *BaseEntity) Updated() (r *BaseEntity) {
+	b.ModifiedAt = time.Now()
+	return b
+}
