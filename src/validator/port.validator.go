@@ -4,7 +4,7 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-func ValidatePort(fl validator.FieldLevel) bool {
+func validatePort(fl validator.FieldLevel) bool {
 	port := fl.Field().Int()
 	if port < 1 || port > 65535 {
 		return false

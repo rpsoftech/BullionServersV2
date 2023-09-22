@@ -1,9 +1,11 @@
 package main
 
 import (
+	"log"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/rpsoftech/bullion-server/src/apis"
 	"github.com/rpsoftech/bullion-server/src/env"
 	"github.com/rpsoftech/bullion-server/src/mongodb"
 	"github.com/rpsoftech/bullion-server/src/mongodb/repos"
@@ -26,6 +28,7 @@ func main() {
 		// return c.JSON(repos.BullionSiteInfoRepo.FindOneByDomain("https://akshatbullion.com"))
 		// return c.SendString("Hello, World!")
 	})
-
-	app.Listen(":" + strconv.Itoa(env.Env.PORT))
+	apis.AddApis(app.Group("/v1"))
+	// app.Listen(":" + strconv.Itoa(env.Env.PORT))
+	log.Fatal(app.Listen(":" + strconv.Itoa(env.Env.PORT)))
 }

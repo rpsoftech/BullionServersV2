@@ -8,6 +8,6 @@ var Validator = v.New()
 
 func init() {
 	println("Registerd")
-	Validator.RegisterValidation("port", ValidatePort)
-	// Validator.Re("port", ValidatePort)
+	Validator.RegisterValidation("port", validatePort)
+	Validator.RegisterValidation("gstNumber", validateGstNumber)
 }

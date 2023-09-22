@@ -37,23 +37,23 @@ type bullionSiteInfoRepo struct {
 	collection *mongo.Collection
 }
 
-func (repo *bullionSiteInfoRepo) Save(entity *interfaces.BullionSiteInfo) (result *interfaces.BullionSiteInfo, err error) {
+func (repo *bullionSiteInfoRepo) Save(entity *interfaces.BullionSiteInfo) (result interfaces.BullionSiteInfo, err error) {
 	err = repo.collection.FindOneAndUpdate(mongodb.MongoCtx, bson.D{{
 		Key: "_id", Value: entity.ID,
-	}}, bson.D{{Key: "$set", Value: entity}}, findOneAndUpdateOptions).Decode(result)
+	}}, bson.D{{Key: "$set", Value: entity}}, findOneAndUpdateOptions).Decode(&result)
 	return
 }
 
-func (repo *bullionSiteInfoRepo) FindOne(id string) (result *interfaces.BullionSiteInfo) {
+func (repo *bullionSiteInfoRepo) FindOne(id string) (result interfaces.BullionSiteInfo) {
 	repo.collection.FindOne(mongodb.MongoCtx, bson.D{{
 		Key: "id", Value: id,
-	}}).Decode(result)
+	}}).Decode(&result)
 	return
 }
 
-func (repo *bullionSiteInfoRepo) FindOneByDomain(domain string) (result *interfaces.BullionSiteInfo) {
+func (repo *bullionSiteInfoRepo) FindOneByDomain(domain string) (result interfaces.BullionSiteInfo) {
 	repo.collection.FindOne(mongodb.MongoCtx, bson.D{{
 		Key: "domain", Value: domain,
-	}}).Decode(result)
+	}}).Decode(&result)
 	return
 }
