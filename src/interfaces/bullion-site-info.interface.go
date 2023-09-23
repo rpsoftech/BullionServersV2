@@ -8,6 +8,7 @@ type bullionGeneralUserConfig struct {
 type BullionSiteInfo struct {
 	*BaseEntity     `bson:"inline"`
 	Name            string                    `bson:"name" json:"name"`
+	ShortName       string                    `bson:"shortName" json:"shortName"`
 	Domain          string                    `bson:"domain" json:"domain"`
 	GeneralUserInfo *bullionGeneralUserConfig `bson:"generalUserInfo" json:"generalUserInfo"`
 }

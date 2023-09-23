@@ -7,7 +7,8 @@ import (
 var Validator = v.New()
 
 func init() {
-	println("Registerd")
+	println("Registered")
 	Validator.RegisterValidation("port", validatePort)
 	Validator.RegisterValidation("gstNumber", validateGstNumber)
+	Validator.RegisterValidation("enum", validateEnum)
 }

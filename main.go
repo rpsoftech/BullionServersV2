@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -29,6 +28,11 @@ func main() {
 		// return c.SendString("Hello, World!")
 	})
 	apis.AddApis(app.Group("/v1"))
-	// app.Listen(":" + strconv.Itoa(env.Env.PORT))
-	log.Fatal(app.Listen(":" + strconv.Itoa(env.Env.PORT)))
+	hostAndPort := ""
+	if env.Env.APP_ENV == env.APP_ENV_LOCAL {
+		hostAndPort = "127.0.0.1"
+	}
+	hostAndPort = hostAndPort + ":" + strconv.Itoa(env.Env.PORT)
+	app.Listen(hostAndPort)
+	// log.Fatal(app.Listen(":" + strconv.Itoa(env.Env.PORT)))
 }

@@ -1,5 +1,7 @@
 package interfaces
 
+import "github.com/rpsoftech/bullion-server/src/validator"
+
 type UserRoles string
 
 const (
@@ -10,6 +12,26 @@ const (
 	ROLE_TRADE_USER   UserRoles = "TRADE_USER"
 	ROLE_GOD          UserRoles = "GOD"
 )
+
+var (
+	userRolesMap = map[string]UserRoles{
+		"RATE_ADMIN":   ROLE_RATE_ADMIN,
+		"SUPER_ADMIN":  ROLE_SUPER_ADMIN,
+		"ADMIN":        ROLE_ADMIN,
+		"GENERAL_USER": ROLE_GENERAL_USER,
+		"TRADE_USER":   ROLE_TRADE_USER,
+		"GOD":          ROLE_GOD,
+	}
+)
+
+func init() {
+	validator.RegisterEnumValidatorFunc("UserRoles", validateEnumUserRoles)
+}
+
+func validateEnumUserRoles(value string) bool {
+	_, ok := userRolesMap[value]
+	return ok
+}
 
 func (s UserRoles) String() string {
 	switch s {
@@ -46,5 +68,5 @@ func (s UserRoles) IsValid() bool {
 }
 
 type UserRolesInterface struct {
-	Role UserRoles `bson:"role" json:"role" binding:"required,enum"`
+	Role UserRoles `bson:"role" json:"role" binding:"required" validate:"required,enum=UserRoles"`
 }
