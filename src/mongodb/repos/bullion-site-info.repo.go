@@ -31,6 +31,10 @@ func init() {
 		Keys:    bson.D{{Key: "domain", Value: 1}},
 		Options: options.Index().SetUnique(true),
 	})
+	BullionSiteInfoRepo.collection.Indexes().CreateOne(mongodb.MongoCtx, mongo.IndexModel{
+		Keys:    bson.D{{Key: "shortName", Value: 1}},
+		Options: options.Index().SetUnique(true),
+	})
 }
 
 type bullionSiteInfoRepo struct {
@@ -54,6 +58,13 @@ func (repo *bullionSiteInfoRepo) FindOne(id string) (result interfaces.BullionSi
 func (repo *bullionSiteInfoRepo) FindOneByDomain(domain string) (result interfaces.BullionSiteInfo) {
 	repo.collection.FindOne(mongodb.MongoCtx, bson.D{{
 		Key: "domain", Value: domain,
+	}}).Decode(&result)
+	return
+}
+
+func (repo *bullionSiteInfoRepo) FindByShortName(name string) (result interfaces.BullionSiteInfo) {
+	repo.collection.FindOne(mongodb.MongoCtx, bson.D{{
+		Key: "shortName", Value: name,
 	}}).Decode(&result)
 	return
 }
