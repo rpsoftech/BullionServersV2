@@ -22,7 +22,7 @@ func validateEnum(fl validator.FieldLevel) bool {
 	ok := function(value)
 
 	if !ok {
-		panic("Value " + value + " is not valid for enum " + fl.GetTag())
+		panic("Value " + value + " is not valid for enum " + fl.Parent().String() + "." + fl.FieldName())
 	}
 	return true
 }

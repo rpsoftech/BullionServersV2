@@ -35,8 +35,8 @@ func init() {
 		ACCESS_TOKEN_KEY:  os.Getenv(access_TOKEN_KEY),
 		REFRESH_TOKEN_KEY: os.Getenv(refresh_TOKEN_KEY),
 	}
-	err = validator.Validator.Struct(Env)
-	if err != nil {
+	errs := validator.Validator.Validate(Env)
+	if len(errs) > 0 {
 		panic(err)
 	}
 }
