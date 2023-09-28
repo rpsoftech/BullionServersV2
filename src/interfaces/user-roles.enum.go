@@ -25,10 +25,10 @@ var (
 )
 
 func init() {
-	validator.RegisterEnumValidatorFunc("UserRoles", validateEnumUserRoles)
+	validator.RegisterEnumValidatorFunc("UserRoles", ValidateEnumUserRole)
 }
 
-func validateEnumUserRoles(value string) bool {
+func ValidateEnumUserRole(value string) bool {
 	_, ok := userRolesMap[value]
 	return ok
 }

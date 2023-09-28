@@ -20,8 +20,8 @@ func TokenDecrypter(c *fiber.Ctx) (err error) {
 		return
 	}
 	userRolesCustomClaim, err := services.AccessTokenService.VerifyToken(tokenString)
-	_, ok := userRolesCustomClaim.Claims.(map[string]interface{})
-	if ok {
+	mappedClaim, ok := userRolesCustomClaim.Claims.(map[string]interface{})
+	if !ok {
 		err = &interfaces.RequestError{
 			StatusCode: 400,
 			Code:       interfaces.ERROR_INVALID_TOKEN_SIGNATURE,
@@ -30,10 +30,22 @@ func TokenDecrypter(c *fiber.Ctx) (err error) {
 		}
 		return err
 	}
-	// a, _ := json.Marshal(userRolesCustomClaim)
-	// print(string(a))
+	role, ok := mappedClaim["role"].(string)
 
-	// c.Next()
+	if !ok || !interfaces.ValidateEnumUserRole(role) {
+		err = &interfaces.RequestError{
+			StatusCode: 400,
+			Code:       interfaces.ERROR_TOKEN_ROLE_NOT_FOUND,
+			Message:    "Invalid Token Role Or Not Found",
+			Name:       "INVALID_TOKEN_ROLE",
+		}
+		return err
+	}
+
+	c.Locals(interfaces.REQ_LOCAL_KEY_ROLE, role)
+	c.Locals(interfaces.REQ_LOCAL_KEY_TOKEN_RAW_DATA, mappedClaim)
+
+	// TODO: Base on role decrypt interface of users
 
 	return
 }

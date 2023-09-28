@@ -2,12 +2,16 @@ package interfaces
 
 import "fmt"
 
+const (
+	REQ_LOCAL_KEY_ROLE           = "UserRole"
+	REQ_LOCAL_KEY_TOKEN_RAW_DATA = "TokenRawData"
+)
+
 type RequestError struct {
 	StatusCode int    `json:"-"`
 	Code       int    `json:"code"`
 	Message    string `json:"message"`
 	Name       string `json:"name"`
-	Err        error  `json:"-"`
 }
 
 func (r *RequestError) Error() string {
@@ -35,4 +39,5 @@ const (
 	ERROR_GENERAL_USER_REQ_REJECTED             = 216
 	ERROR_GENERAL_USER_REQ_PENDING              = 217
 	ERROR_GENERAL_USER_REQ_EXISTS               = 218
+	ERROR_TOKEN_ROLE_NOT_FOUND                  = 219
 )
