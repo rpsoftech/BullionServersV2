@@ -1,5 +1,43 @@
 package middleware
 
+import (
+	"github.com/gofiber/fiber/v2"
+	"github.com/rpsoftech/bullion-server/src/env"
+	"github.com/rpsoftech/bullion-server/src/interfaces"
+	"github.com/rpsoftech/bullion-server/src/services"
+)
+
+// fiber middleware for jwt
+func TokenDecrypter(c *fiber.Ctx) (err error) {
+	reqHeaders := c.GetReqHeaders()
+	tokenString, foundToken := reqHeaders[env.RequestTokenHeaderKey]
+	if !foundToken {
+		c.Next()
+		return
+	}
+	if tokenString == "" {
+		c.Next()
+		return
+	}
+	userRolesCustomClaim, err := services.AccessTokenService.VerifyToken(tokenString)
+	_, ok := userRolesCustomClaim.Claims.(map[string]interface{})
+	if ok {
+		err = &interfaces.RequestError{
+			StatusCode: 400,
+			Code:       interfaces.ERROR_INVALID_TOKEN_SIGNATURE,
+			Message:    "Invalid Token Body",
+			Name:       "JwtInvalidTokenBody",
+		}
+		return err
+	}
+	// a, _ := json.Marshal(userRolesCustomClaim)
+	// print(string(a))
+
+	// c.Next()
+
+	return
+}
+
 // func JwtAuthMiddleware(isAdmin bool) gin.HandlerFunc {
 // 	return func(c *gin.Context) {
 // 		tokenString := strings.Split(c.GetHeader("Authorization"), " ")[1]

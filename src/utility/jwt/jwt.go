@@ -14,9 +14,8 @@ var (
 	ErrInvalidSignatureMethod = errors.New("unexpected signing method")
 )
 
-type CustomClaims[T any] struct {
-	// Username string `json:"username"`
-	Claims T
+type CustomClaims struct {
+	Claims interface{}
 	jwt.RegisteredClaims
 }
 
@@ -24,11 +23,11 @@ type TokenService struct {
 	SigningKey []byte
 }
 
-func (t *TokenService) GenerateToken(claims CustomClaims[any]) (string, error) {
+func (t *TokenService) GenerateToken(claims jwt.Claims) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(t.SigningKey)
 }
-func (t *TokenService) VerifyToken(token string, claim CustomClaims[any]) error {
+func (t *TokenService) VerifyToken(token string) (claim CustomClaims, errs error) {
 	validatedToken, err := jwt.ParseWithClaims(token, &claim, func(token *jwt.Token) (any, error) {
 		// return t.SigningKey, nil
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -41,6 +40,6 @@ func (t *TokenService) VerifyToken(token string, claim CustomClaims[any]) error 
 	if !validatedToken.Valid && err != nil {
 		err = ErrInvalidToken
 	}
-
-	return err
+	errs = err
+	return claim, errs
 }
