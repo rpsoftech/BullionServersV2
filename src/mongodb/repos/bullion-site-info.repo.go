@@ -1,6 +1,7 @@
 package repos
 
 import (
+	"github.com/rpsoftech/bullion-server/src/env"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
 	"github.com/rpsoftech/bullion-server/src/mongodb"
 	"github.com/rpsoftech/bullion-server/src/utility"
@@ -19,6 +20,9 @@ var (
 )
 
 func init() {
+	if env.Env.APP_ENV == env.APP_ENV_DEVELOPE {
+		return
+	}
 	coll := mongodb.MongoDatabase.Collection(bullionSiteInfoCollectionName)
 	BullionSiteInfoRepo = &bullionSiteInfoRepo{
 		collection: coll,

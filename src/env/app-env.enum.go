@@ -9,6 +9,7 @@ import (
 type AppEnv string
 
 const (
+	APP_ENV_DEVELOPE   AppEnv = "DEVELOPE"
 	APP_ENV_LOCAL      AppEnv = "LOCAL"
 	APP_ENV_CI         AppEnv = "CI"
 	APP_ENV_PRODUCTION AppEnv = "PRODUCTION"
@@ -16,6 +17,7 @@ const (
 
 var (
 	appEnvMap = map[string]AppEnv{
+		"DEVELOPE":   APP_ENV_DEVELOPE,
 		"LOCAL":      APP_ENV_LOCAL,
 		"CI":         APP_ENV_CI,
 		"PRODUCTION": APP_ENV_PRODUCTION,

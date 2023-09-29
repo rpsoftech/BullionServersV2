@@ -60,7 +60,7 @@ func main() {
 	})
 	apis.AddApis(app.Group("/v1"))
 	hostAndPort := ""
-	if env.Env.APP_ENV == env.APP_ENV_LOCAL {
+	if env.Env.APP_ENV == env.APP_ENV_LOCAL || env.Env.APP_ENV == env.APP_ENV_DEVELOPE {
 		hostAndPort = "127.0.0.1"
 	}
 	hostAndPort = hostAndPort + ":" + strconv.Itoa(env.Env.PORT)
