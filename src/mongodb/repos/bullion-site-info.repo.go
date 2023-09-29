@@ -4,20 +4,13 @@ import (
 	"github.com/rpsoftech/bullion-server/src/env"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
 	"github.com/rpsoftech/bullion-server/src/mongodb"
-	"github.com/rpsoftech/bullion-server/src/utility"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 const bullionSiteInfoCollectionName = "BullionSiteInfo"
 
-var (
-	BullionSiteInfoRepo     *bullionSiteInfoRepo
-	findOneAndUpdateOptions = &options.FindOneAndUpdateOptions{
-		Upsert: utility.BoolPointer(true),
-	}
-)
+var BullionSiteInfoRepo *bullionSiteInfoRepo
 
 func init() {
 	if env.Env.APP_ENV == env.APP_ENV_DEVELOPE {
@@ -27,18 +20,7 @@ func init() {
 	BullionSiteInfoRepo = &bullionSiteInfoRepo{
 		collection: coll,
 	}
-	BullionSiteInfoRepo.collection.Indexes().CreateOne(mongodb.MongoCtx, mongo.IndexModel{
-		Keys:    bson.D{{Key: "id", Value: 1}},
-		Options: options.Index().SetUnique(true),
-	})
-	BullionSiteInfoRepo.collection.Indexes().CreateOne(mongodb.MongoCtx, mongo.IndexModel{
-		Keys:    bson.D{{Key: "domain", Value: 1}},
-		Options: options.Index().SetUnique(true),
-	})
-	BullionSiteInfoRepo.collection.Indexes().CreateOne(mongodb.MongoCtx, mongo.IndexModel{
-		Keys:    bson.D{{Key: "shortName", Value: 1}},
-		Options: options.Index().SetUnique(true),
-	})
+	addUniqueIndexesToCollection([]string{"id", "domain", "shortName"}, BullionSiteInfoRepo.collection)
 }
 
 type bullionSiteInfoRepo struct {
