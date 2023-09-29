@@ -13,6 +13,9 @@ var MongoDatabase *mongo.Database
 var MongoCtx = context.TODO()
 
 func init() {
+	if env.Env.APP_ENV == env.APP_ENV_DEVELOPE {
+		return
+	}
 	// env.Env.DB_URL
 	client, err := mongo.Connect(MongoCtx, options.Client().ApplyURI(env.Env.DB_URL))
 	if err != nil {
