@@ -8,4 +8,8 @@ import (
 func AddAuthPackages(router fiber.Router) {
 	router.Use(middleware.AllowAllUsers.Validate)
 	router.Get("/deviceId", generateDeviceId)
+	{
+		generalUserGroup := router.Group("general-user")
+		generalUserGroup.Post("/register", apiRegisterNewGeneralUser)
+	}
 }
