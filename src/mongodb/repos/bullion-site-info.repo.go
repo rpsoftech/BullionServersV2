@@ -1,6 +1,8 @@
 package repos
 
 import (
+	"fmt"
+
 	"github.com/rpsoftech/bullion-server/src/env"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
 	"github.com/rpsoftech/bullion-server/src/mongodb"
@@ -34,10 +36,29 @@ func (repo *BullionSiteInfoRepoStruct) Save(entity *interfaces.BullionSiteInfo) 
 	return
 }
 
-func (repo *BullionSiteInfoRepoStruct) FindOne(id string) (result interfaces.BullionSiteInfo) {
-	repo.collection.FindOne(mongodb.MongoCtx, bson.D{{
+func (repo *BullionSiteInfoRepoStruct) FindOne(id string) (result interfaces.BullionSiteInfo, err error) {
+	err = repo.collection.FindOne(mongodb.MongoCtx, bson.D{{
 		Key: "id", Value: id,
 	}}).Decode(&result)
+
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			// This error means your query did not match any documents.
+			err = &interfaces.RequestError{
+				StatusCode: 400,
+				Code:       interfaces.ERROR_ENTITY_NOT_FOUND,
+				Message:    fmt.Sprintf("Bullion Entity identified by id %s not found", id),
+				Name:       "ENTITY_NOT_FOUND",
+			}
+		} else {
+			err = &interfaces.RequestError{
+				StatusCode: 500,
+				Code:       interfaces.ERROR_INTERNAL_ERROR,
+				Message:    fmt.Sprintf("Internal Server Error: %s", err.Error()),
+				Name:       "INTERNAL_ERROR",
+			}
+		}
+	}
 	return
 }
 

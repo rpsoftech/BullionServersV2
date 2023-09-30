@@ -10,9 +10,13 @@ type registerGeneralUserBody struct {
 	User      interface{} `json:"user" validation:"required"`
 }
 
-func apiRegisterNewGeneralUser(c *fiber.Ctx) (err error) {
+func apiRegisterNewGeneralUser(c *fiber.Ctx) error {
 	body := new(registerGeneralUserBody)
 	c.BodyParser(body)
-	services.GeneralUserService.RegisterNew(body.BullionId)
-	return c.JSON(body)
+	entity, err := services.GeneralUserService.RegisterNew(body.BullionId, body.User)
+	if err != nil {
+		return err
+	} else {
+		return c.JSON(entity)
+	}
 }
