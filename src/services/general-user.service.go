@@ -90,3 +90,7 @@ func (service *generalUserService) RegisterNew(bullionId string, user interface{
 	// Pending Approval
 	return &entity, err
 }
+
+// func (service *generalUserService) CreateApprovalReq(bullionId string, userId string) error {
+
+// }

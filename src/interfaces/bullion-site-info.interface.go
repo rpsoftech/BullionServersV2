@@ -5,7 +5,7 @@ type bullionGeneralUserConfig struct {
 	AutoLogin   bool `bson:"autoLogin" json:"autoLogin"`
 }
 
-type BullionSiteInfo struct {
+type BullionSiteInfoEntity struct {
 	BaseEntity      `bson:"inline"`
 	Name            string                    `bson:"name" json:"name"`
 	ShortName       string                    `bson:"shortName" json:"shortName"`
@@ -13,7 +13,7 @@ type BullionSiteInfo struct {
 	GeneralUserInfo *bullionGeneralUserConfig `bson:"generalUserInfo" json:"generalUserInfo"`
 }
 
-func (b *BullionSiteInfo) AddGeneralUserInfo(AutoApprove bool, AutoLogin bool) (r *BullionSiteInfo) {
+func (b *BullionSiteInfoEntity) AddGeneralUserInfo(AutoApprove bool, AutoLogin bool) (r *BullionSiteInfoEntity) {
 	b.GeneralUserInfo = &bullionGeneralUserConfig{
 		AutoApprove: AutoApprove,
 		AutoLogin:   AutoLogin,
@@ -21,8 +21,8 @@ func (b *BullionSiteInfo) AddGeneralUserInfo(AutoApprove bool, AutoLogin bool) (
 	return b
 }
 
-func CreateNewBullionSiteInfo(name string, domain string) (r *BullionSiteInfo) {
-	b := BullionSiteInfo{
+func CreateNewBullionSiteInfo(name string, domain string) (r *BullionSiteInfoEntity) {
+	b := BullionSiteInfoEntity{
 		BaseEntity: BaseEntity{},
 	}
 	b.Name = name
