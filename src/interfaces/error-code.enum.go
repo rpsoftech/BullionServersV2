@@ -22,4 +22,6 @@ const (
 	ERROR_GENERAL_USER_REQ_PENDING              = 217
 	ERROR_GENERAL_USER_REQ_EXISTS               = 218
 	ERROR_TOKEN_ROLE_NOT_FOUND                  = 219
+	ERROR_GENERAL_USER_INVALID_PASSWORD         = 220
+	ERROR_INVALID_ENTITY                        = 220
 )

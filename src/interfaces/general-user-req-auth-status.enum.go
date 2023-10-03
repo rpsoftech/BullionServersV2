@@ -10,8 +10,21 @@ const (
 	GENERAL_USER_AUTH_STATUS_REJECTED   GeneralUserAuthStatus = "Rejected"
 )
 
+var (
+	generalUserAuthStatusMap = map[string]GeneralUserAuthStatus{
+		"Authorized": GENERAL_USER_AUTH_STATUS_AUTHORIZED,
+		"Requested":  GENERAL_USER_AUTH_STATUS_REQUESTED,
+		"Rejected":   GENERAL_USER_AUTH_STATUS_REJECTED,
+	}
+)
+
 func init() {
-	validator.RegisterEnumValidatorFunc("GeneralUserAuthStatus", ValidateEnumUserRole)
+	validator.RegisterEnumValidatorFunc("GeneralUserAuthStatus", validateEnumGeneralUserAuthStatus)
+}
+
+func validateEnumGeneralUserAuthStatus(value string) bool {
+	_, ok := generalUserAuthStatusMap[value]
+	return ok
 }
 
 func (s GeneralUserAuthStatus) String() string {

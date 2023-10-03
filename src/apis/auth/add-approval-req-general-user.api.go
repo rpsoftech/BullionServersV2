@@ -7,13 +7,13 @@ import (
 	"github.com/rpsoftech/bullion-server/src/validator"
 )
 
-type registerGeneralUserBody struct {
-	BullionId string      `json:"bullionId" validate:"required"`
-	User      interface{} `json:"user" validate:"required"`
+type addApprovalReqGeneralUserBody struct {
+	getGeneralUserBody
+	BullionId string `json:"bullionId" validate:"required"`
 }
 
-func apiRegisterNewGeneralUser(c *fiber.Ctx) error {
-	body := new(registerGeneralUserBody)
+func apiSendApprovalReqGeneralUser(c *fiber.Ctx) error {
+	body := new(addApprovalReqGeneralUserBody)
 	c.BodyParser(body)
 	if errs := validator.Validator.Validate(body); len(errs) > 0 {
 		err := &interfaces.RequestError{
@@ -26,7 +26,7 @@ func apiRegisterNewGeneralUser(c *fiber.Ctx) error {
 		err.AppendValidationErrors(errs)
 		return err
 	}
-	entity, err := services.GeneralUserService.RegisterNew(body.BullionId, body.User)
+	entity, err := services.GeneralUserService.CreateApprovalRequest(body.Id, body.Password, body.BullionId)
 	if err != nil {
 		return err
 	} else {

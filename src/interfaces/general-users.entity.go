@@ -5,7 +5,7 @@ type GeneralUser struct {
 	LastName      string     `bson:"lastName" json:"lastName" validate:"required"`
 	RandomPass    string     `bson:"randomPass" json:"randomPass" validate:"required"`
 	FirmName      string     `bson:"firmName" json:"firmName" validate:"required"`
-	IsAuto        bool       `bson:"isAuto" json:"isAuto" validate:"required"`
+	IsAuto        bool       `bson:"isAuto" json:"-" validate:"required"`
 	ContactNumber string     `bson:"contactNumber" json:"contactNumber" validate:"required"`
 	GstNumber     string     `bson:"gstNumber" json:"gstNumber" validate:"required,gstNumber"`
 	OS            string     `bson:"os" json:"os" validate:"required"`

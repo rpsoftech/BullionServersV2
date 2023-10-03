@@ -6,6 +6,7 @@ import (
 	"github.com/rpsoftech/bullion-server/src/env"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
 	"github.com/rpsoftech/bullion-server/src/mongodb"
+	"github.com/rpsoftech/bullion-server/src/validator"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -26,18 +27,71 @@ func init() {
 	GeneralUserReqRepo = &GeneralUserReqRepoStruct{
 		collection: coll,
 	}
+	addComboUniqueIndexesToCollection([]string{"generalUserId", "bullionId"}, GeneralUserReqRepo.collection)
 	addUniqueIndexesToCollection([]string{"id"}, GeneralUserReqRepo.collection)
 }
 
-func (repo *GeneralUserReqRepoStruct) Save(entity *interfaces.GeneralUserReqEntity) (result interfaces.GeneralUserReqEntity, err error) {
-	err = repo.collection.FindOneAndUpdate(mongodb.MongoCtx, bson.D{{
+func (repo *GeneralUserReqRepoStruct) Save(entity *interfaces.GeneralUserReqEntity) (*interfaces.GeneralUserReqEntity, error) {
+	if errs := validator.Validator.Validate(entity); len(errs) > 0 {
+		err := &interfaces.RequestError{
+			StatusCode: 400,
+			Code:       interfaces.ERROR_INVALID_ENTITY,
+			Message:    "",
+			Name:       "ERROR_INVALID_ENTITY",
+			Extra:      errs,
+		}
+		err.AppendValidationErrors(errs)
+		return entity, err
+	}
+	err := repo.collection.FindOneAndUpdate(mongodb.MongoCtx, bson.D{{
 		Key: "_id", Value: entity.ID,
-	}}, bson.D{{Key: "$set", Value: entity}}, findOneAndUpdateOptions).Decode(&result)
-	return
+	}}, bson.D{{Key: "$set", Value: entity}}, findOneAndUpdateOptions).Err()
+	if err != nil {
+		if err != mongo.ErrNoDocuments {
+			err = &interfaces.RequestError{
+				StatusCode: 500,
+				Code:       interfaces.ERROR_INTERNAL_ERROR,
+				Message:    fmt.Sprintf("Internal Server Error: %s", err.Error()),
+				Name:       "INTERNAL_ERROR",
+			}
+		} else {
+			err = nil
+		}
+	}
+	return entity, err
 }
 
-func (repo *GeneralUserReqRepoStruct) FindOne(id string) (result interfaces.GeneralUserReqEntity, err error) {
-	err = repo.collection.FindOne(mongodb.MongoCtx, bson.D{{
+func (repo *GeneralUserReqRepoStruct) FindOneByGeneralUserIdAndBullionId(generalUserId string, bullionId string) (*interfaces.GeneralUserReqEntity, error) {
+	var result interfaces.GeneralUserReqEntity
+	err := repo.collection.FindOne(mongodb.MongoCtx, bson.D{{
+		Key: "generalUserId", Value: generalUserId,
+	}, {
+		Key: "bullionId", Value: bullionId,
+	}}).Decode(&result)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			// This error means your query did not match any documents.
+			err = &interfaces.RequestError{
+				StatusCode: 400,
+				Code:       interfaces.ERROR_ENTITY_NOT_FOUND,
+				Message:    fmt.Sprintf("GeneralUserReq Entity identified by generalUserID %s and bullionId %s not found", generalUserId, bullionId),
+				Name:       "ENTITY_NOT_FOUND",
+			}
+		} else {
+			err = &interfaces.RequestError{
+				StatusCode: 500,
+				Code:       interfaces.ERROR_INTERNAL_ERROR,
+				Message:    fmt.Sprintf("Internal Server Error: %s", err.Error()),
+				Name:       "INTERNAL_ERROR",
+			}
+		}
+	}
+	return &result, err
+}
+func (repo *GeneralUserReqRepoStruct) FindOne(id string) (*interfaces.GeneralUserReqEntity, error) {
+	var result interfaces.GeneralUserReqEntity
+
+	err := repo.collection.FindOne(mongodb.MongoCtx, bson.D{{
 		Key: "id", Value: id,
 	}}).Decode(&result)
 
@@ -59,5 +113,5 @@ func (repo *GeneralUserReqRepoStruct) FindOne(id string) (result interfaces.Gene
 			}
 		}
 	}
-	return
+	return &result, err
 }

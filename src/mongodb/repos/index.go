@@ -12,6 +12,17 @@ var findOneAndUpdateOptions = &options.FindOneAndUpdateOptions{
 	Upsert: utility.BoolPointer(true),
 }
 
+func addComboUniqueIndexesToCollection(UniqueIndexes []string, collection *mongo.Collection) {
+	i := bson.D{}
+	for _, element := range UniqueIndexes {
+		i = append(i, bson.E{Key: element, Value: 1})
+	}
+	collection.Indexes().CreateOne(mongodb.MongoCtx, mongo.IndexModel{
+		Keys:    i,
+		Options: options.Index().SetUnique(true),
+	})
+}
+
 func addUniqueIndexesToCollection(UniqueIndexes []string, collection *mongo.Collection) {
 	for _, element := range UniqueIndexes {
 		collection.Indexes().CreateOne(mongodb.MongoCtx, mongo.IndexModel{
