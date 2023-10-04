@@ -1,19 +1,19 @@
 package interfaces
 
 type bullionGeneralUserConfig struct {
-	AutoApprove bool `bson:"autoApprove" json:"autoApprove"`
-	AutoLogin   bool `bson:"autoLogin" json:"autoLogin"`
+	AutoApprove bool `bson:"autoApprove" json:"autoApprove" validate:"required"`
+	AutoLogin   bool `bson:"autoLogin" json:"autoLogin" validate:"required"`
 }
 
-type BullionSiteInfo struct {
-	*BaseEntity     `bson:"inline"`
-	Name            string                    `bson:"name" json:"name"`
-	ShortName       string                    `bson:"shortName" json:"shortName"`
-	Domain          string                    `bson:"domain" json:"domain"`
-	GeneralUserInfo *bullionGeneralUserConfig `bson:"generalUserInfo" json:"generalUserInfo"`
+type BullionSiteInfoEntity struct {
+	BaseEntity      `bson:"inline"`
+	Name            string                    `bson:"name" json:"name" validate:"required"`
+	ShortName       string                    `bson:"shortName" json:"shortName" validate:"required"`
+	Domain          string                    `bson:"domain" json:"domain" validate:"required"`
+	GeneralUserInfo *bullionGeneralUserConfig `bson:"generalUserInfo" json:"generalUserInfo" validate:"required"`
 }
 
-func (b *BullionSiteInfo) AddGeneralUserInfo(AutoApprove bool, AutoLogin bool) (r *BullionSiteInfo) {
+func (b *BullionSiteInfoEntity) AddGeneralUserInfo(AutoApprove bool, AutoLogin bool) (r *BullionSiteInfoEntity) {
 	b.GeneralUserInfo = &bullionGeneralUserConfig{
 		AutoApprove: AutoApprove,
 		AutoLogin:   AutoLogin,
@@ -21,12 +21,12 @@ func (b *BullionSiteInfo) AddGeneralUserInfo(AutoApprove bool, AutoLogin bool) (
 	return b
 }
 
-func CreateNewBullionSiteInfo(name string, domain string) (r *BullionSiteInfo) {
-	b := &BullionSiteInfo{
-		BaseEntity: &BaseEntity{},
+func CreateNewBullionSiteInfo(name string, domain string) (r *BullionSiteInfoEntity) {
+	b := BullionSiteInfoEntity{
+		BaseEntity: BaseEntity{},
 	}
 	b.Name = name
 	b.Domain = domain
 	b.CreateNewId()
-	return b
+	return &b
 }
