@@ -6,6 +6,10 @@
         "godotenv",
         "gofiber",
         "joho",
-        "rpsoftech"
+        "mapstructure",
+        "mitchellh",
+        "Phonenumber",
+        "rpsoftech",
+        "Upsert"
     ]
 }

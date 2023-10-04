@@ -19,12 +19,7 @@ func validateEnum(fl validator.FieldLevel) bool {
 	if !found {
 		panic("Please Register enum validator function for " + methodName)
 	}
-	ok := function(value)
-
-	if !ok {
-		panic("Value " + value + " is not valid for enum " + fl.Parent().String() + "." + fl.FieldName())
-	}
-	return true
+	return function(value)
 }
 
 func RegisterEnumValidatorFunc(name string, function enumValidationFunction) {

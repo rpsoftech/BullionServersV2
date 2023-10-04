@@ -12,7 +12,6 @@ import (
 	"github.com/rpsoftech/bullion-server/src/interfaces"
 	"github.com/rpsoftech/bullion-server/src/middleware"
 	"github.com/rpsoftech/bullion-server/src/mongodb"
-	"github.com/rpsoftech/bullion-server/src/mongodb/repos"
 	"github.com/rpsoftech/bullion-server/src/services"
 	"github.com/rpsoftech/bullion-server/src/utility/firebase"
 	"github.com/rpsoftech/bullion-server/src/utility/jwt"
@@ -30,6 +29,7 @@ func main() {
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			mappedError, ok := err.(*interfaces.RequestError)
 			if !ok {
+				println(err.Error())
 				return c.Status(500).JSON(interfaces.RequestError{
 					Code:    interfaces.ERROR_INTERNAL_ERROR,
 					Message: "Some Internal Error",
@@ -52,14 +52,14 @@ func main() {
 		return c.SendString(a)
 	})
 	// repos.BullionSiteInfoRepo.Save(interfaces.CreateNewBullionSiteInfo("Akshat Bullion", "https://akshatbullion.com").AddGeneralUserInfo(true, true))
-	app.Get("/", func(c *fiber.Ctx) error {
-		// bull := repos.BullionSiteInfoRepo.FindOne("ad3cee16-e8d7-4a27-a060-46d99c133273")
-		// return c.JSON(bull)
+	// app.Get("/", func(c *fiber.Ctx) error {
+	// bull := repos.BullionSiteInfoRepo.FindOne("ad3cee16-e8d7-4a27-a060-46d99c133273")
+	// return c.JSON(bull)
 
-		return c.JSON(repos.BullionSiteInfoRepo.FindOneByDomain("https://akshatgold.com"))
-		// return c.JSON(repos.BullionSiteInfoRepo.FindOneByDomain("https://akshatbullion.com"))
-		// return c.SendString("Hello, World!")
-	})
+	// return c.JSON(repos.BullionSiteInfoRepo.FindOneByDomain("https://akshatgold.com"))
+	// return c.JSON(repos.BullionSiteInfoRepo.FindOneByDomain("https://akshatbullion.com"))
+	// return c.SendString("Hello, World!")
+	// })
 	apis.AddApis(app.Group("/v1"))
 	hostAndPort := ""
 	if env.Env.APP_ENV == env.APP_ENV_LOCAL || env.Env.APP_ENV == env.APP_ENV_DEVELOPE {
