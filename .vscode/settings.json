@@ -1,10 +1,11 @@
 {
     "cSpell.words": [
         "Akshat",
-        "rpsoftech",
         "bson",
+        "firestore",
+        "godotenv",
         "gofiber",
         "joho",
-        "godotenv"
+        "rpsoftech"
     ]
 }

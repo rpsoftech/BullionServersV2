@@ -2,17 +2,19 @@ package firebase
 
 import (
 	"context"
-	"fmt"
 	"log"
-	"time"
 
+	"cloud.google.com/go/firestore"
 	firebase "firebase.google.com/go/v4"
+	"firebase.google.com/go/v4/db"
 	"github.com/rpsoftech/bullion-server/src/env"
 	"google.golang.org/api/option"
 )
 
 var firebaseApp *firebase.App
 var firebaseCtx context.Context
+var FirebaseDb *db.Client
+var FirebaseFirestore *firestore.Client
 
 func Init() {
 	if env.Env.APP_ENV == env.APP_ENV_DEVELOPE {
@@ -26,12 +28,16 @@ func Init() {
 		log.Fatalf("error initializing app: %v\n", err)
 	}
 	firebaseApp = app
-	firebasedb, _ := firebaseApp.Database(firebaseCtx)
-	ref := firebasedb.NewRef("/")
-	c1 := ref.Child(fmt.Sprintf("%d", time.Now().Unix()))
-	c1.Set(firebaseCtx, map[string]string{
-		"AAAAA": "Ohhyes",
-	})
+	firebaseDb, err := firebaseApp.DatabaseWithURL(firebaseCtx, env.Env.FIREBASE_DATABASE_URL)
+	if err != nil {
+		log.Fatalf("error initializing Firebase Database: %v\n", err)
+	}
+	FirebaseDb = firebaseDb
+	firestoreDb, err := firebaseApp.Firestore(firebaseCtx)
+	if err != nil {
+		log.Fatalf("error initializing Firebase Database: %v\n", err)
+	}
+	FirebaseFirestore = firestoreDb
 }
 
 // ctx := context.Background()
