@@ -3,6 +3,7 @@ package auth
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
+	"github.com/rpsoftech/bullion-server/src/services"
 	"github.com/rpsoftech/bullion-server/src/validator"
 )
 
@@ -20,6 +21,10 @@ func apiGetGeneralUserToken(c *fiber.Ctx) error {
 		err.AppendValidationErrors(errs)
 		return err
 	}
-
-	// return
+	entity, err := services.GeneralUserService.ValidateApprovalAndGenerateToken(body.Id, body.Password, body.BullionId)
+	if err != nil {
+		return err
+	} else {
+		return c.JSON(entity)
+	}
 }

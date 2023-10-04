@@ -3,8 +3,10 @@ package services
 import (
 	"fmt"
 	"math/rand"
+	"time"
 
 	"github.com/go-faker/faker/v4"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
 	"github.com/rpsoftech/bullion-server/src/mongodb/repos"
@@ -146,4 +148,87 @@ func (service *generalUserService) GetGeneralUserDetailsByIdPassword(id string, 
 		return entity, err
 	}
 	return entity, err
+}
+
+func (service *generalUserService) ValidateApprovalAndGenerateToken(userId string, password string, bullionId string) (*interfaces.TokenResponseBody, error) {
+	var tokenResponse *interfaces.TokenResponseBody
+	_, err := service.GetGeneralUserDetailsByIdPassword(userId, password)
+	if err != nil {
+		return tokenResponse, err
+	}
+	reqEntity, err := service.generalUserReqRepo.FindOneByGeneralUserIdAndBullionId(userId, bullionId)
+	if err != nil || reqEntity == nil {
+		err = &interfaces.RequestError{
+			StatusCode: 400,
+			Code:       interfaces.ERROR_GENERAL_USER_REQ_NOT_FOUND,
+			Message:    "REQUEST DOES NOT EXISTS",
+			Name:       "ERROR_GENERAL_USER_REQ_NOT_FOUND",
+		}
+		return tokenResponse, err
+	}
+	if reqEntity.Status == interfaces.GENERAL_USER_AUTH_STATUS_REQUESTED {
+		err = &interfaces.RequestError{
+			StatusCode: 400,
+			Code:       interfaces.ERROR_GENERAL_USER_REQ_PENDING,
+			Message:    "REQUEST PENDING",
+			Name:       "ERROR_GENERAL_USER_REQ_PENDING",
+		}
+		return tokenResponse, err
+	}
+	if reqEntity.Status == interfaces.GENERAL_USER_AUTH_STATUS_REJECTED {
+		err = &interfaces.RequestError{
+			StatusCode: 400,
+			Code:       interfaces.ERROR_GENERAL_USER_REQ_REJECTED,
+			Message:    "REQUEST REJECTED",
+			Name:       "ERROR_GENERAL_USER_REQ_PENDING",
+		}
+		return tokenResponse, err
+	}
+
+	return service.generateTokens(userId, bullionId)
+}
+
+func (service *generalUserService) generateTokens(userId string, bullionId string) (*interfaces.TokenResponseBody, error) {
+	var tokenResponse *interfaces.TokenResponseBody
+	now := time.Now()
+	accessToken, err := AccessTokenService.GenerateToken(interfaces.GeneralUserAccessRefreshToken{
+		UserId:    userId,
+		BullionId: bullionId,
+		RegisteredClaims: &jwt.RegisteredClaims{
+			IssuedAt:  &jwt.NumericDate{Time: now},
+			ExpiresAt: &jwt.NumericDate{Time: now.Add(time.Minute * 30)},
+		},
+	})
+	if err != nil {
+		err = &interfaces.RequestError{
+			Code:    interfaces.ERROR_INTERNAL_ERROR,
+			Message: "JWT ACCESS TOKEN GENERATION ERROR",
+			Name:    "ERROR_INTERNAL_ERROR",
+			Extra:   err,
+		}
+		return tokenResponse, err
+	}
+	refreshToken, err := RefreshTokenService.GenerateToken(interfaces.GeneralUserAccessRefreshToken{
+		UserId:    userId,
+		BullionId: bullionId,
+		RegisteredClaims: &jwt.RegisteredClaims{
+			IssuedAt: &jwt.NumericDate{Time: now},
+			// ExpiresAt: &jwt.NumericDate{Time: now.Add(time.Hour * 24 * 30)},
+		},
+	})
+	if err != nil {
+		err = &interfaces.RequestError{
+			Code:    interfaces.ERROR_INTERNAL_ERROR,
+			Message: "JWT ACCESS TOKEN GENERATION ERROR",
+			Name:    "ERROR_INTERNAL_ERROR",
+			Extra:   err,
+		}
+		return tokenResponse, err
+	}
+	tokenResponse = &interfaces.TokenResponseBody{
+		AccessToken:   accessToken,
+		RefreshToken:  refreshToken,
+		FirebaseToken: "",
+	}
+	return tokenResponse, err
 }

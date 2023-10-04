@@ -13,5 +13,6 @@ func AddAuthPackages(router fiber.Router) {
 		generalUserGroup.Post("/register", apiRegisterNewGeneralUser)
 		generalUserGroup.Get("/get", apiGetGeneralUserDetailsByIdPassword)
 		generalUserGroup.Post("/send-for-approval", apiSendApprovalReqGeneralUser)
+		generalUserGroup.Post("/get-general-user-token", apiGetGeneralUserToken)
 	}
 }
