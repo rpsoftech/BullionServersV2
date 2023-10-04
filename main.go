@@ -13,6 +13,7 @@ import (
 	"github.com/rpsoftech/bullion-server/src/middleware"
 	"github.com/rpsoftech/bullion-server/src/mongodb"
 	"github.com/rpsoftech/bullion-server/src/services"
+	"github.com/rpsoftech/bullion-server/src/utility/firebase"
 	"github.com/rpsoftech/bullion-server/src/utility/jwt"
 )
 
@@ -23,6 +24,7 @@ func deferMainFunc() {
 
 func main() {
 	defer deferMainFunc()
+	firebase.Init()
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			mappedError, ok := err.(*interfaces.RequestError)
