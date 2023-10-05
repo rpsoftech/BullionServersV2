@@ -194,6 +194,7 @@ func (service *generalUserService) generateTokens(userId string, bullionId strin
 	accessToken, err := AccessTokenService.GenerateToken(interfaces.GeneralUserAccessRefreshToken{
 		UserId:    userId,
 		BullionId: bullionId,
+		Role:      interfaces.ROLE_GENERAL_USER,
 		RegisteredClaims: &jwt.RegisteredClaims{
 			IssuedAt:  &jwt.NumericDate{Time: now},
 			ExpiresAt: &jwt.NumericDate{Time: now.Add(time.Minute * 30)},
@@ -201,7 +202,7 @@ func (service *generalUserService) generateTokens(userId string, bullionId strin
 	})
 	if err != nil {
 		err = &interfaces.RequestError{
-			Code:    interfaces.ERROR_INTERNAL_ERROR,
+			Code:    interfaces.ERROR_INTERNAL_SERVER,
 			Message: "JWT ACCESS TOKEN GENERATION ERROR",
 			Name:    "ERROR_INTERNAL_ERROR",
 			Extra:   err,
@@ -211,6 +212,7 @@ func (service *generalUserService) generateTokens(userId string, bullionId strin
 	refreshToken, err := RefreshTokenService.GenerateToken(interfaces.GeneralUserAccessRefreshToken{
 		UserId:    userId,
 		BullionId: bullionId,
+		Role:      interfaces.ROLE_GENERAL_USER,
 		RegisteredClaims: &jwt.RegisteredClaims{
 			IssuedAt: &jwt.NumericDate{Time: now},
 			// ExpiresAt: &jwt.NumericDate{Time: now.Add(time.Hour * 24 * 30)},
@@ -218,17 +220,22 @@ func (service *generalUserService) generateTokens(userId string, bullionId strin
 	})
 	if err != nil {
 		err = &interfaces.RequestError{
-			Code:    interfaces.ERROR_INTERNAL_ERROR,
+			Code:    interfaces.ERROR_INTERNAL_SERVER,
 			Message: "JWT ACCESS TOKEN GENERATION ERROR",
 			Name:    "ERROR_INTERNAL_ERROR",
 			Extra:   err,
 		}
 		return tokenResponse, err
 	}
+	firebaseToken, err := FirebaseAuthService.GenerateCustomToken(userId, map[string]interface{}{
+		"userId":    userId,
+		"bullionId": bullionId,
+		"role":      interfaces.ROLE_GENERAL_USER,
+	})
 	tokenResponse = &interfaces.TokenResponseBody{
 		AccessToken:   accessToken,
 		RefreshToken:  refreshToken,
-		FirebaseToken: "",
+		FirebaseToken: firebaseToken,
 	}
 	return tokenResponse, err
 }

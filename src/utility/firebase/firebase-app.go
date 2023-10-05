@@ -6,38 +6,46 @@ import (
 
 	"cloud.google.com/go/firestore"
 	firebase "firebase.google.com/go/v4"
+	"firebase.google.com/go/v4/auth"
 	"firebase.google.com/go/v4/db"
 	"github.com/rpsoftech/bullion-server/src/env"
 	"google.golang.org/api/option"
 )
 
 var firebaseApp *firebase.App
-var firebaseCtx context.Context
+var FirebaseCtx context.Context
 var FirebaseDb *db.Client
 var FirebaseFirestore *firestore.Client
+var FirebaseAuth *auth.Client
 
-func Init() {
+func init() {
 	if env.Env.APP_ENV == env.APP_ENV_DEVELOPE {
 		return
 	}
-	firebaseCtx = context.Background()
+
+	FirebaseCtx = context.Background()
 	opt := option.WithCredentialsJSON([]byte(env.Env.FIREBASE_JSON_STRING))
 
-	app, err := firebase.NewApp(firebaseCtx, nil, opt)
+	app, err := firebase.NewApp(FirebaseCtx, nil, opt)
 	if err != nil {
 		log.Fatalf("error initializing app: %v\n", err)
 	}
 	firebaseApp = app
-	firebaseDb, err := firebaseApp.DatabaseWithURL(firebaseCtx, env.Env.FIREBASE_DATABASE_URL)
+	firebaseDb, err := firebaseApp.DatabaseWithURL(FirebaseCtx, env.Env.FIREBASE_DATABASE_URL)
 	if err != nil {
 		log.Fatalf("error initializing Firebase Database: %v\n", err)
 	}
 	FirebaseDb = firebaseDb
-	firestoreDb, err := firebaseApp.Firestore(firebaseCtx)
+	firestoreDb, err := firebaseApp.Firestore(FirebaseCtx)
 	if err != nil {
 		log.Fatalf("error initializing Firebase Database: %v\n", err)
 	}
 	FirebaseFirestore = firestoreDb
+	firestoreAuth, err := firebaseApp.Auth(FirebaseCtx)
+	if err != nil {
+		log.Fatalf("error initializing Firebase Database: %v\n", err)
+	}
+	FirebaseAuth = firestoreAuth
 }
 
 // ctx := context.Background()

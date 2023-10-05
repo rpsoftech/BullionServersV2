@@ -1,7 +1,7 @@
 package interfaces
 
 const (
-	ERROR_INTERNAL_ERROR                        = 99
+	ERROR_INTERNAL_SERVER                       = 99
 	ERROR_ENTITY_NOT_FOUND                      = 100
 	ERROR_OTP_EXPIRED                           = 201
 	ERROR_OTP_INVALID                           = 202

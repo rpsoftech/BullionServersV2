@@ -50,7 +50,7 @@ func (repo *GeneralUserReqRepoStruct) Save(entity *interfaces.GeneralUserReqEnti
 		if err != mongo.ErrNoDocuments {
 			err = &interfaces.RequestError{
 				StatusCode: 500,
-				Code:       interfaces.ERROR_INTERNAL_ERROR,
+				Code:       interfaces.ERROR_INTERNAL_SERVER,
 				Message:    fmt.Sprintf("Internal Server Error: %s", err.Error()),
 				Name:       "INTERNAL_ERROR",
 			}
@@ -80,7 +80,7 @@ func (repo *GeneralUserReqRepoStruct) FindOneByGeneralUserIdAndBullionId(general
 		} else {
 			err = &interfaces.RequestError{
 				StatusCode: 500,
-				Code:       interfaces.ERROR_INTERNAL_ERROR,
+				Code:       interfaces.ERROR_INTERNAL_SERVER,
 				Message:    fmt.Sprintf("Internal Server Error: %s", err.Error()),
 				Name:       "INTERNAL_ERROR",
 			}
@@ -107,7 +107,7 @@ func (repo *GeneralUserReqRepoStruct) FindOne(id string) (*interfaces.GeneralUse
 		} else {
 			err = &interfaces.RequestError{
 				StatusCode: 500,
-				Code:       interfaces.ERROR_INTERNAL_ERROR,
+				Code:       interfaces.ERROR_INTERNAL_SERVER,
 				Message:    fmt.Sprintf("Internal Server Error: %s", err.Error()),
 				Name:       "INTERNAL_ERROR",
 			}
