@@ -189,6 +189,15 @@ func (service *generalUserService) validateApprovalAndGenerateTokenStage2(user *
 		}
 		return tokenResponse, err
 	}
+	if reqEntity.Status != interfaces.GENERAL_USER_AUTH_STATUS_AUTHORIZED {
+		err = &interfaces.RequestError{
+			StatusCode: 400,
+			Code:       interfaces.ERROR_GENERAL_USER_INVALID_STATUS,
+			Message:    "Invalid Request Status",
+			Name:       "ERROR_GENERAL_USER_INVALID_STATUS",
+		}
+		return tokenResponse, err
+	}
 
 	return service.generateTokens(user.ID, bullionId)
 }
@@ -246,10 +255,14 @@ func (service *generalUserService) generateTokens(userId string, bullionId strin
 }
 func (service *generalUserService) RefreshToken(token string) (*interfaces.TokenResponseBody, error) {
 	var tokenResponse *interfaces.TokenResponseBody
-	_, err := RefreshTokenService.VerifyToken(token)
+	tokenBody, err := RefreshTokenService.VerifyToken(token)
+	if err != nil {
+		return tokenResponse, err
+	}
 
-	// d, _ := json.Marshal(rr)
-	// fmt.Printf("%+v\n", rr)
-	// fmt.Printf("%s\n", d)
-	return tokenResponse, err
+	generalUserEntity, err := service.GeneralUserRepo.FindOne(tokenBody.UserId)
+	if err != nil {
+		return tokenResponse, err
+	}
+	return service.validateApprovalAndGenerateTokenStage2(generalUserEntity, tokenBody.BullionId)
 }

@@ -24,4 +24,5 @@ const (
 	ERROR_TOKEN_ROLE_NOT_FOUND                  = 219
 	ERROR_GENERAL_USER_INVALID_PASSWORD         = 220
 	ERROR_INVALID_ENTITY                        = 220
+	ERROR_GENERAL_USER_INVALID_STATUS           = 221
 )

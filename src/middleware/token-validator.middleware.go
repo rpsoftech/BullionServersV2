@@ -20,19 +20,9 @@ func TokenDecrypter(c *fiber.Ctx) (err error) {
 	}
 	userRolesCustomClaim, errs := services.AccessTokenService.VerifyToken(tokenString)
 	if errs != nil {
-		return errs
+		c.Locals(interfaces.REQ_LOCAL_ERROR_KEY, errs)
+		return c.Next()
 	}
-	// mappedClaim, ok := userRolesCustomClaim.Claims.(map[string]interface{})
-	// if !ok {
-	// 	err = &interfaces.RequestError{
-	// 		StatusCode: 400,
-	// 		Code:       interfaces.ERROR_INVALID_TOKEN_SIGNATURE,
-	// 		Message:    "Invalid Token Body",
-	// 		Name:       "JwtInvalidTokenBody",
-	// 	}
-	// 	return err
-	// }
-	// role, ok := mappedClaim["role"].(string)
 	if errs := validator.Validator.Validate(userRolesCustomClaim); len(errs) > 0 {
 		err := &interfaces.RequestError{
 			StatusCode: 401,
@@ -42,7 +32,8 @@ func TokenDecrypter(c *fiber.Ctx) (err error) {
 			Extra:      errs,
 		}
 		err.AppendValidationErrors(errs)
-		return err
+		c.Locals(interfaces.REQ_LOCAL_ERROR_KEY, errs)
+		return c.Next()
 	}
 	role := userRolesCustomClaim.Role.String()
 	if !interfaces.ValidateEnumUserRole(role) {
@@ -53,12 +44,41 @@ func TokenDecrypter(c *fiber.Ctx) (err error) {
 			Name:       "INVALID_TOKEN_ROLE",
 		}
 
-		return err
+		c.Locals(interfaces.REQ_LOCAL_ERROR_KEY, errs)
+		return c.Next()
 	}
 
 	c.Locals(interfaces.REQ_LOCAL_KEY_ROLE, role)
 	c.Locals(interfaces.REQ_LOCAL_KEY_TOKEN_RAW_DATA, userRolesCustomClaim)
 	return c.Next()
 	// TODO: Base on role decrypt interface of users
+}
 
+func AllowOnlyValidTokenMiddleWare(c *fiber.Ctx) error {
+	jwtRawFromLocal := c.Locals(interfaces.REQ_LOCAL_KEY_TOKEN_RAW_DATA)
+	localError := c.Locals(interfaces.REQ_LOCAL_ERROR_KEY)
+	if jwtRawFromLocal == nil {
+		if localError != nil {
+			err, ok := localError.(*interfaces.RequestError)
+			if !ok {
+				return &interfaces.RequestError{
+					StatusCode: 403,
+					Code:       interfaces.ERROR_TOKEN_EXPIRED,
+					Message:    "Cannot Cast Error Token",
+					Name:       "NOT_VALID_DECRYPTED_TOKEN",
+				}
+			}
+			return err
+		} else {
+
+			err := &interfaces.RequestError{
+				StatusCode: 403,
+				Code:       interfaces.ERROR_TOKEN_EXPIRED,
+				Message:    "Invalid Token or token expired",
+				Name:       "NOT_VALID_DECRYPTED_TOKEN",
+			}
+			return err
+		}
+	}
+	return c.Next()
 }

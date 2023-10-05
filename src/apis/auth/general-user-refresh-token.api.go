@@ -12,8 +12,6 @@ func apiGeneralUSerRefreshToken(c *fiber.Ctx) (err error) {
 	var body map[string]string
 	json.Unmarshal(c.Body(), &body)
 	token, ok := body["token"]
-
-	print(token)
 	if !ok {
 		err = &interfaces.RequestError{
 			StatusCode: 400,
