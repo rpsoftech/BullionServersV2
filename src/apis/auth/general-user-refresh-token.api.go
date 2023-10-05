@@ -1,27 +1,29 @@
 package auth
 
 import (
+	"encoding/json"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
 	"github.com/rpsoftech/bullion-server/src/services"
-	"github.com/rpsoftech/bullion-server/src/validator"
 )
 
-func apiGeneralUSerRefreshToken(c *fiber.Ctx) error {
-	body := new(addApprovalReqGeneralUserBody)
-	c.BodyParser(body)
-	if errs := validator.Validator.Validate(body); len(errs) > 0 {
-		err := &interfaces.RequestError{
+func apiGeneralUSerRefreshToken(c *fiber.Ctx) (err error) {
+	var body map[string]string
+	json.Unmarshal(c.Body(), &body)
+	token, ok := body["token"]
+
+	print(token)
+	if !ok {
+		err = &interfaces.RequestError{
 			StatusCode: 400,
 			Code:       interfaces.ERROR_INVALID_INPUT,
-			Message:    "",
+			Message:    "Please Pass Valid Token",
 			Name:       "INVALID_INPUT",
-			Extra:      errs,
 		}
-		err.AppendValidationErrors(errs)
 		return err
 	}
-	entity, err := services.GeneralUserService.ValidateApprovalAndGenerateToken(body.Id, body.Password, body.BullionId)
+	entity, err := services.GeneralUserService.RefreshToken(token)
 	if err != nil {
 		return err
 	} else {

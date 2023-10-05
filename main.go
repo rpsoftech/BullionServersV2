@@ -39,11 +39,9 @@ func main() {
 	})
 	app.Use(middleware.TokenDecrypter)
 	app.Get("/token", func(c *fiber.Ctx) error {
-		a, _ := services.AccessTokenService.GenerateToken(jwt.CustomClaims{
-			Claims: interfaces.UserRolesInterface{
-				Role: interfaces.ROLE_ADMIN,
-			},
-			RegisteredClaims: j.RegisteredClaims{
+		a, _ := services.AccessTokenService.GenerateToken(jwt.GeneralUserAccessRefreshToken{
+			Role: interfaces.ROLE_ADMIN,
+			RegisteredClaims: &j.RegisteredClaims{
 				IssuedAt: j.NewNumericDate(time.Now()),
 			},
 		})
