@@ -38,7 +38,7 @@ func (repo *BullionSiteInfoRepoStruct) Save(entity *interfaces.BullionSiteInfoEn
 		if err != mongo.ErrNoDocuments {
 			err = &interfaces.RequestError{
 				StatusCode: 500,
-				Code:       interfaces.ERROR_INTERNAL_ERROR,
+				Code:       interfaces.ERROR_INTERNAL_SERVER,
 				Message:    fmt.Sprintf("Internal Server Error: %s", err.Error()),
 				Name:       "INTERNAL_ERROR",
 			}
@@ -67,7 +67,7 @@ func (repo *BullionSiteInfoRepoStruct) FindOne(id string) (*interfaces.BullionSi
 		} else {
 			err = &interfaces.RequestError{
 				StatusCode: 500,
-				Code:       interfaces.ERROR_INTERNAL_ERROR,
+				Code:       interfaces.ERROR_INTERNAL_SERVER,
 				Message:    fmt.Sprintf("Internal Server Error: %s", err.Error()),
 				Name:       "INTERNAL_ERROR",
 			}
@@ -94,7 +94,7 @@ func (repo *BullionSiteInfoRepoStruct) FindOneByDomain(domain string) (*interfac
 		} else {
 			err = &interfaces.RequestError{
 				StatusCode: 500,
-				Code:       interfaces.ERROR_INTERNAL_ERROR,
+				Code:       interfaces.ERROR_INTERNAL_SERVER,
 				Message:    fmt.Sprintf("Internal Server Error: %s", err.Error()),
 				Name:       "INTERNAL_ERROR",
 			}
@@ -121,7 +121,7 @@ func (repo *BullionSiteInfoRepoStruct) FindByShortName(name string) (*interfaces
 		} else {
 			err = &interfaces.RequestError{
 				StatusCode: 500,
-				Code:       interfaces.ERROR_INTERNAL_ERROR,
+				Code:       interfaces.ERROR_INTERNAL_SERVER,
 				Message:    fmt.Sprintf("Internal Server Error: %s", err.Error()),
 				Name:       "INTERNAL_ERROR",
 			}

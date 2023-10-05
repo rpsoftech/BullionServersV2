@@ -13,7 +13,6 @@ import (
 	"github.com/rpsoftech/bullion-server/src/middleware"
 	"github.com/rpsoftech/bullion-server/src/mongodb"
 	"github.com/rpsoftech/bullion-server/src/services"
-	"github.com/rpsoftech/bullion-server/src/utility/firebase"
 	"github.com/rpsoftech/bullion-server/src/utility/jwt"
 )
 
@@ -24,14 +23,13 @@ func deferMainFunc() {
 
 func main() {
 	defer deferMainFunc()
-	firebase.Init()
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			mappedError, ok := err.(*interfaces.RequestError)
 			if !ok {
 				println(err.Error())
 				return c.Status(500).JSON(interfaces.RequestError{
-					Code:    interfaces.ERROR_INTERNAL_ERROR,
+					Code:    interfaces.ERROR_INTERNAL_SERVER,
 					Message: "Some Internal Error",
 					Name:    "Global Error Handler Function",
 				})
@@ -41,11 +39,9 @@ func main() {
 	})
 	app.Use(middleware.TokenDecrypter)
 	app.Get("/token", func(c *fiber.Ctx) error {
-		a, _ := services.AccessTokenService.GenerateToken(jwt.CustomClaims{
-			Claims: interfaces.UserRolesInterface{
-				Role: interfaces.ROLE_ADMIN,
-			},
-			RegisteredClaims: j.RegisteredClaims{
+		a, _ := services.AccessTokenService.GenerateToken(jwt.GeneralUserAccessRefreshToken{
+			Role: interfaces.ROLE_ADMIN,
+			RegisteredClaims: &j.RegisteredClaims{
 				IssuedAt: j.NewNumericDate(time.Now()),
 			},
 		})

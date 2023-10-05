@@ -10,6 +10,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
 	"github.com/rpsoftech/bullion-server/src/mongodb/repos"
+	localJwt "github.com/rpsoftech/bullion-server/src/utility/jwt"
 	"github.com/rpsoftech/bullion-server/src/validator"
 )
 
@@ -152,11 +153,15 @@ func (service *generalUserService) GetGeneralUserDetailsByIdPassword(id string, 
 
 func (service *generalUserService) ValidateApprovalAndGenerateToken(userId string, password string, bullionId string) (*interfaces.TokenResponseBody, error) {
 	var tokenResponse *interfaces.TokenResponseBody
-	_, err := service.GetGeneralUserDetailsByIdPassword(userId, password)
+	userEntity, err := service.GetGeneralUserDetailsByIdPassword(userId, password)
 	if err != nil {
 		return tokenResponse, err
 	}
-	reqEntity, err := service.generalUserReqRepo.FindOneByGeneralUserIdAndBullionId(userId, bullionId)
+	return service.validateApprovalAndGenerateTokenStage2(userEntity, bullionId)
+}
+func (service *generalUserService) validateApprovalAndGenerateTokenStage2(user *interfaces.GeneralUserEntity, bullionId string) (*interfaces.TokenResponseBody, error) {
+	var tokenResponse *interfaces.TokenResponseBody
+	reqEntity, err := service.generalUserReqRepo.FindOneByGeneralUserIdAndBullionId(user.ID, bullionId)
 	if err != nil || reqEntity == nil {
 		err = &interfaces.RequestError{
 			StatusCode: 400,
@@ -184,16 +189,26 @@ func (service *generalUserService) ValidateApprovalAndGenerateToken(userId strin
 		}
 		return tokenResponse, err
 	}
+	if reqEntity.Status != interfaces.GENERAL_USER_AUTH_STATUS_AUTHORIZED {
+		err = &interfaces.RequestError{
+			StatusCode: 400,
+			Code:       interfaces.ERROR_GENERAL_USER_INVALID_STATUS,
+			Message:    "Invalid Request Status",
+			Name:       "ERROR_GENERAL_USER_INVALID_STATUS",
+		}
+		return tokenResponse, err
+	}
 
-	return service.generateTokens(userId, bullionId)
+	return service.generateTokens(user.ID, bullionId)
 }
 
 func (service *generalUserService) generateTokens(userId string, bullionId string) (*interfaces.TokenResponseBody, error) {
 	var tokenResponse *interfaces.TokenResponseBody
 	now := time.Now()
-	accessToken, err := AccessTokenService.GenerateToken(interfaces.GeneralUserAccessRefreshToken{
+	accessToken, err := AccessTokenService.GenerateToken(localJwt.GeneralUserAccessRefreshToken{
 		UserId:    userId,
 		BullionId: bullionId,
+		Role:      interfaces.ROLE_GENERAL_USER,
 		RegisteredClaims: &jwt.RegisteredClaims{
 			IssuedAt:  &jwt.NumericDate{Time: now},
 			ExpiresAt: &jwt.NumericDate{Time: now.Add(time.Minute * 30)},
@@ -201,16 +216,17 @@ func (service *generalUserService) generateTokens(userId string, bullionId strin
 	})
 	if err != nil {
 		err = &interfaces.RequestError{
-			Code:    interfaces.ERROR_INTERNAL_ERROR,
+			Code:    interfaces.ERROR_INTERNAL_SERVER,
 			Message: "JWT ACCESS TOKEN GENERATION ERROR",
 			Name:    "ERROR_INTERNAL_ERROR",
 			Extra:   err,
 		}
 		return tokenResponse, err
 	}
-	refreshToken, err := RefreshTokenService.GenerateToken(interfaces.GeneralUserAccessRefreshToken{
+	refreshToken, err := RefreshTokenService.GenerateToken(localJwt.GeneralUserAccessRefreshToken{
 		UserId:    userId,
 		BullionId: bullionId,
+		Role:      interfaces.ROLE_GENERAL_USER,
 		RegisteredClaims: &jwt.RegisteredClaims{
 			IssuedAt: &jwt.NumericDate{Time: now},
 			// ExpiresAt: &jwt.NumericDate{Time: now.Add(time.Hour * 24 * 30)},
@@ -218,17 +234,35 @@ func (service *generalUserService) generateTokens(userId string, bullionId strin
 	})
 	if err != nil {
 		err = &interfaces.RequestError{
-			Code:    interfaces.ERROR_INTERNAL_ERROR,
+			Code:    interfaces.ERROR_INTERNAL_SERVER,
 			Message: "JWT ACCESS TOKEN GENERATION ERROR",
 			Name:    "ERROR_INTERNAL_ERROR",
 			Extra:   err,
 		}
 		return tokenResponse, err
 	}
+	firebaseToken, err := FirebaseAuthService.GenerateCustomToken(userId, map[string]interface{}{
+		"userId":    userId,
+		"bullionId": bullionId,
+		"role":      interfaces.ROLE_GENERAL_USER,
+	})
 	tokenResponse = &interfaces.TokenResponseBody{
 		AccessToken:   accessToken,
 		RefreshToken:  refreshToken,
-		FirebaseToken: "",
+		FirebaseToken: firebaseToken,
 	}
 	return tokenResponse, err
+}
+func (service *generalUserService) RefreshToken(token string) (*interfaces.TokenResponseBody, error) {
+	var tokenResponse *interfaces.TokenResponseBody
+	tokenBody, err := RefreshTokenService.VerifyToken(token)
+	if err != nil {
+		return tokenResponse, err
+	}
+
+	generalUserEntity, err := service.GeneralUserRepo.FindOne(tokenBody.UserId)
+	if err != nil {
+		return tokenResponse, err
+	}
+	return service.validateApprovalAndGenerateTokenStage2(generalUserEntity, tokenBody.BullionId)
 }
