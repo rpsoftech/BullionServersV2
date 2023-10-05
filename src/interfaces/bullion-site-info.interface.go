@@ -5,12 +5,15 @@ type bullionGeneralUserConfig struct {
 	AutoLogin   bool `bson:"autoLogin" json:"autoLogin" validate:"required"`
 }
 
+type BullionSiteBasicInfo struct {
+	Name      string `bson:"name" json:"name" validate:"required"`
+	ShortName string `bson:"shortName" json:"shortName" validate:"required"`
+	Domain    string `bson:"domain" json:"domain" validate:"required"`
+}
 type BullionSiteInfoEntity struct {
-	BaseEntity      `bson:"inline"`
-	Name            string                    `bson:"name" json:"name" validate:"required"`
-	ShortName       string                    `bson:"shortName" json:"shortName" validate:"required"`
-	Domain          string                    `bson:"domain" json:"domain" validate:"required"`
-	GeneralUserInfo *bullionGeneralUserConfig `bson:"generalUserInfo" json:"generalUserInfo" validate:"required"`
+	BaseEntity           `bson:"inline"`
+	BullionSiteBasicInfo `bson:"inline"`
+	GeneralUserInfo      *bullionGeneralUserConfig `bson:"generalUserInfo" json:"generalUserInfo" validate:"required"`
 }
 
 func (b *BullionSiteInfoEntity) AddGeneralUserInfo(AutoApprove bool, AutoLogin bool) (r *BullionSiteInfoEntity) {
@@ -21,12 +24,15 @@ func (b *BullionSiteInfoEntity) AddGeneralUserInfo(AutoApprove bool, AutoLogin b
 	return b
 }
 
-func CreateNewBullionSiteInfo(name string, domain string) (r *BullionSiteInfoEntity) {
+func CreateNewBullionSiteInfo(name string, shortName string, domain string) *BullionSiteInfoEntity {
 	b := BullionSiteInfoEntity{
 		BaseEntity: BaseEntity{},
+		BullionSiteBasicInfo: BullionSiteBasicInfo{
+			Name:      name,
+			ShortName: shortName,
+			Domain:    domain,
+		},
 	}
-	b.Name = name
-	b.Domain = domain
 	b.CreateNewId()
 	return &b
 }

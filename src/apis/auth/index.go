@@ -15,4 +15,8 @@ func AddAuthPackages(router fiber.Router) {
 		generalUserGroup.Post("/get-general-user-token", apiGetGeneralUserToken)
 		generalUserGroup.Post("/refresh-token", apiGeneralUSerRefreshToken)
 	}
+	{
+		adminAuthGroup := router.Group("admin")
+		adminAuthGroup.Get("/details-by-short-name")
+	}
 }
