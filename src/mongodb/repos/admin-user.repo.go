@@ -89,7 +89,7 @@ func (repo *AdminUserRepoStruct) FindOneUserNameAndBullionId(uname string, bulli
 			err = &interfaces.RequestError{
 				StatusCode: 400,
 				Code:       interfaces.ERROR_ENTITY_NOT_FOUND,
-				Message:    fmt.Sprintf("GeneralUser Entity identified by uname %s not found", uname),
+				Message:    fmt.Sprintf("GeneralUser Entity identified by uname %s and bullionId %s not found", uname, bullionId),
 				Name:       "ENTITY_NOT_FOUND",
 			}
 		} else {

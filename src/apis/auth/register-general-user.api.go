@@ -14,7 +14,7 @@ type registerGeneralUserBody struct {
 func apiRegisterNewGeneralUser(c *fiber.Ctx) error {
 	body := new(registerGeneralUserBody)
 	c.BodyParser(body)
-	if err := utility.ValidateReqInput(&body); err != nil {
+	if err := utility.ValidateReqInput(body); err != nil {
 		return err
 	}
 	entity, err := services.GeneralUserService.RegisterNew(body.BullionId, body.User)

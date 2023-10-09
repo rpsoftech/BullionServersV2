@@ -14,7 +14,7 @@ type addApprovalReqGeneralUserBody struct {
 func apiSendApprovalReqGeneralUser(c *fiber.Ctx) error {
 	body := new(addApprovalReqGeneralUserBody)
 	c.BodyParser(body)
-	if err := utility.ValidateReqInput(&body); err != nil {
+	if err := utility.ValidateReqInput(body); err != nil {
 		return err
 	}
 	entity, err := services.GeneralUserService.CreateApprovalRequest(body.Id, body.Password, body.BullionId)

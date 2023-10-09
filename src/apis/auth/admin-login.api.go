@@ -1,23 +1,27 @@
 package auth
 
-// func apiAdminLogin(c *fiber.Ctx) error {
-// 	body := new(adminLoginBody)
-// 	c.BodyParser(body)
-// 	if errs := validator.Validator.Validate(body); len(errs) > 0 {
-// 		err := &interfaces.RequestError{
-// 			StatusCode: 400,
-// 			Code:       interfaces.ERROR_INVALID_INPUT,
-// 			Message:    "",
-// 			Name:       "INVALID_INPUT",
-// 			Extra:      errs,
-// 		}
-// 		err.AppendValidationErrors(errs)
-// 		return err
-// 	}
-// 	entity, err := services.GeneralUserService.AdminLogin(body.Id, body.Password)
-// 	if err != nil {
-// 		return err
-// 	} else {
-// 		return c.JSON(entity)
-// 	}
-// }
+import (
+	"github.com/gofiber/fiber/v2"
+	"github.com/rpsoftech/bullion-server/src/services"
+	"github.com/rpsoftech/bullion-server/src/utility"
+)
+
+type apiAdminLoginBody struct {
+	UserName  string `json:"uname" validate:"required"`
+	Password  string `json:"password" validate:"required"`
+	BullionId string `json:"bullionId" validate:"required"`
+}
+
+func apiAdminLogin(c *fiber.Ctx) error {
+	body := new(apiAdminLoginBody)
+	c.BodyParser(body)
+	if err := utility.ValidateReqInput(body); err != nil {
+		return err
+	}
+	entity, err := services.AdminUserService.ValidateUserAndGenerateToken(body.UserName, body.Password, body.BullionId)
+	if err != nil {
+		return err
+	} else {
+		return c.JSON(entity)
+	}
+}

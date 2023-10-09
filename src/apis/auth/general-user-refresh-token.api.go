@@ -10,7 +10,7 @@ import (
 
 func apiGeneralUSerRefreshToken(c *fiber.Ctx) (err error) {
 	var body map[string]string
-	json.Unmarshal(c.Body(), &body)
+	json.Unmarshal(c.Body(), body)
 	token, ok := body["token"]
 	if !ok {
 		err = &interfaces.RequestError{
