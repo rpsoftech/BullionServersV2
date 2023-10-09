@@ -13,7 +13,7 @@ type GeneralUser struct {
 	DeviceType    DeviceType `bson:"deviceType" json:"deviceType" binding:"required,enum" validate:"required"`
 }
 type GeneralUserEntity struct {
-	BaseEntity         `bson:"inline"`
+	*BaseEntity        `bson:"inline"`
 	UserRolesInterface `bson:"inline"`
 	GeneralUser        `bson:"inline"`
 }
@@ -24,8 +24,8 @@ func CreateNewGeneralUser(user GeneralUser) (r *GeneralUserEntity) {
 			Role: ROLE_GENERAL_USER,
 		},
 		GeneralUser: user,
-		BaseEntity:  BaseEntity{},
+		BaseEntity:  &BaseEntity{},
 	}
-	b.CreateNewId()
+	b.createNewId()
 	return b
 }

@@ -17,6 +17,7 @@ func AddAuthPackages(router fiber.Router) {
 	}
 	{
 		adminAuthGroup := router.Group("admin")
-		adminAuthGroup.Get("/details-by-short-name")
+		adminAuthGroup.Get("/bullion-details-by-short-name", apiGetBullionDetailsByShortName)
+		adminAuthGroup.Get("/bullion-details-by-id", apiGetBullionDetailsById)
 	}
 }

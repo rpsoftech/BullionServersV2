@@ -1,7 +1,7 @@
 package interfaces
 
 type GeneralUserReqEntity struct {
-	BaseEntity    `bson:"inline"`
+	*BaseEntity   `bson:"inline"`
 	GeneralUserId string                `bson:"generalUserId" json:"generalUserId" validate:"required"`
 	BullionId     string                `bson:"bullionId" json:"bullionId" validate:"required"`
 	Status        GeneralUserAuthStatus `bson:"status" json:"status" validate:"required,enum=GeneralUserAuthStatus"`
@@ -12,8 +12,8 @@ func CreateNewGeneralUserReq(generalUserId string, bullionId string, status Gene
 		GeneralUserId: generalUserId,
 		BullionId:     bullionId,
 		Status:        status,
-		BaseEntity:    BaseEntity{},
+		BaseEntity:    &BaseEntity{},
 	}
-	b.CreateNewId()
+	b.createNewId()
 	return b
 }

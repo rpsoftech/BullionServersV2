@@ -10,8 +10,8 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
 	"github.com/rpsoftech/bullion-server/src/mongodb/repos"
+	"github.com/rpsoftech/bullion-server/src/utility"
 	localJwt "github.com/rpsoftech/bullion-server/src/utility/jwt"
-	"github.com/rpsoftech/bullion-server/src/validator"
 )
 
 type generalUserService struct {
@@ -32,11 +32,11 @@ func init() {
 
 func (service *generalUserService) RegisterNew(bullionId string, user interface{}) (*interfaces.GeneralUserEntity, error) {
 	var baseGeneralUser interfaces.GeneralUser
-	var entity interfaces.GeneralUserEntity
+	var entity *interfaces.GeneralUserEntity
 
 	Bullion, err := service.BullionSiteInfoRepo.FindOne(bullionId)
 	if err != nil {
-		return &entity, err
+		return entity, err
 	}
 	if Bullion.GeneralUserInfo.AutoLogin {
 		baseGeneralUser = interfaces.GeneralUser{
@@ -58,45 +58,22 @@ func (service *generalUserService) RegisterNew(bullionId string, user interface{
 	baseGeneralUser.RandomPass = faker.Password()
 	err = mapstructure.Decode(user, &baseGeneralUser)
 	if err != nil {
-		return &entity, err
+		return entity, err
 	}
-	errs := validator.Validator.Validate(&baseGeneralUser)
-	if len(errs) > 0 {
-		reqErr := &interfaces.RequestError{
-			StatusCode: 400,
-			Code:       interfaces.ERROR_INVALID_INPUT,
-			Message:    "",
-			Name:       "INVALID_INPUT",
-			Extra:      errs,
-		}
-		return &entity, reqErr.AppendValidationErrors(errs)
-	}
-	entity = interfaces.GeneralUserEntity{
-		BaseEntity:  interfaces.BaseEntity{},
-		GeneralUser: baseGeneralUser,
-		UserRolesInterface: interfaces.UserRolesInterface{
-			Role: interfaces.ROLE_GENERAL_USER,
-		},
-	}
-	entity.CreateNewId()
 
-	errs = validator.Validator.Validate(&entity)
-	if len(errs) > 0 {
-		reqErr := &interfaces.RequestError{
-			StatusCode: 400,
-			Code:       interfaces.ERROR_INVALID_INPUT,
-			Message:    "",
-			Name:       "INVALID_INPUT",
-			Extra:      errs,
-		}
-		return &entity, reqErr.AppendValidationErrors(errs)
+	if err := utility.ValidateReqInput(&baseGeneralUser); err != nil {
+		return entity, err
 	}
-	service.GeneralUserRepo.Save(&entity)
-	_, err = service.sendApprovalRequest(&entity, Bullion)
+	entity = interfaces.CreateNewGeneralUser(baseGeneralUser)
+	if err := utility.ValidateReqInput(&entity); err != nil {
+		return entity, err
+	}
+	service.GeneralUserRepo.Save(entity)
+	_, err = service.sendApprovalRequest(entity, Bullion)
 	if err != nil {
-		return &entity, err
+		return entity, err
 	}
-	return &entity, err
+	return entity, err
 }
 
 func (service *generalUserService) CreateApprovalRequest(userId string, password string, bullionId string) (reqEntity *interfaces.GeneralUserReqEntity, err error) {
@@ -122,15 +99,10 @@ func (service *generalUserService) sendApprovalRequest(user *interfaces.GeneralU
 	} else {
 		err = nil
 	}
-	reqEntity = &interfaces.GeneralUserReqEntity{
-		GeneralUserId: user.ID,
-		BullionId:     bullion.ID,
-		Status:        interfaces.GENERAL_USER_AUTH_STATUS_REQUESTED,
-	}
+	reqEntity = interfaces.CreateNewGeneralUserReq(user.ID, bullion.ID, interfaces.GENERAL_USER_AUTH_STATUS_REQUESTED)
 	if bullion.GeneralUserInfo.AutoApprove {
 		reqEntity.Status = interfaces.GENERAL_USER_AUTH_STATUS_AUTHORIZED
 	}
-	reqEntity.CreateNewId()
 	reqEntity, err = service.generalUserReqRepo.Save(reqEntity)
 	return
 }

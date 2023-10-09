@@ -6,7 +6,7 @@ import (
 	"github.com/rpsoftech/bullion-server/src/env"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
 	"github.com/rpsoftech/bullion-server/src/mongodb"
-	"github.com/rpsoftech/bullion-server/src/validator"
+	"github.com/rpsoftech/bullion-server/src/utility"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -32,15 +32,13 @@ func init() {
 }
 
 func (repo *GeneralUserReqRepoStruct) Save(entity *interfaces.GeneralUserReqEntity) (*interfaces.GeneralUserReqEntity, error) {
-	if errs := validator.Validator.Validate(entity); len(errs) > 0 {
-		err := &interfaces.RequestError{
-			StatusCode: 400,
-			Code:       interfaces.ERROR_INVALID_ENTITY,
-			Message:    "",
-			Name:       "ERROR_INVALID_ENTITY",
-			Extra:      errs,
-		}
-		err.AppendValidationErrors(errs)
+
+	if err := utility.ValidateStructAndReturnReqError(&entity, &interfaces.RequestError{
+		StatusCode: 400,
+		Code:       interfaces.ERROR_INVALID_ENTITY,
+		Message:    "",
+		Name:       "ERROR_INVALID_ENTITY",
+	}); err != nil {
 		return entity, err
 	}
 	err := repo.collection.FindOneAndUpdate(mongodb.MongoCtx, bson.D{{
