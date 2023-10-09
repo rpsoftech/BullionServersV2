@@ -1,6 +1,6 @@
 package interfaces
 
-type AdminUser struct {
+type AdminUserEntity struct {
 	*BaseEntity         `bson:"inline"`
 	*UserRolesInterface `bson:"inline"`
 	UserName            string `bson:"userName" json:"userName" validate:"require"`
@@ -9,11 +9,11 @@ type AdminUser struct {
 	BullionId           string `bson:"bullionId" json:"bullionId" validate:"require"`
 }
 
-func (admin *AdminUser) MatchPassword(password string) bool {
+func (admin *AdminUserEntity) MatchPassword(password string) bool {
 	return admin.Password == password
 }
 
-func (admin *AdminUser) CreateNewEntity(UserName string, Password string, NickName string, BullionId string) *AdminUser {
+func (admin *AdminUserEntity) CreateNewEntity(UserName string, Password string, NickName string, BullionId string) *AdminUserEntity {
 	admin.BaseEntity = &BaseEntity{}
 	admin.UserName = UserName
 	admin.Password = Password
