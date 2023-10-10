@@ -6,44 +6,35 @@ import (
 	"github.com/rpsoftech/bullion-server/src/env"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
 	"github.com/rpsoftech/bullion-server/src/mongodb"
-	"github.com/rpsoftech/bullion-server/src/utility"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type GeneralUserReqRepoStruct struct {
+type AdminUserRepoStruct struct {
 	collection *mongo.Collection
 }
 
-const generalUserReqCollectionName = "GeneralUserReq"
+const adminUserCollectionName = "AdminUser"
 
-var GeneralUserReqRepo *GeneralUserReqRepoStruct
+var AdminUserRepo *AdminUserRepoStruct
 
 func init() {
 	if env.Env.APP_ENV == env.APP_ENV_DEVELOPE {
 		return
 	}
-	coll := mongodb.MongoDatabase.Collection(generalUserReqCollectionName)
-	GeneralUserReqRepo = &GeneralUserReqRepoStruct{
+	coll := mongodb.MongoDatabase.Collection(adminUserCollectionName)
+	AdminUserRepo = &AdminUserRepoStruct{
 		collection: coll,
 	}
-	addComboUniqueIndexesToCollection([]string{"generalUserId", "bullionId"}, GeneralUserReqRepo.collection)
-	addUniqueIndexesToCollection([]string{"id"}, GeneralUserReqRepo.collection)
+	addUniqueIndexesToCollection([]string{"id"}, AdminUserRepo.collection)
+	addComboUniqueIndexesToCollection([]string{"userName", "bullionId"}, AdminUserRepo.collection)
 }
 
-func (repo *GeneralUserReqRepoStruct) Save(entity *interfaces.GeneralUserReqEntity) (*interfaces.GeneralUserReqEntity, error) {
-
-	if err := utility.ValidateStructAndReturnReqError(&entity, &interfaces.RequestError{
-		StatusCode: 400,
-		Code:       interfaces.ERROR_INVALID_ENTITY,
-		Message:    "",
-		Name:       "ERROR_INVALID_ENTITY",
-	}); err != nil {
-		return entity, err
-	}
+func (repo *AdminUserRepoStruct) Save(entity *interfaces.AdminUserEntity) (*interfaces.AdminUserEntity, error) {
+	var result interfaces.AdminUserEntity
 	err := repo.collection.FindOneAndUpdate(mongodb.MongoCtx, bson.D{{
 		Key: "_id", Value: entity.ID,
-	}}, bson.D{{Key: "$set", Value: entity}}, findOneAndUpdateOptions).Err()
+	}}, bson.D{{Key: "$set", Value: entity}}, findOneAndUpdateOptions).Decode(&result)
 	if err != nil {
 		if err != mongo.ErrNoDocuments {
 			err = &interfaces.RequestError{
@@ -56,15 +47,13 @@ func (repo *GeneralUserReqRepoStruct) Save(entity *interfaces.GeneralUserReqEnti
 			err = nil
 		}
 	}
-	return entity, err
+	return &result, err
 }
 
-func (repo *GeneralUserReqRepoStruct) FindOneByGeneralUserIdAndBullionId(generalUserId string, bullionId string) (*interfaces.GeneralUserReqEntity, error) {
-	var result interfaces.GeneralUserReqEntity
+func (repo *AdminUserRepoStruct) FindOne(id string) (*interfaces.AdminUserEntity, error) {
+	var result interfaces.AdminUserEntity
 	err := repo.collection.FindOne(mongodb.MongoCtx, bson.D{{
-		Key: "generalUserId", Value: generalUserId,
-	}, {
-		Key: "bullionId", Value: bullionId,
+		Key: "id", Value: id,
 	}}).Decode(&result)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -72,7 +61,7 @@ func (repo *GeneralUserReqRepoStruct) FindOneByGeneralUserIdAndBullionId(general
 			err = &interfaces.RequestError{
 				StatusCode: 400,
 				Code:       interfaces.ERROR_ENTITY_NOT_FOUND,
-				Message:    fmt.Sprintf("GeneralUserReq Entity identified by generalUserID %s and bullionId %s not found", generalUserId, bullionId),
+				Message:    fmt.Sprintf("GeneralUser Entity identified by id %s not found", id),
 				Name:       "ENTITY_NOT_FOUND",
 			}
 		} else {
@@ -86,20 +75,21 @@ func (repo *GeneralUserReqRepoStruct) FindOneByGeneralUserIdAndBullionId(general
 	}
 	return &result, err
 }
-func (repo *GeneralUserReqRepoStruct) FindOne(id string) (*interfaces.GeneralUserReqEntity, error) {
-	var result interfaces.GeneralUserReqEntity
 
+func (repo *AdminUserRepoStruct) FindOneUserNameAndBullionId(uname string, bullionId string) (*interfaces.AdminUserEntity, error) {
+	var result interfaces.AdminUserEntity
 	err := repo.collection.FindOne(mongodb.MongoCtx, bson.D{{
-		Key: "id", Value: id,
+		Key: "userName", Value: uname,
+	}, {
+		Key: "bullionId", Value: bullionId,
 	}}).Decode(&result)
-
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			// This error means your query did not match any documents.
 			err = &interfaces.RequestError{
 				StatusCode: 400,
 				Code:       interfaces.ERROR_ENTITY_NOT_FOUND,
-				Message:    fmt.Sprintf("GeneralUserReq Entity identified by id %s not found", id),
+				Message:    fmt.Sprintf("GeneralUser Entity identified by uname %s and bullionId %s not found", uname, bullionId),
 				Name:       "ENTITY_NOT_FOUND",
 			}
 		} else {

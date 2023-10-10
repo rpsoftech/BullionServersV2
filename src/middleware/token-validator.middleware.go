@@ -5,7 +5,7 @@ import (
 	"github.com/rpsoftech/bullion-server/src/env"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
 	"github.com/rpsoftech/bullion-server/src/services"
-	"github.com/rpsoftech/bullion-server/src/validator"
+	"github.com/rpsoftech/bullion-server/src/utility"
 )
 
 // fiber middleware for jwt
@@ -18,21 +18,18 @@ func TokenDecrypter(c *fiber.Ctx) (err error) {
 	if tokenString == "" {
 		return c.Next()
 	}
-	userRolesCustomClaim, errs := services.AccessTokenService.VerifyToken(tokenString)
-	if errs != nil {
-		c.Locals(interfaces.REQ_LOCAL_ERROR_KEY, errs)
+	userRolesCustomClaim, localErr := services.AccessTokenService.VerifyToken(tokenString)
+	if localErr != nil {
+		c.Locals(interfaces.REQ_LOCAL_ERROR_KEY, localErr)
 		return c.Next()
 	}
-	if errs := validator.Validator.Validate(userRolesCustomClaim); len(errs) > 0 {
-		err := &interfaces.RequestError{
-			StatusCode: 401,
-			Code:       interfaces.ERROR_INVALID_TOKEN_SIGNATURE,
-			Message:    "Invalid Token Structure",
-			Name:       "ERROR_INVALID_TOKEN_SIGNATURE",
-			Extra:      errs,
-		}
-		err.AppendValidationErrors(errs)
-		c.Locals(interfaces.REQ_LOCAL_ERROR_KEY, errs)
+	if localErr := utility.ValidateStructAndReturnReqError(&userRolesCustomClaim, &interfaces.RequestError{
+		StatusCode: 401,
+		Code:       interfaces.ERROR_INVALID_TOKEN_SIGNATURE,
+		Message:    "Invalid Token Structure",
+		Name:       "ERROR_INVALID_TOKEN_SIGNATURE",
+	}); localErr != nil {
+		c.Locals(interfaces.REQ_LOCAL_ERROR_KEY, localErr)
 		return c.Next()
 	}
 	role := userRolesCustomClaim.Role.String()
@@ -44,7 +41,7 @@ func TokenDecrypter(c *fiber.Ctx) (err error) {
 			Name:       "INVALID_TOKEN_ROLE",
 		}
 
-		c.Locals(interfaces.REQ_LOCAL_ERROR_KEY, errs)
+		c.Locals(interfaces.REQ_LOCAL_ERROR_KEY, err)
 		return c.Next()
 	}
 

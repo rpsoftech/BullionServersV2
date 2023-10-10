@@ -3,15 +3,12 @@ package services
 import (
 	"fmt"
 	"math/rand"
-	"time"
 
 	"github.com/go-faker/faker/v4"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
 	"github.com/rpsoftech/bullion-server/src/mongodb/repos"
-	localJwt "github.com/rpsoftech/bullion-server/src/utility/jwt"
-	"github.com/rpsoftech/bullion-server/src/validator"
+	"github.com/rpsoftech/bullion-server/src/utility"
 )
 
 type generalUserService struct {
@@ -32,11 +29,11 @@ func init() {
 
 func (service *generalUserService) RegisterNew(bullionId string, user interface{}) (*interfaces.GeneralUserEntity, error) {
 	var baseGeneralUser interfaces.GeneralUser
-	var entity interfaces.GeneralUserEntity
+	var entity *interfaces.GeneralUserEntity
 
 	Bullion, err := service.BullionSiteInfoRepo.FindOne(bullionId)
 	if err != nil {
-		return &entity, err
+		return entity, err
 	}
 	if Bullion.GeneralUserInfo.AutoLogin {
 		baseGeneralUser = interfaces.GeneralUser{
@@ -58,45 +55,22 @@ func (service *generalUserService) RegisterNew(bullionId string, user interface{
 	baseGeneralUser.RandomPass = faker.Password()
 	err = mapstructure.Decode(user, &baseGeneralUser)
 	if err != nil {
-		return &entity, err
+		return entity, err
 	}
-	errs := validator.Validator.Validate(&baseGeneralUser)
-	if len(errs) > 0 {
-		reqErr := &interfaces.RequestError{
-			StatusCode: 400,
-			Code:       interfaces.ERROR_INVALID_INPUT,
-			Message:    "",
-			Name:       "INVALID_INPUT",
-			Extra:      errs,
-		}
-		return &entity, reqErr.AppendValidationErrors(errs)
-	}
-	entity = interfaces.GeneralUserEntity{
-		BaseEntity:  interfaces.BaseEntity{},
-		GeneralUser: baseGeneralUser,
-		UserRolesInterface: interfaces.UserRolesInterface{
-			Role: interfaces.ROLE_GENERAL_USER,
-		},
-	}
-	entity.CreateNewId()
 
-	errs = validator.Validator.Validate(&entity)
-	if len(errs) > 0 {
-		reqErr := &interfaces.RequestError{
-			StatusCode: 400,
-			Code:       interfaces.ERROR_INVALID_INPUT,
-			Message:    "",
-			Name:       "INVALID_INPUT",
-			Extra:      errs,
-		}
-		return &entity, reqErr.AppendValidationErrors(errs)
+	if err := utility.ValidateReqInput(&baseGeneralUser); err != nil {
+		return entity, err
 	}
-	service.GeneralUserRepo.Save(&entity)
-	_, err = service.sendApprovalRequest(&entity, Bullion)
+	entity = interfaces.CreateNewGeneralUser(baseGeneralUser)
+	if err := utility.ValidateReqInput(&entity); err != nil {
+		return entity, err
+	}
+	service.GeneralUserRepo.Save(entity)
+	_, err = service.sendApprovalRequest(entity, Bullion)
 	if err != nil {
-		return &entity, err
+		return entity, err
 	}
-	return &entity, err
+	return entity, err
 }
 
 func (service *generalUserService) CreateApprovalRequest(userId string, password string, bullionId string) (reqEntity *interfaces.GeneralUserReqEntity, err error) {
@@ -122,15 +96,10 @@ func (service *generalUserService) sendApprovalRequest(user *interfaces.GeneralU
 	} else {
 		err = nil
 	}
-	reqEntity = &interfaces.GeneralUserReqEntity{
-		GeneralUserId: user.ID,
-		BullionId:     bullion.ID,
-		Status:        interfaces.GENERAL_USER_AUTH_STATUS_REQUESTED,
-	}
+	reqEntity = interfaces.CreateNewGeneralUserReq(user.ID, bullion.ID, interfaces.GENERAL_USER_AUTH_STATUS_REQUESTED)
 	if bullion.GeneralUserInfo.AutoApprove {
 		reqEntity.Status = interfaces.GENERAL_USER_AUTH_STATUS_AUTHORIZED
 	}
-	reqEntity.CreateNewId()
 	reqEntity, err = service.generalUserReqRepo.Save(reqEntity)
 	return
 }
@@ -152,15 +121,13 @@ func (service *generalUserService) GetGeneralUserDetailsByIdPassword(id string, 
 }
 
 func (service *generalUserService) ValidateApprovalAndGenerateToken(userId string, password string, bullionId string) (*interfaces.TokenResponseBody, error) {
-	var tokenResponse *interfaces.TokenResponseBody
 	userEntity, err := service.GetGeneralUserDetailsByIdPassword(userId, password)
 	if err != nil {
-		return tokenResponse, err
+		return nil, err
 	}
 	return service.validateApprovalAndGenerateTokenStage2(userEntity, bullionId)
 }
 func (service *generalUserService) validateApprovalAndGenerateTokenStage2(user *interfaces.GeneralUserEntity, bullionId string) (*interfaces.TokenResponseBody, error) {
-	var tokenResponse *interfaces.TokenResponseBody
 	reqEntity, err := service.generalUserReqRepo.FindOneByGeneralUserIdAndBullionId(user.ID, bullionId)
 	if err != nil || reqEntity == nil {
 		err = &interfaces.RequestError{
@@ -169,7 +136,7 @@ func (service *generalUserService) validateApprovalAndGenerateTokenStage2(user *
 			Message:    "REQUEST DOES NOT EXISTS",
 			Name:       "ERROR_GENERAL_USER_REQ_NOT_FOUND",
 		}
-		return tokenResponse, err
+		return nil, err
 	}
 	if reqEntity.Status == interfaces.GENERAL_USER_AUTH_STATUS_REQUESTED {
 		err = &interfaces.RequestError{
@@ -178,7 +145,7 @@ func (service *generalUserService) validateApprovalAndGenerateTokenStage2(user *
 			Message:    "REQUEST PENDING",
 			Name:       "ERROR_GENERAL_USER_REQ_PENDING",
 		}
-		return tokenResponse, err
+		return nil, err
 	}
 	if reqEntity.Status == interfaces.GENERAL_USER_AUTH_STATUS_REJECTED {
 		err = &interfaces.RequestError{
@@ -187,7 +154,7 @@ func (service *generalUserService) validateApprovalAndGenerateTokenStage2(user *
 			Message:    "REQUEST REJECTED",
 			Name:       "ERROR_GENERAL_USER_REQ_PENDING",
 		}
-		return tokenResponse, err
+		return nil, err
 	}
 	if reqEntity.Status != interfaces.GENERAL_USER_AUTH_STATUS_AUTHORIZED {
 		err = &interfaces.RequestError{
@@ -196,62 +163,14 @@ func (service *generalUserService) validateApprovalAndGenerateTokenStage2(user *
 			Message:    "Invalid Request Status",
 			Name:       "ERROR_GENERAL_USER_INVALID_STATUS",
 		}
-		return tokenResponse, err
+		return nil, err
 	}
 
 	return service.generateTokens(user.ID, bullionId)
 }
 
 func (service *generalUserService) generateTokens(userId string, bullionId string) (*interfaces.TokenResponseBody, error) {
-	var tokenResponse *interfaces.TokenResponseBody
-	now := time.Now()
-	accessToken, err := AccessTokenService.GenerateToken(localJwt.GeneralUserAccessRefreshToken{
-		UserId:    userId,
-		BullionId: bullionId,
-		Role:      interfaces.ROLE_GENERAL_USER,
-		RegisteredClaims: &jwt.RegisteredClaims{
-			IssuedAt:  &jwt.NumericDate{Time: now},
-			ExpiresAt: &jwt.NumericDate{Time: now.Add(time.Minute * 30)},
-		},
-	})
-	if err != nil {
-		err = &interfaces.RequestError{
-			Code:    interfaces.ERROR_INTERNAL_SERVER,
-			Message: "JWT ACCESS TOKEN GENERATION ERROR",
-			Name:    "ERROR_INTERNAL_ERROR",
-			Extra:   err,
-		}
-		return tokenResponse, err
-	}
-	refreshToken, err := RefreshTokenService.GenerateToken(localJwt.GeneralUserAccessRefreshToken{
-		UserId:    userId,
-		BullionId: bullionId,
-		Role:      interfaces.ROLE_GENERAL_USER,
-		RegisteredClaims: &jwt.RegisteredClaims{
-			IssuedAt: &jwt.NumericDate{Time: now},
-			// ExpiresAt: &jwt.NumericDate{Time: now.Add(time.Hour * 24 * 30)},
-		},
-	})
-	if err != nil {
-		err = &interfaces.RequestError{
-			Code:    interfaces.ERROR_INTERNAL_SERVER,
-			Message: "JWT ACCESS TOKEN GENERATION ERROR",
-			Name:    "ERROR_INTERNAL_ERROR",
-			Extra:   err,
-		}
-		return tokenResponse, err
-	}
-	firebaseToken, err := FirebaseAuthService.GenerateCustomToken(userId, map[string]interface{}{
-		"userId":    userId,
-		"bullionId": bullionId,
-		"role":      interfaces.ROLE_GENERAL_USER,
-	})
-	tokenResponse = &interfaces.TokenResponseBody{
-		AccessToken:   accessToken,
-		RefreshToken:  refreshToken,
-		FirebaseToken: firebaseToken,
-	}
-	return tokenResponse, err
+	return generateTokens(userId, bullionId, interfaces.ROLE_GENERAL_USER)
 }
 func (service *generalUserService) RefreshToken(token string) (*interfaces.TokenResponseBody, error) {
 	var tokenResponse *interfaces.TokenResponseBody

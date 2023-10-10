@@ -23,6 +23,7 @@ func deferMainFunc() {
 
 func main() {
 	defer deferMainFunc()
+
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			mappedError, ok := err.(*interfaces.RequestError)
@@ -37,7 +38,9 @@ func main() {
 			return c.Status(mappedError.StatusCode).JSON(mappedError)
 		},
 	})
+
 	app.Use(middleware.TokenDecrypter)
+
 	app.Get("/token", func(c *fiber.Ctx) error {
 		a, _ := services.AccessTokenService.GenerateToken(jwt.GeneralUserAccessRefreshToken{
 			Role: interfaces.ROLE_ADMIN,
