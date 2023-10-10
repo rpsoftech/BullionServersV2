@@ -28,12 +28,13 @@ func init() {
 }
 
 func (service *generalUserService) RegisterNew(bullionId string, user interface{}) (*interfaces.GeneralUserEntity, error) {
-	var baseGeneralUser interfaces.GeneralUser
-	var entity *interfaces.GeneralUserEntity
-
 	Bullion, err := service.BullionSiteInfoRepo.FindOne(bullionId)
 	if err != nil {
-		return entity, err
+		return nil, err
+	}
+
+	baseGeneralUser := interfaces.GeneralUser{
+		IsAuto: false,
 	}
 	if Bullion.GeneralUserInfo.AutoLogin {
 		baseGeneralUser = interfaces.GeneralUser{
@@ -47,30 +48,30 @@ func (service *generalUserService) RegisterNew(bullionId string, user interface{
 			DeviceId:      faker.UUIDDigit(),
 			DeviceType:    interfaces.DEVICE_TYPE_IOS,
 		}
-	} else {
-		baseGeneralUser = interfaces.GeneralUser{
-			IsAuto: false,
-		}
 	}
+
 	baseGeneralUser.RandomPass = faker.Password()
 	err = mapstructure.Decode(user, &baseGeneralUser)
 	if err != nil {
-		return entity, err
+		return nil, err
 	}
 
 	if err := utility.ValidateReqInput(&baseGeneralUser); err != nil {
-		return entity, err
+		return nil, err
 	}
-	entity = interfaces.CreateNewGeneralUser(baseGeneralUser)
+
+	entity := interfaces.CreateNewGeneralUser(baseGeneralUser)
 	if err := utility.ValidateReqInput(&entity); err != nil {
-		return entity, err
+		return nil, err
 	}
+
 	service.GeneralUserRepo.Save(entity)
 	_, err = service.sendApprovalRequest(entity, Bullion)
 	if err != nil {
-		return entity, err
+		return nil, err
 	}
-	return entity, err
+
+	return entity, nil
 }
 
 func (service *generalUserService) CreateApprovalRequest(userId string, password string, bullionId string) (reqEntity *interfaces.GeneralUserReqEntity, err error) {
@@ -130,43 +131,39 @@ func (service *generalUserService) ValidateApprovalAndGenerateToken(userId strin
 func (service *generalUserService) validateApprovalAndGenerateTokenStage2(user *interfaces.GeneralUserEntity, bullionId string) (*interfaces.TokenResponseBody, error) {
 	reqEntity, err := service.generalUserReqRepo.FindOneByGeneralUserIdAndBullionId(user.ID, bullionId)
 	if err != nil || reqEntity == nil {
-		err = &interfaces.RequestError{
+		return nil, &interfaces.RequestError{
 			StatusCode: 400,
 			Code:       interfaces.ERROR_GENERAL_USER_REQ_NOT_FOUND,
 			Message:    "REQUEST DOES NOT EXISTS",
 			Name:       "ERROR_GENERAL_USER_REQ_NOT_FOUND",
 		}
-		return nil, err
 	}
-	if reqEntity.Status == interfaces.GENERAL_USER_AUTH_STATUS_REQUESTED {
-		err = &interfaces.RequestError{
+
+	switch reqEntity.Status {
+	case interfaces.GENERAL_USER_AUTH_STATUS_REQUESTED:
+		return nil, &interfaces.RequestError{
 			StatusCode: 400,
 			Code:       interfaces.ERROR_GENERAL_USER_REQ_PENDING,
 			Message:    "REQUEST PENDING",
 			Name:       "ERROR_GENERAL_USER_REQ_PENDING",
 		}
-		return nil, err
-	}
-	if reqEntity.Status == interfaces.GENERAL_USER_AUTH_STATUS_REJECTED {
-		err = &interfaces.RequestError{
+	case interfaces.GENERAL_USER_AUTH_STATUS_REJECTED:
+		return nil, &interfaces.RequestError{
 			StatusCode: 400,
 			Code:       interfaces.ERROR_GENERAL_USER_REQ_REJECTED,
 			Message:    "REQUEST REJECTED",
-			Name:       "ERROR_GENERAL_USER_REQ_PENDING",
+			Name:       "ERROR_GENERAL_USER_REQ_REJECTED",
 		}
-		return nil, err
-	}
-	if reqEntity.Status != interfaces.GENERAL_USER_AUTH_STATUS_AUTHORIZED {
-		err = &interfaces.RequestError{
+	case interfaces.GENERAL_USER_AUTH_STATUS_AUTHORIZED:
+		return service.generateTokens(user.ID, bullionId)
+	default:
+		return nil, &interfaces.RequestError{
 			StatusCode: 400,
 			Code:       interfaces.ERROR_GENERAL_USER_INVALID_STATUS,
 			Message:    "Invalid Request Status",
 			Name:       "ERROR_GENERAL_USER_INVALID_STATUS",
 		}
-		return nil, err
 	}
-
-	return service.generateTokens(user.ID, bullionId)
 }
 
 func (service *generalUserService) generateTokens(userId string, bullionId string) (*interfaces.TokenResponseBody, error) {
