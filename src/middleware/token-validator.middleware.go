@@ -6,6 +6,7 @@ import (
 	"github.com/rpsoftech/bullion-server/src/interfaces"
 	"github.com/rpsoftech/bullion-server/src/services"
 	"github.com/rpsoftech/bullion-server/src/utility"
+	"github.com/rpsoftech/bullion-server/src/utility/jwt"
 )
 
 // fiber middleware for jwt
@@ -23,13 +24,13 @@ func TokenDecrypter(c *fiber.Ctx) (err error) {
 		c.Locals(interfaces.REQ_LOCAL_ERROR_KEY, localErr)
 		return c.Next()
 	}
-	if localErr := utility.ValidateStructAndReturnReqError(&userRolesCustomClaim, &interfaces.RequestError{
+	if e := utility.ValidateStructAndReturnReqError(userRolesCustomClaim, &interfaces.RequestError{
 		StatusCode: 401,
 		Code:       interfaces.ERROR_INVALID_TOKEN_SIGNATURE,
 		Message:    "Invalid Token Structure",
 		Name:       "ERROR_INVALID_TOKEN_SIGNATURE",
-	}); localErr != nil {
-		c.Locals(interfaces.REQ_LOCAL_ERROR_KEY, localErr)
+	}); e != nil {
+		c.Locals(interfaces.REQ_LOCAL_ERROR_KEY, e)
 		return c.Next()
 	}
 	role := userRolesCustomClaim.Role.String()
@@ -54,6 +55,7 @@ func TokenDecrypter(c *fiber.Ctx) (err error) {
 func AllowOnlyValidTokenMiddleWare(c *fiber.Ctx) error {
 	jwtRawFromLocal := c.Locals(interfaces.REQ_LOCAL_KEY_TOKEN_RAW_DATA)
 	localError := c.Locals(interfaces.REQ_LOCAL_ERROR_KEY)
+
 	if jwtRawFromLocal == nil {
 		if localError != nil {
 			err, ok := localError.(*interfaces.RequestError)
@@ -66,16 +68,33 @@ func AllowOnlyValidTokenMiddleWare(c *fiber.Ctx) error {
 				}
 			}
 			return err
-		} else {
-
-			err := &interfaces.RequestError{
-				StatusCode: 403,
-				Code:       interfaces.ERROR_TOKEN_EXPIRED,
-				Message:    "Invalid Token or token expired",
-				Name:       "NOT_VALID_DECRYPTED_TOKEN",
-			}
-			return err
+		}
+		return &interfaces.RequestError{
+			StatusCode: 403,
+			Code:       interfaces.ERROR_TOKEN_EXPIRED,
+			Message:    "Invalid Token or token expired",
+			Name:       "NOT_VALID_DECRYPTED_TOKEN",
 		}
 	}
+
+	jwtRaw, ok := jwtRawFromLocal.(*jwt.GeneralUserAccessRefreshToken)
+	if !ok {
+		return &interfaces.RequestError{
+			StatusCode: 403,
+			Code:       interfaces.ERROR_TOKEN_EXPIRED,
+			Message:    "Invalid Token or token expired",
+			Name:       "NOT_VALID_DECRYPTED_TOKEN",
+		}
+	}
+	if jwtRaw.BullionId == "" {
+		return &interfaces.RequestError{
+			StatusCode: 403,
+			Code:       interfaces.ERROR_INVALID_TOKEN,
+			Message:    "Invalid Bullion Id in Token",
+			Name:       "INVALID_BULLION_ID_IN_TOKEN",
+		}
+	}
+
+	c.Locals(interfaces.REQ_LOCAL_BullionId_KEY, jwtRaw.BullionId)
 	return c.Next()
 }

@@ -17,13 +17,21 @@ var (
 		interfaces.ROLE_RATE_ADMIN.String(),
 		interfaces.ROLE_SUPER_ADMIN.String(),
 		interfaces.ROLE_ADMIN.String(),
+		interfaces.ROLE_GOD.String(),
 		interfaces.ROLE_GENERAL_USER.String(),
 		interfaces.ROLE_TRADE_USER.String(),
 	}
 
 	AllowAllUsers = roleCheckerMiddlewareWithRolesArray{
 		roles: allUserRoles,
-		// Middleware: roleCheckerAndValidator(allUserRoles),
+	}
+	AllowOnlyAdmins = roleCheckerMiddlewareWithRolesArray{
+		roles: []string{
+			interfaces.ROLE_ADMIN.String(),
+			interfaces.ROLE_RATE_ADMIN.String(),
+			interfaces.ROLE_SUPER_ADMIN.String(),
+			interfaces.ROLE_GOD.String(),
+		},
 	}
 )
 
