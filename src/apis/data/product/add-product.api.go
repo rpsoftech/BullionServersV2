@@ -17,5 +17,6 @@ func apiAddNewProduct(c *fiber.Ctx) error {
 	if err := utility.ValidateReqInput(body); err != nil {
 		return err
 	}
+	// services.ProductService.GetProductsByBullionId()
 	return c.JSON(body)
 }

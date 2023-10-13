@@ -19,6 +19,10 @@ func init() {
 	}
 }
 
+func (service *productService) AddNewProduct(prouctBase *interfaces.ProductBaseStruct, calcBase *interfaces.CalcSnapshotStruct, bullionId string) {
+	// if
+
+}
 func (service *productService) GetProductsByBullionId(bullionId string) {
 
 }
