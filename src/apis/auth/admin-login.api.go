@@ -9,7 +9,7 @@ import (
 type apiAdminLoginBody struct {
 	UserName  string `json:"uname" validate:"required"`
 	Password  string `json:"password" validate:"required"`
-	BullionId string `json:"bullionId" validate:"required"`
+	BullionId string `json:"bullionId" validate:"required,uuid"`
 }
 
 func apiAdminLogin(c *fiber.Ctx) error {

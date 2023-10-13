@@ -3,8 +3,8 @@ package interfaces
 type ProductBaseStruct struct {
 	BullionId           string               `bson:"bullionId" json:"bullionId" validate:"required"`
 	Name                string               `bson:"name" json:"name" validate:"required"`
-	SourceSymbol        string               `bson:"sourceSymbol" json:"sourceSymbol" validate:"required"`
-	CalculationSymbol   string               `bson:"CalculationSymbol" json:"CalculationSymbol" validate:"required"`
+	SourceSymbol        SymbolsEnum          `bson:"sourceSymbol" json:"sourceSymbol" validate:"required,enum=SymbolsEnum"`
+	CalculationSymbol   SymbolsEnum          `bson:"CalculationSymbol" json:"CalculationSymbol" validate:"required,enum=SymbolsEnum"`
 	IsActive            bool                 `bson:"isActive" json:"isActive" validate:"required"`
 	IsHedging           bool                 `bson:"isHedging" json:"isHedging" validate:"required"`
 	FloatPoint          int                  `bson:"floatPoint" json:"floatPoint" validate:"required"`

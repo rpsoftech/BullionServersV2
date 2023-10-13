@@ -2,54 +2,80 @@ package interfaces
 
 import "github.com/rpsoftech/bullion-server/src/validator"
 
-type CalculationSymbolEnum string
+type SymbolsEnum string
 
 const (
-	CALCULATION_SYMBOL_GOLD       CalculationSymbolEnum = "GOLD"
-	CALCULATION_SYMBOL_SILVER     CalculationSymbolEnum = "SILVER"
-	CALCULATION_SYMBOL_GOLD_MCX   CalculationSymbolEnum = "GOLD_MCX"
-	CALCULATION_SYMBOL_SILVER_MCX CalculationSymbolEnum = "SILVER_MCX"
+	SYMBOL_GOLD        SymbolsEnum = "GOLD"
+	SYMBOL_SILVER      SymbolsEnum = "SILVER"
+	SYMBOL_GOLD_MCX    SymbolsEnum = "GOLD_MCX"
+	SYMBOL_SILVER_MCX  SymbolsEnum = "SILVER_MCX"
+	SYMBOL_GOLD_NEXT   SymbolsEnum = "GOLD_NEXT"
+	SYMBOL_SILVER_NEXT SymbolsEnum = "SILVER_NEXT"
+	SYMBOL_GOLD_SPOT   SymbolsEnum = "GOLD_SPOT"
+	SYMBOL_SILVER_SPOT SymbolsEnum = "SILVER_SPOT"
+	SYMBOL_INR         SymbolsEnum = "INR"
 )
 
 var (
-	calculationSymbolEnumMap = map[string]CalculationSymbolEnum{
-		"GOLD":       CALCULATION_SYMBOL_GOLD,
-		"SILVER":     CALCULATION_SYMBOL_SILVER,
-		"GOLD_MCX":   CALCULATION_SYMBOL_GOLD_MCX,
-		"SILVER_MCX": CALCULATION_SYMBOL_SILVER_MCX,
+	symbolEnumMap = map[string]SymbolsEnum{
+		"GOLD":        SYMBOL_GOLD,
+		"SILVER":      SYMBOL_SILVER,
+		"GOLD_MCX":    SYMBOL_GOLD_MCX,
+		"SILVER_MCX":  SYMBOL_SILVER_MCX,
+		"GOLD_NEXT":   SYMBOL_GOLD_NEXT,
+		"SILVER_NEXT": SYMBOL_SILVER_NEXT,
+		"GOLD_SPOT":   SYMBOL_GOLD_SPOT,
+		"SILVER_SPOT": SYMBOL_SILVER_SPOT,
+		"INR":         SYMBOL_INR,
 	}
 )
 
 func init() {
-	validator.RegisterEnumValidatorFunc("CalculationSymbolEnum", ValidateEnumCalculationSymbolEnum)
+	validator.RegisterEnumValidatorFunc("SymbolsEnum", ValidateEnumSymbolsEnum)
 }
 
-func ValidateEnumCalculationSymbolEnum(value string) bool {
-	_, ok := calculationSymbolEnumMap[value]
+func ValidateEnumSymbolsEnum(value string) bool {
+	_, ok := symbolEnumMap[value]
 	return ok
 }
 
-func (s CalculationSymbolEnum) String() string {
+func (s SymbolsEnum) String() string {
 	switch s {
-	case CALCULATION_SYMBOL_GOLD:
+	case SYMBOL_GOLD:
 		return "GOLD"
-	case CALCULATION_SYMBOL_SILVER:
+	case SYMBOL_SILVER:
 		return "SILVER"
-	case CALCULATION_SYMBOL_GOLD_MCX:
+	case SYMBOL_GOLD_MCX:
 		return "GOLD_MCX"
-	case CALCULATION_SYMBOL_SILVER_MCX:
+	case SYMBOL_SILVER_MCX:
 		return "SILVER_MCX"
+	case SYMBOL_GOLD_NEXT:
+		return "GOLD_NEXT"
+	case SYMBOL_SILVER_NEXT:
+		return "SILVER_NEXT"
+	case SYMBOL_GOLD_SPOT:
+		return "GOLD_SPOT"
+	case SYMBOL_SILVER_SPOT:
+		return "SILVER_SPOT"
+	case SYMBOL_INR:
+		return "INR"
+
 	}
 	return "unknown"
 }
 
-func (s CalculationSymbolEnum) IsValid() bool {
+func (s SymbolsEnum) IsValid() bool {
 	switch s {
 	case
-		CALCULATION_SYMBOL_GOLD,
-		CALCULATION_SYMBOL_SILVER,
-		CALCULATION_SYMBOL_GOLD_MCX,
-		CALCULATION_SYMBOL_SILVER_MCX:
+		SYMBOL_GOLD,
+		SYMBOL_SILVER,
+		SYMBOL_GOLD_MCX,
+		SYMBOL_SILVER_MCX,
+		SYMBOL_GOLD_NEXT,
+		SYMBOL_SILVER_NEXT,
+		SYMBOL_GOLD_SPOT,
+		SYMBOL_SILVER_SPOT,
+		SYMBOL_INR:
 		return true
 	}
 

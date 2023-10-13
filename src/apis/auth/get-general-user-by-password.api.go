@@ -6,7 +6,7 @@ import (
 )
 
 type getGeneralUserBody struct {
-	Id       string `json:"id" validate:"required"`
+	Id       string `json:"id" validate:"required,uuid"`
 	Password string `json:"password" validate:"required"`
 }
 

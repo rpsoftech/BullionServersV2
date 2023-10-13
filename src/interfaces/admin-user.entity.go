@@ -6,7 +6,7 @@ type AdminUserEntity struct {
 	UserName            string `bson:"userName" json:"userName" validate:"require"`
 	Password            string `bson:"password" json:"password" validate:"require"`
 	NickName            string `bson:"nickName" json:"nickName" validate:"require"`
-	BullionId           string `bson:"bullionId" json:"bullionId" validate:"require"`
+	BullionId           string `bson:"bullionId" json:"bullionId" validate:"require,uuid"`
 }
 
 func (admin *AdminUserEntity) MatchPassword(password string) bool {

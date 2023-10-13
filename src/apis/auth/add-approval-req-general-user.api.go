@@ -8,7 +8,7 @@ import (
 
 type addApprovalReqGeneralUserBody struct {
 	getGeneralUserBody
-	BullionId string `json:"bullionId" validate:"required"`
+	BullionId string `json:"bullionId" validate:"required,uuid"`
 }
 
 func apiSendApprovalReqGeneralUser(c *fiber.Ctx) error {

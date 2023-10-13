@@ -17,8 +17,8 @@ var (
 
 type GeneralUserAccessRefreshToken struct {
 	*jwt.RegisteredClaims
-	UserId     string                 `json:"userId" validate:"required"`
-	BullionId  string                 `json:"bullionId" validate:"required"`
+	UserId     string                 `json:"userId" validate:"required,uuid"`
+	BullionId  string                 `json:"bullionId" validate:"required,uuid"`
 	Role       interfaces.UserRoles   `json:"role" validate:"required"`
 	ExtraClaim map[string]interface{} `json:"extraClaim,omitempty"`
 }

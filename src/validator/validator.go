@@ -37,6 +37,7 @@ func init() {
 	Validator.validator.RegisterValidation("port", validatePort)
 	Validator.validator.RegisterValidation("gstNumber", validateGstNumber)
 	Validator.validator.RegisterValidation("enum", validateEnum)
+	Validator.validator.RegisterValidation("uuid", validateUUID)
 }
 
 func (v XValidator) Validate(data interface{}) []ErrorResponse {
