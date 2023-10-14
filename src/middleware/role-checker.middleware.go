@@ -35,38 +35,35 @@ var (
 	}
 )
 
-func (cc *roleCheckerMiddlewareWithRolesArray) Validate(c *fiber.Ctx) (err error) {
+func (cc *roleCheckerMiddlewareWithRolesArray) Validate(c *fiber.Ctx) error {
 	roleFromLocal := c.Locals(interfaces.REQ_LOCAL_KEY_ROLE)
 	if roleFromLocal == nil {
-		err = &interfaces.RequestError{
+		return &interfaces.RequestError{
 			StatusCode: 403,
 			Code:       interfaces.ERROR_TOKEN_ROLE_NOT_FOUND,
 			Message:    "Invalid Token Role Or Not Found",
 			Name:       "INVALID_TOKEN_ROLE",
 		}
-		return
 	}
 	role, ok := roleFromLocal.(string)
 	if !ok {
-		err = &interfaces.RequestError{
+		return &interfaces.RequestError{
 			StatusCode: 403,
 			Code:       interfaces.ERROR_ROLE_NOT_EXISTS,
 			Message:    "Token Role Should be string",
 			Name:       "INVALID_TOKEN_ROLE_FORMAT",
 		}
-		return
 	}
 	if role == string(interfaces.ROLE_GOD) {
 		return c.Next()
 	}
 	if !slices.Contains(cc.roles, role) {
-		err = &interfaces.RequestError{
+		return &interfaces.RequestError{
 			StatusCode: 403,
 			Code:       interfaces.ERROR_ROLE_NOT_AUTHORIZED,
 			Message:    fmt.Sprintf("%s is not allowed for this route", role),
 			Name:       "INVALID_TOKEN_ROLE_FORMAT",
 		}
-		return
 	}
 	return c.Next()
 }

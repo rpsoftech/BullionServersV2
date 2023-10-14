@@ -10,7 +10,7 @@ import (
 )
 
 // fiber middleware for jwt
-func TokenDecrypter(c *fiber.Ctx) (err error) {
+func TokenDecrypter(c *fiber.Ctx) error {
 	reqHeaders := c.GetReqHeaders()
 	tokenString, foundToken := reqHeaders[env.RequestTokenHeaderKey]
 	if !foundToken {
@@ -35,14 +35,13 @@ func TokenDecrypter(c *fiber.Ctx) (err error) {
 	}
 	role := userRolesCustomClaim.Role.String()
 	if !interfaces.ValidateEnumUserRole(role) {
-		err = &interfaces.RequestError{
+
+		c.Locals(interfaces.REQ_LOCAL_ERROR_KEY, &interfaces.RequestError{
 			StatusCode: 400,
 			Code:       interfaces.ERROR_TOKEN_ROLE_NOT_FOUND,
 			Message:    "Invalid Token Role Or Not Found",
 			Name:       "INVALID_TOKEN_ROLE",
-		}
-
-		c.Locals(interfaces.REQ_LOCAL_ERROR_KEY, err)
+		})
 		return c.Next()
 	}
 

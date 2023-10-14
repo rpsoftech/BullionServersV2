@@ -1,6 +1,8 @@
 package services
 
 import (
+	"fmt"
+
 	"github.com/rpsoftech/bullion-server/src/interfaces"
 	"github.com/rpsoftech/bullion-server/src/mongodb/repos"
 )
@@ -80,4 +82,22 @@ func (service *productService) GetProductsByBullionId(bullionId string) (*[]inte
 		service.saveProductEntityToLocalCaches(&product, false)
 	}
 	return products, nil
+}
+
+func (service *productService) GetProductsById(bullionId string, productId string) (*interfaces.ProductEntity, error) {
+	allProducts, err := service.GetProductsByBullionId(bullionId)
+	if err != nil {
+		return nil, err
+	}
+	for _, product := range *allProducts {
+		if product.ID == productId {
+			return &product, nil
+		}
+	}
+	return nil, &interfaces.RequestError{
+		StatusCode: 400,
+		Code:       interfaces.ERROR_ENTITY_NOT_FOUND,
+		Message:    fmt.Sprintf("Product Entities identified by bullionId %s and productId %s not found", bullionId, productId),
+		Name:       "ENTITY_NOT_FOUND",
+	}
 }
