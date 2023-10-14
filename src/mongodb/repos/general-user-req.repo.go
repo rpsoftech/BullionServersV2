@@ -33,7 +33,7 @@ func init() {
 
 func (repo *GeneralUserReqRepoStruct) Save(entity *interfaces.GeneralUserReqEntity) (*interfaces.GeneralUserReqEntity, error) {
 
-	if err := utility.ValidateStructAndReturnReqError(&entity, &interfaces.RequestError{
+	if err := utility.ValidateStructAndReturnReqError(entity, &interfaces.RequestError{
 		StatusCode: 400,
 		Code:       interfaces.ERROR_INVALID_ENTITY,
 		Message:    "",

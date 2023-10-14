@@ -22,6 +22,10 @@ func apiAddNewProduct(c *fiber.Ctx) error {
 	if err := utility.ValidateReqInput(body); err != nil {
 		return err
 	}
-	services.ProductService.AddNewProduct(body.ProductBaseStruct, body.CalcSnapshotStruct)
-	return c.JSON(body)
+	entity, err := services.ProductService.AddNewProduct(body.ProductBaseStruct, body.CalcSnapshotStruct)
+	if err != nil {
+		return err
+	} else {
+		return c.JSON(entity)
+	}
 }

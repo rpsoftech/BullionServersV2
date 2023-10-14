@@ -32,7 +32,7 @@ func init() {
 
 func (repo *ProductRepoStruct) Save(entity *interfaces.ProductEntity) (*interfaces.ProductEntity, error) {
 
-	if err := utility.ValidateStructAndReturnReqError(&entity, &interfaces.RequestError{
+	if err := utility.ValidateStructAndReturnReqError(entity, &interfaces.RequestError{
 		StatusCode: 400,
 		Code:       interfaces.ERROR_INVALID_ENTITY,
 		Message:    "",
