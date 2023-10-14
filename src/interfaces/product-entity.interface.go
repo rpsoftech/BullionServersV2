@@ -8,6 +8,7 @@ type ProductBaseStruct struct {
 	IsActive            bool                 `bson:"isActive" json:"isActive" validate:"required"`
 	IsHedging           bool                 `bson:"isHedging" json:"isHedging" validate:"required"`
 	FloatPoint          int                  `bson:"floatPoint" json:"floatPoint" validate:"min=0,max=4"`
+	Sequence            int                  `bson:"sequence" json:"sequence"`
 	CalculatedOnPriceOf CalculateOnPriceType `bson:"calculatedOnPriceOf" json:"calculatedOnPriceOf" validate:"required,enum=CalculateOnPriceType"`
 }
 

@@ -2,7 +2,9 @@ package interfaces
 
 import (
 	"fmt"
+	"net/http"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/rpsoftech/bullion-server/src/validator"
 )
 
@@ -33,4 +35,18 @@ func (r *RequestError) AppendValidationErrors(errs []validator.ErrorResponse) *R
 		r.Message += fmt.Sprintf("FieldName:- %s,Passed Value:- %s,Failed Tag:- %s", element.FailedField, element.Value, element.Tag)
 	}
 	return r
+}
+
+func ValidateBullionIdMatchingInToken(c *fiber.Ctx, bullionId string) error {
+	id, ok := c.Locals(REQ_LOCAL_BullionId_KEY).(string)
+	if !ok || bullionId != id {
+		return &RequestError{
+			StatusCode: http.StatusForbidden,
+			Code:       ERROR_MISMATCH_BULLION_ID,
+			Message:    "Your can not access this resource due to different bullionId",
+			Name:       "ERROR_MISMATCH_BULLION_ID",
+			Extra:      fmt.Sprintf("Expected := %s Got := %s", id, bullionId),
+		}
+	}
+	return nil
 }

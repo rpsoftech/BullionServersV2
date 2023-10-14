@@ -27,4 +27,5 @@ const (
 	ERROR_GENERAL_USER_INVALID_STATUS           = 221
 	ERROR_INVALID_TOKEN                         = 223
 	ERROR_INVALID_TOKEN_SIGNATURE_METHOD        = 224
+	ERROR_MISMATCH_BULLION_ID                   = 225
 )
