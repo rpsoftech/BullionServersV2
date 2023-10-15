@@ -63,7 +63,7 @@ func (service *generalUserService) RegisterNew(bullionId string, user interface{
 	}
 
 	entity := interfaces.CreateNewGeneralUser(baseGeneralUser)
-	if err := utility.ValidateReqInput(&entity); err != nil {
+	if err := utility.ValidateReqInput(entity); err != nil {
 		return nil, err
 	}
 
