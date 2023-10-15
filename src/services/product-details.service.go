@@ -9,6 +9,7 @@ import (
 
 type productService struct {
 	productRepo                   *repos.ProductRepoStruct
+	firebaseDatabaseService       *firebaseDatabaseService
 	productsByBullionAndProductId map[string]map[string]*interfaces.ProductEntity
 	productsArray                 map[string]*[]interfaces.ProductEntity
 	productsById                  map[string]*interfaces.ProductEntity
@@ -18,6 +19,7 @@ var ProductService *productService
 
 func init() {
 	ProductService = &productService{
+		firebaseDatabaseService:       FirebaseDatabaseService,
 		productRepo:                   repos.ProductRepo,
 		productsByBullionAndProductId: make(map[string]map[string]*interfaces.ProductEntity),
 		productsArray:                 make(map[string]*[]interfaces.ProductEntity),
@@ -41,6 +43,7 @@ func (service *productService) saveProductEntity(entity *interfaces.ProductEntit
 	if err != nil {
 		return entity, err
 	}
+	service.firebaseDatabaseService.SetData(entity.BullionId, []string{"products", entity.ID}, entity)
 	service.saveProductEntityToLocalCaches(entity, true)
 	return entity, nil
 }
