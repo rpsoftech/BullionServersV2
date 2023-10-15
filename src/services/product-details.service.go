@@ -8,18 +8,20 @@ import (
 )
 
 type productService struct {
-	productRepo   *repos.ProductRepoStruct
-	productsById  map[string]map[string]*interfaces.ProductEntity
-	productsArray map[string]*[]interfaces.ProductEntity
+	productRepo                   *repos.ProductRepoStruct
+	productsByBullionAndProductId map[string]map[string]*interfaces.ProductEntity
+	productsArray                 map[string]*[]interfaces.ProductEntity
+	productsById                  map[string]*interfaces.ProductEntity
 }
 
 var ProductService *productService
 
 func init() {
 	ProductService = &productService{
-		productRepo:   repos.ProductRepo,
-		productsById:  make(map[string]map[string]*interfaces.ProductEntity),
-		productsArray: make(map[string]*[]interfaces.ProductEntity),
+		productRepo:                   repos.ProductRepo,
+		productsByBullionAndProductId: make(map[string]map[string]*interfaces.ProductEntity),
+		productsArray:                 make(map[string]*[]interfaces.ProductEntity),
+		productsById:                  make(map[string]*interfaces.ProductEntity),
 	}
 }
 
@@ -44,10 +46,11 @@ func (service *productService) saveProductEntity(entity *interfaces.ProductEntit
 }
 
 func (service *productService) saveProductEntityToLocalCaches(entity *interfaces.ProductEntity, appendToArray bool) {
-	if _, ok := service.productsById[entity.BullionId]; !ok {
-		service.productsById[entity.BullionId] = make(map[string]*interfaces.ProductEntity)
+	if _, ok := service.productsByBullionAndProductId[entity.BullionId]; !ok {
+		service.productsByBullionAndProductId[entity.BullionId] = make(map[string]*interfaces.ProductEntity)
 	}
-	service.productsById[entity.BullionId][entity.ID] = entity
+	service.productsByBullionAndProductId[entity.BullionId][entity.ID] = entity
+	service.productsById[entity.ID] = entity
 
 	if !appendToArray {
 		return
