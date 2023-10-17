@@ -3,6 +3,7 @@ package services
 import (
 	"fmt"
 
+	"github.com/rpsoftech/bullion-server/src/events"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
 	"github.com/rpsoftech/bullion-server/src/mongodb/repos"
 )
@@ -10,6 +11,7 @@ import (
 type productService struct {
 	productRepo                   *repos.ProductRepoStruct
 	firebaseDatabaseService       *firebaseDatabaseService
+	eventBus                      *eventBusService
 	productsByBullionAndProductId map[string]map[string]*interfaces.ProductEntity
 	productsArray                 map[string]*[]interfaces.ProductEntity
 	productsById                  map[string]*interfaces.ProductEntity
@@ -19,6 +21,7 @@ var ProductService *productService
 
 func init() {
 	ProductService = &productService{
+		eventBus:                      EventBus,
 		firebaseDatabaseService:       FirebaseDatabaseService,
 		productRepo:                   repos.ProductRepo,
 		productsByBullionAndProductId: make(map[string]map[string]*interfaces.ProductEntity),
@@ -27,7 +30,7 @@ func init() {
 	}
 }
 
-func (service *productService) AddNewProduct(productBase *interfaces.ProductBaseStruct, calcBase *interfaces.CalcSnapshotStruct) (*interfaces.ProductEntity, error) {
+func (service *productService) AddNewProduct(productBase *interfaces.ProductBaseStruct, calcBase *interfaces.CalcSnapshotStruct, adminId string) (*interfaces.ProductEntity, error) {
 	currentProducts, err := service.GetProductsByBullionId(productBase.BullionId)
 	if err != nil {
 		return nil, err
@@ -35,7 +38,13 @@ func (service *productService) AddNewProduct(productBase *interfaces.ProductBase
 	currentCount := len(*currentProducts)
 	entity := interfaces.CreateNewProduct(productBase, calcBase)
 	entity.Sequence = currentCount + 1
-	return service.saveProductEntity(entity)
+	_, err = service.saveProductEntity(entity)
+	if err != nil {
+		return nil, err
+	}
+	event := events.CreateProductCreatedEvent(entity.BullionId, entity.ID, entity, adminId)
+	service.eventBus.Publish(event.BaseEvent)
+	return entity, nil
 }
 
 func (service *productService) saveProductEntity(entity *interfaces.ProductEntity) (*interfaces.ProductEntity, error) {

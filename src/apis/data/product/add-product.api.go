@@ -15,14 +15,17 @@ type apiAddNewProductBody struct {
 func apiAddNewProduct(c *fiber.Ctx) error {
 	body := new(apiAddNewProductBody)
 	c.BodyParser(body)
+	userId, err := interfaces.ExtractTokenUserIdFromCtx(c)
+	if err != nil {
+		return err
+	}
 	if err := interfaces.ValidateBullionIdMatchingInToken(c, body.BullionId); err != nil {
 		return err
 	}
-
 	if err := utility.ValidateReqInput(body); err != nil {
 		return err
 	}
-	entity, err := services.ProductService.AddNewProduct(body.ProductBaseStruct, body.CalcSnapshotStruct)
+	entity, err := services.ProductService.AddNewProduct(body.ProductBaseStruct, body.CalcSnapshotStruct, userId)
 	if err != nil {
 		return err
 	} else {

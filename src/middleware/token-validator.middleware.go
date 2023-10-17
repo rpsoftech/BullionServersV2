@@ -94,6 +94,7 @@ func AllowOnlyValidTokenMiddleWare(c *fiber.Ctx) error {
 		}
 	}
 
+	c.Locals(interfaces.REQ_LOCAL_UserID, jwtRaw.UserId)
 	c.Locals(interfaces.REQ_LOCAL_BullionId_KEY, jwtRaw.BullionId)
 	return c.Next()
 }
