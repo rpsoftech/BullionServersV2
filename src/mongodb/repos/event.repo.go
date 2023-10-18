@@ -45,3 +45,19 @@ func (repo *EventRepoStruct) Save(entity *events.BaseEvent) error {
 	}
 	return err
 }
+func (repo *EventRepoStruct) SaveAll(entity *[]interface{}) error {
+	_, err := repo.collection.InsertMany(mongodb.MongoCtx, *entity)
+	if err != nil {
+		if err != mongo.ErrNoDocuments {
+			err = &interfaces.RequestError{
+				StatusCode: 500,
+				Code:       interfaces.ERROR_INTERNAL_SERVER,
+				Message:    fmt.Sprintf("Internal Server Error: %s", err.Error()),
+				Name:       "INTERNAL_ERROR",
+			}
+		} else {
+			err = nil
+		}
+	}
+	return err
+}

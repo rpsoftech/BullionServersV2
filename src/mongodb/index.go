@@ -17,7 +17,7 @@ func init() {
 		return
 	}
 	// env.Env.DB_URL
-	client, err := mongo.Connect(MongoCtx, options.Client().ApplyURI(env.Env.DB_URL))
+	client, err := mongo.Connect(MongoCtx, options.Client().ApplyURI(env.Env.DB_URL).SetMinPoolSize(2))
 	if err != nil {
 		panic(err)
 	}
