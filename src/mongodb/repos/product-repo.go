@@ -28,6 +28,7 @@ func init() {
 		collection: coll,
 	}
 	addUniqueIndexesToCollection([]string{"id"}, ProductRepo.collection)
+	addIndexesToCollection([]string{"bullionId"}, ProductRepo.collection)
 }
 
 func (repo *ProductRepoStruct) Save(entity *interfaces.ProductEntity) (*interfaces.ProductEntity, error) {
