@@ -10,6 +10,14 @@ import (
 func apiUpdateProducts(c *fiber.Ctx) error {
 	body := new([]interfaces.UpdateProductApiBody)
 	c.BodyParser(body)
+	if len(*body) == 0 {
+		return &interfaces.RequestError{
+			StatusCode: 400,
+			Code:       interfaces.ERROR_INVALID_INPUT,
+			Message:    "Please pass at least 1 product to update",
+			Name:       "ERROR_INVALID_INPUT",
+		}
+	}
 	userId, err := interfaces.ExtractTokenUserIdFromCtx(c)
 	if err != nil {
 		return err
