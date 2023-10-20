@@ -36,8 +36,7 @@ func (service *productService) AddNewProduct(productBase *interfaces.ProductBase
 		return nil, err
 	}
 	currentCount := len(*currentProducts)
-	entity := interfaces.CreateNewProduct(productBase, calcBase)
-	entity.Sequence = currentCount + 1
+	entity := interfaces.CreateNewProduct(productBase, calcBase, currentCount+1)
 	_, err = service.saveProductEntity(entity)
 	if err != nil {
 		return nil, err
@@ -45,6 +44,28 @@ func (service *productService) AddNewProduct(productBase *interfaces.ProductBase
 	event := events.CreateProductCreatedEvent(entity.BullionId, entity.ID, entity, adminId)
 	service.eventBus.Publish(event.BaseEvent)
 	return entity, nil
+}
+
+func (service *productService) UpdateProduct(updateProductBody *[]interfaces.UpdateProductApiBody, adminId string) (*[]interfaces.ProductEntity, error) {
+	entities := make([]interfaces.ProductEntity, len(*updateProductBody))
+	for i, prod := range *updateProductBody {
+		oldDetails, err := service.GetProductsById(prod.BullionId, prod.ProductId)
+		if err != nil {
+			return nil, err
+		}
+		oldDetails.ProductBaseStruct = prod.ProductBaseStruct
+		oldDetails.CalcSnapshot = prod.CalcSnapshot
+		entities[i] = *oldDetails
+	}
+	result, err := service.productRepo.BulkUpdate(&entities)
+	if err == nil {
+		for _, entity := range entities {
+			service.saveProductEntityToLocalCaches(&entity, true)
+			event := events.CreateProductUpdatedEvent(entity.BullionId, entity.ID, &entity, adminId)
+			service.eventBus.Publish(event.BaseEvent)
+		}
+	}
+	return result, err
 }
 
 func (service *productService) saveProductEntity(entity *interfaces.ProductEntity) (*interfaces.ProductEntity, error) {

@@ -1,6 +1,7 @@
 package repos
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/rpsoftech/bullion-server/src/env"
@@ -32,7 +33,6 @@ func init() {
 }
 
 func (repo *ProductRepoStruct) Save(entity *interfaces.ProductEntity) (*interfaces.ProductEntity, error) {
-
 	if err := utility.ValidateStructAndReturnReqError(entity, &interfaces.RequestError{
 		StatusCode: 400,
 		Code:       interfaces.ERROR_INVALID_ENTITY,
@@ -41,11 +41,12 @@ func (repo *ProductRepoStruct) Save(entity *interfaces.ProductEntity) (*interfac
 	}); err != nil {
 		return entity, err
 	}
+	entity.Updated()
 	err := repo.collection.FindOneAndUpdate(mongodb.MongoCtx, bson.D{{
 		Key: "_id", Value: entity.ID,
 	}}, bson.D{{Key: "$set", Value: entity}}, findOneAndUpdateOptions).Err()
 	if err != nil {
-		if err != mongo.ErrNoDocuments {
+		if !errors.Is(err, mongo.ErrNoDocuments) {
 			err = &interfaces.RequestError{
 				StatusCode: 500,
 				Code:       interfaces.ERROR_INTERNAL_SERVER,
@@ -59,6 +60,37 @@ func (repo *ProductRepoStruct) Save(entity *interfaces.ProductEntity) (*interfac
 	return entity, err
 }
 
+func (repo *ProductRepoStruct) BulkUpdate(entities *[]interfaces.ProductEntity) (*[]interfaces.ProductEntity, error) {
+	models := make([]mongo.WriteModel, len(*entities))
+	for i, entity := range *entities {
+		if err := utility.ValidateStructAndReturnReqError(entity, &interfaces.RequestError{
+			StatusCode: 400,
+			Code:       interfaces.ERROR_INVALID_ENTITY,
+			Message:    "",
+			Name:       "ERROR_INVALID_ENTITY",
+		}); err != nil {
+			return nil, err
+		}
+		entity.Updated()
+		models[i] = mongo.NewUpdateOneModel().SetFilter(bson.D{{Key: "_id", Value: entity.ID}}).SetUpdate(
+			bson.D{{Key: "$set", Value: entity}})
+	}
+	_, err := repo.collection.BulkWrite(mongodb.MongoCtx, models)
+	if err != nil {
+		if !errors.Is(err, mongo.ErrNoDocuments) {
+			err = &interfaces.RequestError{
+				StatusCode: 500,
+				Code:       interfaces.ERROR_INTERNAL_SERVER,
+				Message:    fmt.Sprintf("Internal Server Error: %s", err.Error()),
+				Name:       "INTERNAL_ERROR",
+			}
+		} else {
+			err = nil
+		}
+	}
+	return entities, err
+}
+
 func (repo *ProductRepoStruct) FindByBullionId(bullionId string) (*[]interfaces.ProductEntity, error) {
 	var result []interfaces.ProductEntity
 	cursor, err := repo.collection.Find(mongodb.MongoCtx, bson.D{{Key: "bullionId", Value: bullionId}})
@@ -66,7 +98,7 @@ func (repo *ProductRepoStruct) FindByBullionId(bullionId string) (*[]interfaces.
 		err = cursor.All(mongodb.MongoCtx, &result)
 	}
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
+		if errors.Is(err, mongo.ErrNoDocuments) {
 			// This error means your query did not match any documents.
 			err = &interfaces.RequestError{
 				StatusCode: 400,
@@ -94,7 +126,7 @@ func (repo *ProductRepoStruct) FindOne(id string) (*interfaces.ProductEntity, er
 	}}).Decode(&result)
 
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
+		if errors.Is(err, mongo.ErrNoDocuments) {
 			// This error means your query did not match any documents.
 			err = &interfaces.RequestError{
 				StatusCode: 400,

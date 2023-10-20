@@ -8,22 +8,29 @@ type ProductBaseStruct struct {
 	IsActive            bool                 `bson:"isActive" json:"isActive" validate:"required"`
 	IsHedging           bool                 `bson:"isHedging" json:"isHedging" validate:"required"`
 	FloatPoint          int                  `bson:"floatPoint" json:"floatPoint" validate:"min=0,max=4"`
-	Sequence            int                  `bson:"sequence" json:"sequence"`
 	CalculatedOnPriceOf CalculateOnPriceType `bson:"calculatedOnPriceOf" json:"calculatedOnPriceOf" validate:"required,enum=CalculateOnPriceType"`
 }
 
 type ProductEntity struct {
 	*BaseEntity        `bson:"inline"`
 	*ProductBaseStruct `bson:"inline"`
+	Sequence           int                 `bson:"sequence" json:"sequence"`
 	CalcSnapshot       *CalcSnapshotStruct `bson:"calcSnapshot" json:"calcSnapshot" validate:"required"`
 }
 
-func CreateNewProduct(productBase *ProductBaseStruct, calcSnapShot *CalcSnapshotStruct) (r *ProductEntity) {
+func CreateNewProduct(productBase *ProductBaseStruct, calcSnapShot *CalcSnapshotStruct, sequence int) (r *ProductEntity) {
 	b := &ProductEntity{
 		ProductBaseStruct: productBase,
 		CalcSnapshot:      calcSnapShot,
+		Sequence:          sequence,
 		BaseEntity:        &BaseEntity{},
 	}
 	b.createNewId()
 	return b
+}
+
+type UpdateProductApiBody struct {
+	ProductId          string `json:"id" validate:"required,uuid"`
+	*ProductBaseStruct `validate:"required"`
+	CalcSnapshot       *CalcSnapshotStruct `json:"calcSnapShot" validate:"required"`
 }

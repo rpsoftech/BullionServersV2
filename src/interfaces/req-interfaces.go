@@ -63,3 +63,16 @@ func ExtractTokenUserIdFromCtx(c *fiber.Ctx) (string, error) {
 	}
 	return id, nil
 }
+
+func ExtractBullionIdFromCtx(c *fiber.Ctx) (string, error) {
+	id, ok := c.Locals(REQ_LOCAL_BullionId_KEY).(string)
+	if !ok {
+		return "", &RequestError{
+			StatusCode: http.StatusForbidden,
+			Code:       ERROR_INVALID_INPUT,
+			Message:    "Your can not access this resource due to different UserId",
+			Name:       "ERROR_BULLION_ID_NOT_FOUND",
+		}
+	}
+	return id, nil
+}

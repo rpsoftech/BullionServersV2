@@ -1,6 +1,7 @@
 package repos
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/rpsoftech/bullion-server/src/env"
@@ -32,7 +33,7 @@ func init() {
 func (repo *EventRepoStruct) Save(entity *events.BaseEvent) error {
 	_, err := repo.collection.InsertOne(mongodb.MongoCtx, entity)
 	if err != nil {
-		if err != mongo.ErrNoDocuments {
+		if !errors.Is(err, mongo.ErrNoDocuments) {
 			err = &interfaces.RequestError{
 				StatusCode: 500,
 				Code:       interfaces.ERROR_INTERNAL_SERVER,
@@ -48,7 +49,7 @@ func (repo *EventRepoStruct) Save(entity *events.BaseEvent) error {
 func (repo *EventRepoStruct) SaveAll(entity *[]interface{}) error {
 	_, err := repo.collection.InsertMany(mongodb.MongoCtx, *entity)
 	if err != nil {
-		if err != mongo.ErrNoDocuments {
+		if !errors.Is(err, mongo.ErrNoDocuments) {
 			err = &interfaces.RequestError{
 				StatusCode: 500,
 				Code:       interfaces.ERROR_INTERNAL_SERVER,
