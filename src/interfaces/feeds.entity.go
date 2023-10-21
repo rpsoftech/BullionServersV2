@@ -15,6 +15,10 @@ type (
 		FeedId     string `bson:"feedId" json:"feedId" validate:"required,uuid"`
 		*FeedsBase `bson:"inline"`
 	}
+	FeedDeleteRequestBody struct {
+		FeedId    string `bson:"feedId" json:"feedId" validate:"required,uuid"`
+		BullionId string `bson:"bullionId" json:"bullionId" validate:"required,uuid"`
+	}
 )
 
 func (b *FeedsEntity) CreateNewId() *FeedsEntity {

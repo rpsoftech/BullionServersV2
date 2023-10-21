@@ -67,6 +67,29 @@ func (service *feedsService) AddAndUpdateNewFeeds(entity *interfaces.FeedsEntity
 func (service *feedsService) FetchAllFeedsByBullionId(bullionId string) (*[]interfaces.FeedsEntity, error) {
 	return service.feedsRepo.GetAllByBullionId(bullionId)
 }
+
 func (service *feedsService) FetchPaginatedFeedsByBullionId(bullionId string, page int64, limit int64) (*[]interfaces.FeedsEntity, error) {
 	return service.feedsRepo.GetPaginatedFeedInDescendingOrder(bullionId, page, limit)
+}
+
+func (service *feedsService) DeleteById(id string, bullionId string, adminId string) (*interfaces.FeedsEntity, error) {
+	entity, err := service.feedsRepo.FindOne(id)
+	if err != nil {
+		return entity, err
+	}
+	if entity.BullionId != bullionId {
+		return nil, &interfaces.RequestError{
+			StatusCode: 403,
+			Code:       interfaces.ERROR_MISMATCH_BULLION_ID,
+			Message:    "You do not have access to this Feed",
+			Name:       "ERROR_MISMATCH_BULLION_ID",
+		}
+	}
+	err = service.feedsRepo.DeleteById(entity.ID)
+	if err != nil {
+		return entity, err
+	}
+	event := events.CreateDeleteFeedEvent(entity.FeedsBase, entity.ID, adminId)
+	service.eventBus.Publish(event)
+	return entity, err
 }

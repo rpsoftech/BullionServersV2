@@ -82,7 +82,7 @@ func (repo *FeedsRepoStruct) findByFilter(filter *feedFilters) (*[]interfaces.Fe
 	if filter.skip > 0 {
 		opt.SetSkip(filter.skip)
 	}
-	cursor, err := repo.collection.Find(mongodb.MongoCtx, filter.conditions)
+	cursor, err := repo.collection.Find(mongodb.MongoCtx, filter.conditions, opt)
 	if err == nil {
 		err = cursor.All(mongodb.MongoCtx, &result)
 	}
@@ -113,7 +113,34 @@ func (repo *FeedsRepoStruct) GetAllByBullionId(bullionId string) (*[]interfaces.
 	})
 }
 
+func (repo *FeedsRepoStruct) DeleteById(id string) error {
+	_, err := repo.collection.DeleteOne(mongodb.MongoCtx, bson.D{{
+		Key: "id", Value: id,
+	}})
+
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			// This error means your query did not match any documents.
+			err = &interfaces.RequestError{
+				StatusCode: 400,
+				Code:       interfaces.ERROR_ENTITY_NOT_FOUND,
+				Message:    fmt.Sprintf("Feeds Entity identified by id %s not found", id),
+				Name:       "ENTITY_NOT_FOUND",
+			}
+		} else {
+			err = &interfaces.RequestError{
+				StatusCode: 500,
+				Code:       interfaces.ERROR_INTERNAL_SERVER,
+				Message:    fmt.Sprintf("Internal Server Error: %s", err.Error()),
+				Name:       "INTERNAL_ERROR",
+			}
+		}
+	}
+	return err
+}
+
 func (repo *FeedsRepoStruct) GetPaginatedFeedInDescendingOrder(bullionId string, page int64, limit int64) (*[]interfaces.FeedsEntity, error) {
+	println(limit)
 	return repo.findByFilter(&feedFilters{
 		conditions: &bson.D{{Key: "bullionId", Value: bullionId}},
 		sort:       &bson.D{{Key: "createdAt", Value: -1}},
@@ -135,7 +162,7 @@ func (repo *FeedsRepoStruct) FindOne(id string) (*interfaces.FeedsEntity, error)
 			err = &interfaces.RequestError{
 				StatusCode: 400,
 				Code:       interfaces.ERROR_ENTITY_NOT_FOUND,
-				Message:    fmt.Sprintf("GeneralUserReq Entity identified by id %s not found", id),
+				Message:    fmt.Sprintf("Feeds Entity identified by id %s not found", id),
 				Name:       "ENTITY_NOT_FOUND",
 			}
 		} else {

@@ -15,7 +15,7 @@ func AddDataPackage(router fiber.Router) {
 		product.AddProduct(productGroup)
 	}
 	{
-		feddGroup := router.Group("/feeds")
-		feeds.AddFeedsAndNotificationSection(feddGroup)
+		feedGroup := router.Group("/feeds")
+		feeds.AddFeedsAndNotificationSection(feedGroup)
 	}
 }
