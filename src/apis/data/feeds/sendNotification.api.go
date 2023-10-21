@@ -1,0 +1,5 @@
+package feeds
+
+func apiSendFeedAsNotification() {
+
+}

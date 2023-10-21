@@ -19,6 +19,22 @@ func init() {
 	}
 }
 
-func (service *feedsService) AddNewFeedsAndSendNotification(entity *interfaces.FeedsEntity) (*interfaces.FeedsEntity, error) {
+func (service *feedsService) SendNotification(bullionId string, feedId string) error {
+	entity, err := service.feedsRepo.FindOne(feedId)
+	if err != nil {
+		return err
+	}
+	if entity.BullionId != bullionId {
+		return &interfaces.RequestError{
+			StatusCode: 403,
+			Code:       interfaces.ERROR_MISMATCH_BULLION_ID,
+			Message:    "Can not send this feed as Notification. You do not have access to this Feed",
+			Name:       "ERROR_MISMATCH_BULLION_ID",
+		}
+	}
+	service.fcmService.SendTextNotificationToAll(bullionId, entity.Title, entity.Body, entity.IsHtml)
+	return nil
+}
+func (service *feedsService) AddAndUpdateNewFeeds(entity *interfaces.FeedsEntity) (*interfaces.FeedsEntity, error) {
 	return service.feedsRepo.Save(entity)
 }
