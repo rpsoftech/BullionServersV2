@@ -100,8 +100,8 @@ func (service *productService) UpdateProduct(updateProductBody *[]interfaces.Upd
 	if err == nil {
 		for i, entity := range entities {
 			if modified[i] {
-				event := events.CreateProductUpdatedEvent(entity.BullionId, entity.ID, &entity, adminId)
 				service.saveProductEntityToLocalCaches(&entity, true)
+				event := events.CreateProductUpdatedEvent(entity.BullionId, entity.ID, &entity, adminId)
 				service.eventBus.Publish(event.BaseEvent)
 			}
 		}
@@ -119,7 +119,7 @@ func (service *productService) saveProductEntity(entity *interfaces.ProductEntit
 }
 
 func (service *productService) saveProductEntityToLocalCaches(entity *interfaces.ProductEntity, appendToArray bool) {
-	go service.firebaseDatabaseService.SetData(entity.BullionId, []string{"products", entity.ID}, entity)
+	service.firebaseDatabaseService.SetData(entity.BullionId, []string{"products", entity.ID}, entity)
 	if _, ok := service.productsByBullionAndProductId[entity.BullionId]; !ok {
 		service.productsByBullionAndProductId[entity.BullionId] = make(map[string]*interfaces.ProductEntity)
 	}
