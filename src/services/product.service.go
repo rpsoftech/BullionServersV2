@@ -9,14 +9,16 @@ import (
 	"github.com/rpsoftech/bullion-server/src/mongodb/repos"
 )
 
-type productService struct {
-	productRepo                   *repos.ProductRepoStruct
-	firebaseDatabaseService       *firebaseDatabaseService
-	eventBus                      *eventBusService
-	productsByBullionAndProductId map[string]map[string]*interfaces.ProductEntity
-	productsArray                 map[string]*[]interfaces.ProductEntity
-	productsById                  map[string]*interfaces.ProductEntity
-}
+type (
+	productService struct {
+		productRepo                   *repos.ProductRepoStruct
+		firebaseDatabaseService       *firebaseDatabaseService
+		eventBus                      *eventBusService
+		productsByBullionAndProductId map[string]map[string]*interfaces.ProductEntity
+		productsArray                 map[string]*[]interfaces.ProductEntity
+		productsById                  map[string]*interfaces.ProductEntity
+	}
+)
 
 var ProductService *productService
 
@@ -48,8 +50,37 @@ func (service *productService) AddNewProduct(productBase *interfaces.ProductBase
 	return entity, nil
 }
 
-func (service *productService) UpdateProduct(updateProductBody *[]interfaces.UpdateProductApiBody, adminId string) (*[]*interfaces.ProductEntity, error) {
-	entities := make([]*interfaces.ProductEntity, len(*updateProductBody))
+func (service *productService) UpdateProductCalcSnapshot(updateProductCalcSnapshot *[]interfaces.UpdateProductCalcSnapshotApiBody, adminId string) (*[]interfaces.ProductEntity, error) {
+	entities := make([]interfaces.ProductEntity, len(*updateProductCalcSnapshot))
+	modified := make([]bool, len(*updateProductCalcSnapshot))
+	for i, prod := range *updateProductCalcSnapshot {
+		oldDetails, err := service.GetProductsById(prod.BullionId, prod.ProductId)
+		if err != nil {
+			return nil, err
+		}
+		if !reflect.DeepEqual(oldDetails.CalcSnapshot, prod.CalcSnapshot) {
+			modified[i] = true
+		} else {
+			modified[i] = false
+		}
+		oldDetails.CalcSnapshot = prod.CalcSnapshot
+		entities[i] = *oldDetails
+	}
+	result, err := service.productRepo.BulkUpdate(&entities)
+	if err == nil {
+		for i, entity := range entities {
+			if modified[i] {
+				event := events.CreateProductCalcUpdated(entity.BullionId, entity.ID, entity.CalcSnapshot, adminId)
+				service.saveProductEntityToLocalCaches(&entity, true)
+				service.eventBus.Publish(event.BaseEvent)
+			}
+		}
+	}
+	return result, err
+}
+
+func (service *productService) UpdateProduct(updateProductBody *[]interfaces.UpdateProductApiBody, adminId string) (*[]interfaces.ProductEntity, error) {
+	entities := make([]interfaces.ProductEntity, len(*updateProductBody))
 	modified := make([]bool, len(*updateProductBody))
 	for i, prod := range *updateProductBody {
 		oldDetails, err := service.GetProductsById(prod.BullionId, prod.ProductId)
@@ -63,14 +94,14 @@ func (service *productService) UpdateProduct(updateProductBody *[]interfaces.Upd
 		}
 		oldDetails.ProductBaseStruct = prod.ProductBaseStruct
 		oldDetails.CalcSnapshot = prod.CalcSnapshot
-		entities[i] = oldDetails
+		entities[i] = *oldDetails
 	}
 	result, err := service.productRepo.BulkUpdate(&entities)
 	if err == nil {
 		for i, entity := range entities {
 			if modified[i] {
-				event := events.CreateProductUpdatedEvent(entity.BullionId, entity.ID, entity, adminId)
-				service.saveProductEntityToLocalCaches(entity, true)
+				event := events.CreateProductUpdatedEvent(entity.BullionId, entity.ID, &entity, adminId)
+				service.saveProductEntityToLocalCaches(&entity, true)
 				service.eventBus.Publish(event.BaseEvent)
 			}
 		}

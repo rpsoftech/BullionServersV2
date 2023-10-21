@@ -60,7 +60,7 @@ func (repo *ProductRepoStruct) Save(entity *interfaces.ProductEntity) (*interfac
 	return entity, err
 }
 
-func (repo *ProductRepoStruct) BulkUpdate(entities *[]*interfaces.ProductEntity) (*[]*interfaces.ProductEntity, error) {
+func (repo *ProductRepoStruct) BulkUpdate(entities *[]interfaces.ProductEntity) (*[]interfaces.ProductEntity, error) {
 	models := make([]mongo.WriteModel, len(*entities))
 	for i, entity := range *entities {
 		if err := utility.ValidateStructAndReturnReqError(entity, &interfaces.RequestError{
