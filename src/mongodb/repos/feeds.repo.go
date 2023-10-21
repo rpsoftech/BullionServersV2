@@ -9,6 +9,7 @@ import (
 	"github.com/rpsoftech/bullion-server/src/mongodb"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type FeedsRepoStruct struct {
@@ -48,8 +49,12 @@ func (repo *FeedsRepoStruct) Save(entity *interfaces.FeedsEntity) error {
 	return err
 }
 
-func (repo *FeedsRepoStruct) findByFilter(filter bson.D) (*[]interfaces.FeedsEntity, error) {
+func (repo *FeedsRepoStruct) findByFilter(filter bson.D, sortFilter *bson.D) (*[]interfaces.FeedsEntity, error) {
 	var result []interfaces.FeedsEntity
+	opt := options.Find()
+	if len(*sortFilter) > 0 {
+		opt.SetSort(sortFilter)
+	}
 	cursor, err := repo.collection.Find(mongodb.MongoCtx, filter)
 	if err == nil {
 		err = cursor.All(mongodb.MongoCtx, &result)
@@ -76,5 +81,5 @@ func (repo *FeedsRepoStruct) findByFilter(filter bson.D) (*[]interfaces.FeedsEnt
 }
 
 func (repo *FeedsRepoStruct) GetAllByBullionId(bullionId string) (*[]interfaces.FeedsEntity, error) {
-	return repo.findByFilter(bson.D{{Key: "bullionId", Value: bullionId}})
+	return repo.findByFilter(bson.D{{Key: "bullionId", Value: bullionId}}, &bson.D{})
 }
