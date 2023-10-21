@@ -1,7 +1,10 @@
 package services
 
 import (
+	"strconv"
+
 	"firebase.google.com/go/v4/messaging"
+	"github.com/rpsoftech/bullion-server/src/interfaces"
 	"github.com/rpsoftech/bullion-server/src/utility/firebase"
 )
 
@@ -17,13 +20,27 @@ func init() {
 	}
 }
 
-// func (s *firebaseCloudMessagingService) GenerateCustomToken(uid string, claims map[string]interface{}) (string, error) {
-// 	token, err := s.auth.CustomTokenWithClaims(firebase.FirebaseCtx, uid, claims)
-// 	if err != nil {
-// 		err = &interfaces.RequestError{
-// 			StatusCode: 500, Code: interfaces.ERROR_INTERNAL_SERVER, Message: "Issue In Generating Firebase Token", Name: "INTERNAL_SERVER_ERROR", Extra: err,
-// 		}
-// 		return token, err
-// 	}
-// 	return token, err
-// }
+func (s *firebaseCloudMessagingService) SendTextNotificationToAll(bullionId string, title string, body string, isHtml bool) {
+	s.SendToTopic(bullionId, &messaging.Notification{
+		Title: title,
+		Body:  body,
+	}, map[string]string{
+		"title":  title,
+		"body":   body,
+		"isHtml": strconv.FormatBool(isHtml),
+	})
+}
+
+func (s *firebaseCloudMessagingService) SendToTopic(bullionId string, notification *messaging.Notification, extra map[string]string) {
+	// TODO: NEED To Add TTL
+	s.fcm.Send(firebase.FirebaseCtx, &messaging.Message{
+		Data:         extra,
+		Notification: notification,
+		Topic:        bullionId + "/main",
+	})
+}
+
+func (s *firebaseCloudMessagingService) SubscribeToChanel(bullionId string, token string, deviceType interfaces.DeviceType) {
+	s.fcm.SubscribeToTopic(firebase.FirebaseCtx, []string{token}, bullionId+"/main")
+	s.fcm.SubscribeToTopic(firebase.FirebaseCtx, []string{token}, bullionId+"/"+deviceType.String())
+}
