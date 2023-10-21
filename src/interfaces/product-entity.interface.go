@@ -30,6 +30,11 @@ type (
 		BullionId    string              `json:"bullionId" validate:"required,uuid"`
 		CalcSnapshot *CalcSnapshotStruct `json:"calcSnapShot" validate:"required"`
 	}
+	UpdateProductCalcSequenceApiBody struct {
+		ProductId string `json:"id" validate:"required,uuid"`
+		BullionId string `json:"bullionId" validate:"required,uuid"`
+		Sequence  int    `json:"sequence" validate:"required"`
+	}
 )
 
 func CreateNewProduct(productBase *ProductBaseStruct, calcSnapShot *CalcSnapshotStruct, sequence int) (r *ProductEntity) {

@@ -3,7 +3,7 @@ package events
 import "github.com/rpsoftech/bullion-server/src/interfaces"
 
 type productEvent struct {
-	*BaseEvent
+	*BaseEvent `bson:"inline"`
 }
 
 type productSequenceChangedEvent struct {
@@ -48,13 +48,13 @@ func CreateProductUpdatedEvent(bullionId string, productId string, product *inte
 	return event
 }
 
-func CreateProductSequenceChangedEvent(bullionId string, productId string, product *[]interfaces.ProductEntity, adminId string) *[]interface{} {
+func CreateProductSequenceChangedEvent(bullionId string, product *[]interfaces.ProductEntity, adminId string) *[]interface{} {
 	events := make([]interface{}, len(*product))
 	for i, pro := range *product {
 		event := productEvent{
 			BaseEvent: &BaseEvent{
 				BullionId: bullionId,
-				KeyId:     productId,
+				KeyId:     pro.ID,
 				AdminId:   adminId,
 				Payload: productSequenceChangedEvent{
 					Id:        pro.ID,

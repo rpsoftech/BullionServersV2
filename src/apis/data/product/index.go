@@ -11,4 +11,5 @@ func AddProduct(router fiber.Router) {
 	router.Post("/add", middleware.AllowOnlyAdmins.Validate, apiAddNewProduct)
 	router.Post("/update", middleware.AllowOnlyAdmins.Validate, apiUpdateProducts)
 	router.Post("/updateCalcSnapShot", middleware.AllowOnlyAdmins.Validate, apiUpdateProductCalcSnapshot)
+	router.Post("/updateSequence", middleware.AllowOnlyAdmins.Validate, apiUpdateProductSequence)
 }

@@ -50,6 +50,35 @@ func (service *productService) AddNewProduct(productBase *interfaces.ProductBase
 	return entity, nil
 }
 
+func (service *productService) UpdateProductSequence(updateProductCalcSequenceApiBody *[]interfaces.UpdateProductCalcSequenceApiBody, adminId string, bullionID string) (*[]interfaces.ProductEntity, error) {
+	entities := make([]interfaces.ProductEntity, len(*updateProductCalcSequenceApiBody))
+	modified := make([]bool, len(*updateProductCalcSequenceApiBody))
+	for i, prod := range *updateProductCalcSequenceApiBody {
+		oldDetails, err := service.GetProductsById(prod.BullionId, prod.ProductId)
+		if err != nil {
+			return nil, err
+		}
+		if oldDetails.Sequence != prod.Sequence {
+			modified[i] = true
+		} else {
+			modified[i] = false
+		}
+		oldDetails.Sequence = prod.Sequence
+		entities[i] = *oldDetails
+	}
+	result, err := service.productRepo.BulkUpdate(&entities)
+	if err == nil {
+		event := events.CreateProductSequenceChangedEvent(bullionID, &entities, adminId)
+		service.eventBus.PublishAll(event)
+		for i, entity := range entities {
+			if modified[i] {
+				service.saveProductEntityToLocalCaches(&entity, true)
+			}
+		}
+	}
+	return result, err
+}
+
 func (service *productService) UpdateProductCalcSnapshot(updateProductCalcSnapshot *[]interfaces.UpdateProductCalcSnapshotApiBody, adminId string) (*[]interfaces.ProductEntity, error) {
 	entities := make([]interfaces.ProductEntity, len(*updateProductCalcSnapshot))
 	modified := make([]bool, len(*updateProductCalcSnapshot))
