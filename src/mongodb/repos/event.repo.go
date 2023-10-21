@@ -28,6 +28,7 @@ func init() {
 		collection: coll,
 	}
 	addUniqueIndexesToCollection([]string{"id"}, EventRepo.collection)
+	addIndexesToCollection([]string{"key", "bullionId", "occurredAt"}, EventRepo.collection)
 }
 
 func (repo *EventRepoStruct) Save(entity *events.BaseEvent) error {

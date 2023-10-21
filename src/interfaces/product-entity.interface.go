@@ -5,8 +5,8 @@ type ProductBaseStruct struct {
 	Name                string               `bson:"name" json:"name" validate:"required"`
 	SourceSymbol        SymbolsEnum          `bson:"sourceSymbol" json:"sourceSymbol" validate:"required,enum=SymbolsEnum"`
 	CalculationSymbol   SymbolsEnum          `bson:"calculationSymbol" json:"calculationSymbol" validate:"required,enum=SymbolsEnum"`
-	IsActive            bool                 `bson:"isActive" json:"isActive" validate:"required"`
-	IsHedging           bool                 `bson:"isHedging" json:"isHedging" validate:"required"`
+	IsActive            bool                 `bson:"isActive" json:"isActive" validate:"boolean"`
+	IsHedging           bool                 `bson:"isHedging" json:"isHedging" validate:"boolean"`
 	FloatPoint          int                  `bson:"floatPoint" json:"floatPoint" validate:"min=0,max=4"`
 	CalculatedOnPriceOf CalculateOnPriceType `bson:"calculatedOnPriceOf" json:"calculatedOnPriceOf" validate:"required,enum=CalculateOnPriceType"`
 }

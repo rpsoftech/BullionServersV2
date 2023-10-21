@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/rpsoftech/bullion-server/src/events"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
@@ -37,6 +38,7 @@ func (service *productService) AddNewProduct(productBase *interfaces.ProductBase
 	}
 	currentCount := len(*currentProducts)
 	entity := interfaces.CreateNewProduct(productBase, calcBase, currentCount+1)
+	// TODO: Create Product Group Map
 	_, err = service.saveProductEntity(entity)
 	if err != nil {
 		return nil, err
@@ -46,23 +48,31 @@ func (service *productService) AddNewProduct(productBase *interfaces.ProductBase
 	return entity, nil
 }
 
-func (service *productService) UpdateProduct(updateProductBody *[]interfaces.UpdateProductApiBody, adminId string) (*[]interfaces.ProductEntity, error) {
-	entities := make([]interfaces.ProductEntity, len(*updateProductBody))
+func (service *productService) UpdateProduct(updateProductBody *[]interfaces.UpdateProductApiBody, adminId string) (*[]*interfaces.ProductEntity, error) {
+	entities := make([]*interfaces.ProductEntity, len(*updateProductBody))
+	modified := make([]bool, len(*updateProductBody))
 	for i, prod := range *updateProductBody {
 		oldDetails, err := service.GetProductsById(prod.BullionId, prod.ProductId)
 		if err != nil {
 			return nil, err
 		}
+		if !reflect.DeepEqual(oldDetails.ProductBaseStruct, prod.ProductBaseStruct) || !reflect.DeepEqual(oldDetails.CalcSnapshot, prod.CalcSnapshot) {
+			modified[i] = true
+		} else {
+			modified[i] = false
+		}
 		oldDetails.ProductBaseStruct = prod.ProductBaseStruct
 		oldDetails.CalcSnapshot = prod.CalcSnapshot
-		entities[i] = *oldDetails
+		entities[i] = oldDetails
 	}
 	result, err := service.productRepo.BulkUpdate(&entities)
 	if err == nil {
-		for _, entity := range entities {
-			service.saveProductEntityToLocalCaches(&entity, true)
-			event := events.CreateProductUpdatedEvent(entity.BullionId, entity.ID, &entity, adminId)
-			service.eventBus.Publish(event.BaseEvent)
+		for i, entity := range entities {
+			if modified[i] {
+				event := events.CreateProductUpdatedEvent(entity.BullionId, entity.ID, entity, adminId)
+				service.saveProductEntityToLocalCaches(entity, true)
+				service.eventBus.Publish(event.BaseEvent)
+			}
 		}
 	}
 	return result, err
