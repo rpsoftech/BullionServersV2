@@ -2,7 +2,6 @@ package jwt
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
@@ -18,8 +17,8 @@ var (
 
 type GeneralUserAccessRefreshToken struct {
 	*jwt.RegisteredClaims
-	UserId     string                 `json:"userId" validate:"required"`
-	BullionId  string                 `json:"bullionId" validate:"required"`
+	UserId     string                 `json:"userId" validate:"required,uuid"`
+	BullionId  string                 `json:"bullionId" validate:"required,uuid"`
 	Role       interfaces.UserRoles   `json:"role" validate:"required"`
 	ExtraClaim map[string]interface{} `json:"extraClaim,omitempty"`
 }
@@ -33,40 +32,66 @@ func (t *TokenService) GenerateToken(claims jwt.Claims) (string, error) {
 }
 func (t *TokenService) VerifyToken(token string) (*GeneralUserAccessRefreshToken, error) {
 	claimRaw, err := jwt.ParseWithClaims(token, &GeneralUserAccessRefreshToken{}, func(token *jwt.Token) (any, error) {
-		// return t.SigningKey, nil
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, &interfaces.RequestError{
+			return nil, ErrInvalidSignatureMethod
+		}
+		return t.SigningKey, nil
+	})
+	if err != nil {
+		if errors.Is(err, ErrTokenExpired) {
+			err = &interfaces.RequestError{
+				StatusCode: 403,
+				Code:       interfaces.ERROR_TOKEN_EXPIRED,
+				Message:    "Token Expired",
+				Name:       "ERROR_TOKEN_EXPIRED",
+				Extra:      err,
+			}
+		} else if errors.Is(err, ErrInvalidSignatureMethod) {
+			err = &interfaces.RequestError{
 				StatusCode: 401,
-				Code:       interfaces.ERROR_INVALID_TOKEN_SIGNATURE,
+				Code:       interfaces.ERROR_INVALID_TOKEN_SIGNATURE_METHOD,
 				Message:    "Invalid Signature Method",
 				Name:       "ERROR_INVALID_TOKEN_SIGNATURE",
 				Extra:      ErrInvalidSignatureMethod,
 			}
+		} else if errors.Is(err, ErrSignatureInvalid) {
+			err = &interfaces.RequestError{
+				StatusCode: 401,
+				Code:       interfaces.ERROR_INVALID_TOKEN_SIGNATURE,
+				Message:    "Invalid TOKEN Signature",
+				Name:       "ERROR_INVALID_TOKEN_SIGNATURE",
+				Extra:      ErrInvalidSignatureMethod,
+			}
+		} else {
+			err = &interfaces.RequestError{
+				StatusCode: 401,
+				Code:       interfaces.ERROR_INTERNAL_SERVER,
+				Message:    "Error In Token Parsing",
+				Name:       "ERROR_IN_TOKEN_PARSING",
+				Extra:      err,
+			}
 		}
-		// Set the secret key for verification
-		return t.SigningKey, nil
-	})
-
-	fmt.Sprintf("claimRaw: %v", claimRaw.Claims)
-
-	claim, ok := claimRaw.Claims.(*GeneralUserAccessRefreshToken)
-	if (!claimRaw.Valid || !ok) && err != nil {
-		err = &interfaces.RequestError{
+		return nil, err
+	}
+	if !claimRaw.Valid {
+		return nil, &interfaces.RequestError{
 			StatusCode: 401,
-			Code:       interfaces.ERROR_INVALID_TOKEN_SIGNATURE,
+			Code:       interfaces.ERROR_INVALID_TOKEN,
 			Message:    "Error InValid Token",
 			Name:       "ERROR_INVALID_TOKEN",
-			Extra:      err,
 		}
 	}
-	if err == ErrTokenExpired {
+	claim, ok := claimRaw.Claims.(*GeneralUserAccessRefreshToken)
+
+	if !ok && err == nil {
 		err = &interfaces.RequestError{
-			StatusCode: 403,
-			Code:       interfaces.ERROR_TOKEN_EXPIRED,
-			Message:    "Refresh Token Expired",
-			Name:       "ERROR_TOKEN_EXPIRED",
+			StatusCode: 401,
+			Code:       interfaces.ERROR_INVALID_TOKEN,
+			Message:    "Error InValid Token Body",
+			Name:       "ERROR_INVALID_TOKEN_BODY",
 			Extra:      err,
 		}
 	}
+
 	return claim, err
 }

@@ -1,8 +1,8 @@
 package interfaces
 
 type bullionGeneralUserConfig struct {
-	AutoApprove bool `bson:"autoApprove" json:"autoApprove" validate:"required"`
-	AutoLogin   bool `bson:"autoLogin" json:"autoLogin" validate:"required"`
+	AutoApprove bool `bson:"autoApprove" json:"autoApprove" validate:"boolean"`
+	AutoLogin   bool `bson:"autoLogin" json:"autoLogin" validate:"boolean"`
 }
 
 type BullionSiteBasicInfo struct {

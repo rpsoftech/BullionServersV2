@@ -23,11 +23,23 @@ func addComboUniqueIndexesToCollection(UniqueIndexes []string, collection *mongo
 	})
 }
 
+func addIndexesToCollection(indexesString []string, collection *mongo.Collection) {
+	indexArray := make([]mongo.IndexModel, len(indexesString))
+	for i, element := range indexesString {
+		indexArray[i] = mongo.IndexModel{
+			Keys:    bson.D{{Key: element, Value: 1}},
+			Options: options.Index().SetUnique(false),
+		}
+	}
+	collection.Indexes().CreateMany(mongodb.MongoCtx, indexArray)
+}
 func addUniqueIndexesToCollection(UniqueIndexes []string, collection *mongo.Collection) {
-	for _, element := range UniqueIndexes {
-		collection.Indexes().CreateOne(mongodb.MongoCtx, mongo.IndexModel{
+	indexes := make([]mongo.IndexModel, len(UniqueIndexes))
+	for i, element := range UniqueIndexes {
+		indexes[i] = mongo.IndexModel{
 			Keys:    bson.D{{Key: element, Value: 1}},
 			Options: options.Index().SetUnique(true),
-		})
+		}
 	}
+	collection.Indexes().CreateMany(mongodb.MongoCtx, indexes)
 }

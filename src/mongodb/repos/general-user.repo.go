@@ -1,6 +1,7 @@
 package repos
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/rpsoftech/bullion-server/src/env"
@@ -35,7 +36,7 @@ func (repo *GeneralUserRepoStruct) Save(entity *interfaces.GeneralUserEntity) (*
 		Key: "_id", Value: entity.ID,
 	}}, bson.D{{Key: "$set", Value: entity}}, findOneAndUpdateOptions).Decode(&result)
 	if err != nil {
-		if err != mongo.ErrNoDocuments {
+		if !errors.Is(err, mongo.ErrNoDocuments) {
 			err = &interfaces.RequestError{
 				StatusCode: 500,
 				Code:       interfaces.ERROR_INTERNAL_SERVER,
@@ -55,7 +56,7 @@ func (repo *GeneralUserRepoStruct) FindOne(id string) (*interfaces.GeneralUserEn
 		Key: "id", Value: id,
 	}}).Decode(&result)
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
+		if errors.Is(err, mongo.ErrNoDocuments) {
 			// This error means your query did not match any documents.
 			err = &interfaces.RequestError{
 				StatusCode: 400,

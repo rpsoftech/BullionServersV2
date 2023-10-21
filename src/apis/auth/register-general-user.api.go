@@ -7,7 +7,7 @@ import (
 )
 
 type registerGeneralUserBody struct {
-	BullionId string      `json:"bullionId" validate:"required"`
+	BullionId string      `json:"bullionId" validate:"required,uuid"`
 	User      interface{} `json:"user" validate:"required"`
 }
 

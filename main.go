@@ -7,6 +7,7 @@ import (
 	j "github.com/golang-jwt/jwt/v5"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/rpsoftech/bullion-server/src/apis"
 	"github.com/rpsoftech/bullion-server/src/env"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
@@ -39,6 +40,7 @@ func main() {
 		},
 	})
 
+	app.Use(logger.New())
 	app.Use(middleware.TokenDecrypter)
 
 	app.Get("/token", func(c *fiber.Ctx) error {
@@ -60,6 +62,9 @@ func main() {
 	// return c.SendString("Hello, World!")
 	// })
 	apis.AddApis(app.Group("/v1"))
+	app.Use(func(c *fiber.Ctx) error {
+		return c.Status(fiber.StatusNotFound).SendString("Sorry can't find that!")
+	})
 	hostAndPort := ""
 	if env.Env.APP_ENV == env.APP_ENV_LOCAL || env.Env.APP_ENV == env.APP_ENV_DEVELOPE {
 		hostAndPort = "127.0.0.1"
