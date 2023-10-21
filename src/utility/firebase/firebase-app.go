@@ -8,6 +8,7 @@ import (
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/auth"
 	"firebase.google.com/go/v4/db"
+	"firebase.google.com/go/v4/messaging"
 	"github.com/rpsoftech/bullion-server/src/env"
 	"google.golang.org/api/option"
 )
@@ -17,6 +18,7 @@ var FirebaseCtx context.Context
 var FirebaseDb *db.Client
 var FirebaseFirestore *firestore.Client
 var FirebaseAuth *auth.Client
+var FirebaseFCM *messaging.Client
 
 func init() {
 	if env.Env.APP_ENV == env.APP_ENV_DEVELOPE {
@@ -46,6 +48,12 @@ func init() {
 		log.Fatalf("error initializing Firebase Database: %v\n", err)
 	}
 	FirebaseAuth = firestoreAuth
+
+	firebaseFCM, err := firebaseApp.Messaging(FirebaseCtx)
+	if err != nil {
+		log.Fatalf("error initializing Firebase Database: %v\n", err)
+	}
+	FirebaseFCM = firebaseFCM
 }
 
 // ctx := context.Background()
