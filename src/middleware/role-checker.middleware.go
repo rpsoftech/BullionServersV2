@@ -25,10 +25,17 @@ var (
 	AllowAllUsers = roleCheckerMiddlewareWithRolesArray{
 		roles: allUserRoles,
 	}
-	AllowOnlyAdmins = roleCheckerMiddlewareWithRolesArray{
+	AllowAllAdmins = roleCheckerMiddlewareWithRolesArray{
 		roles: []string{
 			interfaces.ROLE_ADMIN.String(),
 			interfaces.ROLE_RATE_ADMIN.String(),
+			interfaces.ROLE_SUPER_ADMIN.String(),
+			interfaces.ROLE_GOD.String(),
+		},
+	}
+	AllowOnlyBigAdmins = roleCheckerMiddlewareWithRolesArray{
+		roles: []string{
+			interfaces.ROLE_ADMIN.String(),
 			interfaces.ROLE_SUPER_ADMIN.String(),
 			interfaces.ROLE_GOD.String(),
 		},

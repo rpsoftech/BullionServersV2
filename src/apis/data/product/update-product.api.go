@@ -93,7 +93,6 @@ func apiUpdateProductCalcSnapshot(c *fiber.Ctx) error {
 		return c.JSON(entity)
 	}
 }
-
 func apiUpdateProductSequence(c *fiber.Ctx) error {
 	body := new([]interfaces.UpdateProductCalcSequenceApiBody)
 	c.BodyParser(body)

@@ -49,11 +49,12 @@ func init() {
 	}
 	FirebaseAuth = firestoreAuth
 
-	firebaseFCM, err := firebaseApp.Messaging(FirebaseCtx)
+	fcm, err := firebaseApp.Messaging(FirebaseCtx)
 	if err != nil {
 		log.Fatalf("error initializing Firebase Database: %v\n", err)
 	}
-	FirebaseFCM = firebaseFCM
+	FirebaseFCM = fcm
+	println("Firebase App Initialize")
 }
 
 // ctx := context.Background()

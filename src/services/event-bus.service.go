@@ -15,6 +15,7 @@ func init() {
 	EventBus = &eventBusService{
 		eventsRepo: repos.EventRepo,
 	}
+	println("EventBus Service Initialized")
 }
 
 func (service *eventBusService) Publish(event *events.BaseEvent) {

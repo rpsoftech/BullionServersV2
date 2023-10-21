@@ -18,10 +18,15 @@ func init() {
 	FirebaseCloudMessagingService = &firebaseCloudMessagingService{
 		fcm: firebase.FirebaseFCM,
 	}
+	println("FCM Service Initialized")
+}
+
+func GetFirebaseCloudMessagingService() *firebaseCloudMessagingService {
+	return FirebaseCloudMessagingService
 }
 
 func (s *firebaseCloudMessagingService) SendTextNotificationToAll(bullionId string, title string, body string, isHtml bool) {
-	s.SendToTopic(bullionId, &messaging.Notification{
+	s.SendToTopic(bullionId, messaging.Notification{
 		Title: title,
 		Body:  body,
 	}, map[string]string{
@@ -31,11 +36,11 @@ func (s *firebaseCloudMessagingService) SendTextNotificationToAll(bullionId stri
 	})
 }
 
-func (s *firebaseCloudMessagingService) SendToTopic(bullionId string, notification *messaging.Notification, extra map[string]string) {
+func (s *firebaseCloudMessagingService) SendToTopic(bullionId string, notification messaging.Notification, extra map[string]string) {
 	// TODO: NEED To Add TTL
 	s.fcm.Send(firebase.FirebaseCtx, &messaging.Message{
 		Data:         extra,
-		Notification: notification,
+		Notification: &notification,
 		Topic:        bullionId + "/main",
 	})
 }

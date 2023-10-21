@@ -1,12 +1,14 @@
 package services
 
 import (
+	"github.com/rpsoftech/bullion-server/src/events"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
 	"github.com/rpsoftech/bullion-server/src/mongodb/repos"
 )
 
 type feedsService struct {
 	feedsRepo  *repos.FeedsRepoStruct
+	eventBus   *eventBusService
 	fcmService *firebaseCloudMessagingService
 }
 
@@ -15,26 +17,56 @@ var FeedsService *feedsService
 func init() {
 	FeedsService = &feedsService{
 		feedsRepo:  repos.FeedsRepo,
+		eventBus:   EventBus,
 		fcmService: FirebaseCloudMessagingService,
 	}
+	if FirebaseCloudMessagingService == nil {
+		go func() {
+			if FirebaseCloudMessagingService == nil {
+				panic("FirebaseCloudMessagingService is nil")
+			}
+			FeedsService.fcmService = FirebaseCloudMessagingService
+			println("Feed Service Assigned Firebase Cloud Messaging Service")
+		}()
+	}
+	println("Feed Service Initialized")
 }
 
-func (service *feedsService) SendNotification(bullionId string, feedId string) error {
+func (service *feedsService) SendNotification(bullionId string, entity *interfaces.FeedsBase, adminId string) error {
+
+	service.fcmService.SendTextNotificationToAll(bullionId, entity.Title, entity.Body, entity.IsHtml)
+	event := events.CreateNotificationSendEvent(entity, adminId)
+	service.eventBus.Publish(event)
+	return nil
+}
+
+func (service *feedsService) UpdateFeeds(baseEntity *interfaces.FeedsBase, feedId string, adminId string) (*interfaces.FeedsEntity, error) {
 	entity, err := service.feedsRepo.FindOne(feedId)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if entity.BullionId != bullionId {
-		return &interfaces.RequestError{
+	if entity.BullionId != baseEntity.BullionId {
+		return nil, &interfaces.RequestError{
 			StatusCode: 403,
 			Code:       interfaces.ERROR_MISMATCH_BULLION_ID,
-			Message:    "Can not send this feed as Notification. You do not have access to this Feed",
+			Message:    "You do not have access to this Feed",
 			Name:       "ERROR_MISMATCH_BULLION_ID",
 		}
 	}
-	service.fcmService.SendTextNotificationToAll(bullionId, entity.Title, entity.Body, entity.IsHtml)
-	return nil
+	entity.FeedsBase = baseEntity
+	entity.Updated()
+	return service.AddAndUpdateNewFeeds(entity, adminId)
 }
-func (service *feedsService) AddAndUpdateNewFeeds(entity *interfaces.FeedsEntity) (*interfaces.FeedsEntity, error) {
+
+func (service *feedsService) AddAndUpdateNewFeeds(entity *interfaces.FeedsEntity, adminID string) (*interfaces.FeedsEntity, error) {
+	event := events.CreateUpdateFeedEvent(entity, adminID)
+	go service.eventBus.Publish(event)
 	return service.feedsRepo.Save(entity)
+}
+
+func (service *feedsService) FetchAllFeedsByBullionId(bullionId string) (*[]interfaces.FeedsEntity, error) {
+	return service.feedsRepo.GetAllByBullionId(bullionId)
+}
+func (service *feedsService) FetchPaginatedFeedsByBullionId(bullionId string, page int64, limit int64) (*[]interfaces.FeedsEntity, error) {
+	return service.feedsRepo.GetPaginatedFeedInDescendingOrder(bullionId, page, limit)
 }

@@ -11,4 +11,16 @@ type (
 		*BaseEntity `bson:"inline"`
 		*FeedsBase  `bson:"inline"`
 	}
+	FeedUpdateRequestBody struct {
+		FeedId     string `bson:"feedId" json:"feedId" validate:"required,uuid"`
+		*FeedsBase `bson:"inline"`
+	}
 )
+
+func (b *FeedsEntity) CreateNewId() *FeedsEntity {
+	if b.BaseEntity == nil {
+		b.BaseEntity = &BaseEntity{}
+	}
+	b.createNewId()
+	return b
+}
