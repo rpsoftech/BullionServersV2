@@ -1,6 +1,15 @@
 package interfaces
 
 type (
+	CshPremiumBuySellSnapshot struct {
+		Tax     int     `bson:"tax" json:"tax" validate:"min=0,max=50"`
+		Premium float32 `bson:"premium" json:"premium"`
+	}
+
+	CalcSnapshotStruct struct {
+		Buy  CshPremiumBuySellSnapshot `bson:"buy" json:"buy" validate:"required"`
+		Sell CshPremiumBuySellSnapshot `bson:"sell" json:"sell" validate:"required"`
+	}
 	ProductBaseStruct struct {
 		BullionId           string               `bson:"bullionId" json:"bullionId" validate:"required"`
 		Name                string               `bson:"name" json:"name" validate:"required"`
