@@ -2,6 +2,7 @@ package data
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/rpsoftech/bullion-server/src/apis/data/feeds"
 	"github.com/rpsoftech/bullion-server/src/apis/data/product"
 	"github.com/rpsoftech/bullion-server/src/middleware"
 )
@@ -12,5 +13,9 @@ func AddDataPackage(router fiber.Router) {
 	{
 		productGroup := router.Group("/product")
 		product.AddProduct(productGroup)
+	}
+	{
+		feedGroup := router.Group("/feeds")
+		feeds.AddFeedsAndNotificationSection(feedGroup)
 	}
 }
