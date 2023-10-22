@@ -11,7 +11,7 @@ func AddFeedsAndNotificationSection(router fiber.Router) {
 		adminGroup := router.Group("", middleware.AllowOnlyBigAdmins.Validate)
 		adminGroup.Post("/sendNotification", apiSendFeedAsNotification)
 		adminGroup.Post("/add", apiAddNewFeed)
-		adminGroup.Post("/update", apiUpdateFeed)
+		adminGroup.Patch("/update", apiUpdateFeed)
 		adminGroup.Delete("/delete", apiDeleteFeeds)
 	}
 }

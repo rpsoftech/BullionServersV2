@@ -18,6 +18,14 @@ func init() {
 		eventBus:        EventBus,
 		bankDetailsRepo: repos.BankDetailsRepo,
 	}
+	if EventBus == nil {
+		go func() {
+			if EventBus == nil {
+				panic("Event Bus Not Initialized")
+			}
+			BankDetailsService.eventBus = EventBus
+		}()
+	}
 	println("Bank Details Service Initialized")
 }
 
@@ -33,8 +41,8 @@ func (s *bankDetailsService) addUpdateBankDetails(entity *interfaces.BankDetails
 
 	return entity, err
 }
-func (s *bankDetailsService) UpdateBankDetails(entity *interfaces.BankDetailsEntity, adminId string) (*interfaces.BankDetailsEntity, error) {
-	entityFromDb, err := s.bankDetailsRepo.FindOne(entity.ID)
+func (s *bankDetailsService) UpdateBankDetails(entity *interfaces.BankDetailsBase, id string, adminId string) (*interfaces.BankDetailsEntity, error) {
+	entityFromDb, err := s.bankDetailsRepo.FindOne(id)
 	if err != nil {
 		return nil, err
 	}
@@ -46,13 +54,14 @@ func (s *bankDetailsService) UpdateBankDetails(entity *interfaces.BankDetailsEnt
 			Name:       "ERROR_MISMATCH_BULLION_ID",
 		}
 	}
-	_, err = s.addUpdateBankDetails(entity)
+	entityFromDb.BankDetailsBase = entity
+	_, err = s.addUpdateBankDetails(entityFromDb)
 	if err != nil {
 		return nil, err
 	}
-	event := events.CreateBankDetailsUpdatedEvent(entity, adminId)
+	event := events.CreateBankDetailsUpdatedEvent(entityFromDb, adminId)
 	s.eventBus.Publish(event)
-	return entity, err
+	return entityFromDb, err
 }
 func (s *bankDetailsService) AddNewBankDetails(base *interfaces.BankDetailsBase, adminId string) (*interfaces.BankDetailsEntity, error) {
 	entity := interfaces.CreateNewBankDetails(base)
@@ -64,8 +73,8 @@ func (s *bankDetailsService) AddNewBankDetails(base *interfaces.BankDetailsBase,
 	s.eventBus.Publish(event)
 	return entity, err
 }
-func (s *bankDetailsService) DeleteBankDetails(entity *interfaces.BankDetailsEntity, adminId string) (*interfaces.BankDetailsEntity, error) {
-	entityFromDb, err := s.bankDetailsRepo.FindOne(entity.ID)
+func (s *bankDetailsService) DeleteBankDetails(entity *interfaces.BankDetailsBase, id string, adminId string) (*interfaces.BankDetailsEntity, error) {
+	entityFromDb, err := s.bankDetailsRepo.FindOne(id)
 	if err != nil {
 		return nil, err
 	}
@@ -77,11 +86,11 @@ func (s *bankDetailsService) DeleteBankDetails(entity *interfaces.BankDetailsEnt
 			Name:       "ERROR_MISMATCH_BULLION_ID",
 		}
 	}
-	err = s.bankDetailsRepo.DeleteById(entity.ID)
+	err = s.bankDetailsRepo.DeleteById(id)
 	if err != nil {
 		return nil, err
 	}
-	event := events.CreateBankDetailsDeletedEvent(entity.BankDetailsBase, entity.ID, adminId)
+	event := events.CreateBankDetailsDeletedEvent(entity, id, adminId)
 	s.eventBus.Publish(event)
-	return entity, err
+	return entityFromDb, err
 }
