@@ -1,10 +1,12 @@
 {
     "cSpell.words": [
         "Akshat",
+        "bankdetails",
         "bson",
         "firestore",
         "godotenv",
         "gofiber",
+        "ifsc",
         "joho",
         "mapstructure",
         "mitchellh",
