@@ -5,6 +5,7 @@
         "firestore",
         "godotenv",
         "gofiber",
+        "ifsc",
         "joho",
         "mapstructure",
         "mitchellh",

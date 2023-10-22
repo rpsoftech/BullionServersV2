@@ -14,28 +14,28 @@ import (
 )
 
 type (
-	FeedsRepoStruct struct {
+	BankDetailsRepoStruct struct {
 		collection *mongo.Collection
 	}
 )
 
-const feedCollectionName = "Feed"
+const bankDetailsCollectionName = "BankDetails"
 
-var FeedsRepo *FeedsRepoStruct
+var BankDetailsRepo *BankDetailsRepoStruct
 
 func init() {
 	if env.Env.APP_ENV == env.APP_ENV_DEVELOPE {
 		return
 	}
-	coll := mongodb.MongoDatabase.Collection(feedCollectionName)
-	FeedsRepo = &FeedsRepoStruct{
+	coll := mongodb.MongoDatabase.Collection(bankDetailsCollectionName)
+	BankDetailsRepo = &BankDetailsRepoStruct{
 		collection: coll,
 	}
-	addUniqueIndexesToCollection([]string{"id"}, FeedsRepo.collection)
-	addIndexesToCollection([]string{"bullionId", "createdAt"}, FeedsRepo.collection)
+	addUniqueIndexesToCollection([]string{"id"}, BankDetailsRepo.collection)
+	addIndexesToCollection([]string{"bullionId"}, BankDetailsRepo.collection)
 }
 
-func (repo *FeedsRepoStruct) Save(entity *interfaces.FeedsEntity) (*interfaces.FeedsEntity, error) {
+func (repo *BankDetailsRepoStruct) Save(entity *interfaces.BankDetailsEntity) (*interfaces.BankDetailsEntity, error) {
 	if err := utility.ValidateStructAndReturnReqError(entity, &interfaces.RequestError{
 		StatusCode: 400,
 		Code:       interfaces.ERROR_INVALID_ENTITY,
@@ -63,8 +63,8 @@ func (repo *FeedsRepoStruct) Save(entity *interfaces.FeedsEntity) (*interfaces.F
 	return entity, err
 }
 
-func (repo *FeedsRepoStruct) findByFilter(filter *mongoDbFilter) (*[]interfaces.FeedsEntity, error) {
-	var result []interfaces.FeedsEntity
+func (repo *BankDetailsRepoStruct) findByFilter(filter *mongoDbFilter) (*[]interfaces.BankDetailsEntity, error) {
+	var result []interfaces.BankDetailsEntity
 	opt := options.Find()
 	if filter.sort != nil {
 		opt.SetSort(filter.sort)
@@ -100,13 +100,13 @@ func (repo *FeedsRepoStruct) findByFilter(filter *mongoDbFilter) (*[]interfaces.
 	return &result, err
 }
 
-func (repo *FeedsRepoStruct) GetAllByBullionId(bullionId string) (*[]interfaces.FeedsEntity, error) {
+func (repo *BankDetailsRepoStruct) GetAllByBullionId(bullionId string) (*[]interfaces.BankDetailsEntity, error) {
 	return repo.findByFilter(&mongoDbFilter{
 		conditions: &bson.D{{Key: "bullionId", Value: bullionId}},
 	})
 }
 
-func (repo *FeedsRepoStruct) DeleteById(id string) error {
+func (repo *BankDetailsRepoStruct) DeleteById(id string) error {
 	_, err := repo.collection.DeleteOne(mongodb.MongoCtx, bson.D{{
 		Key: "id", Value: id,
 	}})
@@ -132,18 +132,8 @@ func (repo *FeedsRepoStruct) DeleteById(id string) error {
 	return err
 }
 
-func (repo *FeedsRepoStruct) GetPaginatedFeedInDescendingOrder(bullionId string, page int64, limit int64) (*[]interfaces.FeedsEntity, error) {
-	println(limit)
-	return repo.findByFilter(&mongoDbFilter{
-		conditions: &bson.D{{Key: "bullionId", Value: bullionId}},
-		sort:       &bson.D{{Key: "createdAt", Value: -1}},
-		limit:      limit,
-		skip:       page * limit,
-	})
-}
-
-func (repo *FeedsRepoStruct) FindOne(id string) (*interfaces.FeedsEntity, error) {
-	var result interfaces.FeedsEntity
+func (repo *BankDetailsRepoStruct) FindOne(id string) (*interfaces.BankDetailsEntity, error) {
+	var result interfaces.BankDetailsEntity
 
 	err := repo.collection.FindOne(mongodb.MongoCtx, bson.D{{
 		Key: "id", Value: id,

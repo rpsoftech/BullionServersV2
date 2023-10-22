@@ -8,6 +8,13 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+type mongoDbFilter struct {
+	conditions *bson.D
+	sort       *bson.D
+	limit      int64
+	skip       int64
+}
+
 var findOneAndUpdateOptions = &options.FindOneAndUpdateOptions{
 	Upsert: utility.BoolPointer(true),
 }
