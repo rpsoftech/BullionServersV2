@@ -9,15 +9,17 @@ type eventBusService struct {
 	eventsRepo *repos.EventRepoStruct
 }
 
-var EventBus *eventBusService
+var eventBus *eventBusService
 
-func init() {
-	EventBus = &eventBusService{
-		eventsRepo: repos.EventRepo,
+func getEventBusService() *eventBusService {
+	if eventBus == nil {
+		eventBus = &eventBusService{
+			eventsRepo: repos.EventRepo,
+		}
+		println("EventBus Service Initialized")
 	}
-	println("EventBus Service Initialized")
+	return eventBus
 }
-
 func (service *eventBusService) Publish(event *events.BaseEvent) {
 	go service.saveToDb(event)
 }

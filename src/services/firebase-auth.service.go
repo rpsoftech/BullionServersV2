@@ -16,6 +16,7 @@ func init() {
 	FirebaseAuthService = &firebaseAuthService{
 		auth: firebase.FirebaseAuth,
 	}
+	println("Firebase Auth Service Initialized")
 }
 
 func (s *firebaseAuthService) GenerateCustomToken(uid string, claims map[string]interface{}) (string, error) {

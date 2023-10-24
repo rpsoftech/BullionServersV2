@@ -12,17 +12,16 @@ type firebaseCloudMessagingService struct {
 	fcm *messaging.Client
 }
 
-var FirebaseCloudMessagingService *firebaseCloudMessagingService
+var fcmService *firebaseCloudMessagingService
 
-func init() {
-	FirebaseCloudMessagingService = &firebaseCloudMessagingService{
-		fcm: firebase.FirebaseFCM,
+func getFirebaseCloudMessagingService() *firebaseCloudMessagingService {
+	if fcmService == nil {
+		fcmService = &firebaseCloudMessagingService{
+			fcm: firebase.FirebaseFCM,
+		}
+		println("FCM Service Initialized")
 	}
-	println("FCM Service Initialized")
-}
-
-func GetFirebaseCloudMessagingService() *firebaseCloudMessagingService {
-	return FirebaseCloudMessagingService
+	return fcmService
 }
 
 func (s *firebaseCloudMessagingService) SendTextNotificationToAll(bullionId string, title string, body string, isHtml bool) {

@@ -17,17 +17,8 @@ var FeedsService *feedsService
 func init() {
 	FeedsService = &feedsService{
 		feedsRepo:  repos.FeedsRepo,
-		eventBus:   EventBus,
-		fcmService: FirebaseCloudMessagingService,
-	}
-	if FirebaseCloudMessagingService == nil {
-		go func() {
-			if FirebaseCloudMessagingService == nil {
-				panic("FirebaseCloudMessagingService is nil")
-			}
-			FeedsService.fcmService = FirebaseCloudMessagingService
-			println("Feed Service Assigned Firebase Cloud Messaging Service")
-		}()
+		eventBus:   getEventBusService(),
+		fcmService: getFirebaseCloudMessagingService(),
 	}
 	println("Feed Service Initialized")
 }

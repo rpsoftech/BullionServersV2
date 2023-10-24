@@ -24,13 +24,14 @@ var ProductService *productService
 
 func init() {
 	ProductService = &productService{
-		eventBus:                      EventBus,
-		firebaseDatabaseService:       FirebaseDatabaseService,
+		eventBus:                      getEventBusService(),
+		firebaseDatabaseService:       getFirebaseRealTimeDatabase(),
 		productRepo:                   repos.ProductRepo,
 		productsByBullionAndProductId: make(map[string]map[string]*interfaces.ProductEntity),
 		productsArray:                 make(map[string]*[]interfaces.ProductEntity),
 		productsById:                  make(map[string]*interfaces.ProductEntity),
 	}
+	println("Product Service Initialized")
 }
 
 func (service *productService) AddNewProduct(productBase *interfaces.ProductBaseStruct, calcBase *interfaces.CalcSnapshotStruct, adminId string) (*interfaces.ProductEntity, error) {

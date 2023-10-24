@@ -17,6 +17,7 @@ func init() {
 	AdminUserService = &adminUserService{
 		adminUserRepo: repos.AdminUserRepo,
 	}
+	println("Admin Service Initialized")
 }
 
 func (service *adminUserService) ValidateUserAndGenerateToken(uname string, password string, bullionId string) (*interfaces.TokenResponseBody, error) {
