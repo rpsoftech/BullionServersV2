@@ -11,7 +11,7 @@ type (
 		Sell CshPremiumBuySellSnapshot `bson:"sell" json:"sell" validate:"required"`
 	}
 	ProductBaseStruct struct {
-		BullionId           string               `bson:"bullionId" json:"bullionId" validate:"required"`
+		BullionId           string               `bson:"bullionId" json:"bullionId" validate:"required,uuid"`
 		Name                string               `bson:"name" json:"name" validate:"required"`
 		SourceSymbol        SymbolsEnum          `bson:"sourceSymbol" json:"sourceSymbol" validate:"required,enum=SymbolsEnum"`
 		CalculationSymbol   SymbolsEnum          `bson:"calculationSymbol" json:"calculationSymbol" validate:"required,enum=SymbolsEnum"`

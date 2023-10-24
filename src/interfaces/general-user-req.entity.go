@@ -3,7 +3,7 @@ package interfaces
 type GeneralUserReqEntity struct {
 	*BaseEntity   `bson:"inline"`
 	GeneralUserId string                `bson:"generalUserId" json:"generalUserId" validate:"required"`
-	BullionId     string                `bson:"bullionId" json:"bullionId" validate:"required"`
+	BullionId     string                `bson:"bullionId" json:"bullionId" validate:"required,uuid"`
 	Status        GeneralUserAuthStatus `bson:"status" json:"status" validate:"required,enum=GeneralUserAuthStatus"`
 }
 
