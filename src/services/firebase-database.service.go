@@ -9,12 +9,16 @@ type firebaseDatabaseService struct {
 	db *db.Client
 }
 
-var FirebaseDatabaseService *firebaseDatabaseService
+var firebaseRealTimeDatabaseService *firebaseDatabaseService
 
-func init() {
-	FirebaseDatabaseService = &firebaseDatabaseService{
-		db: firebase.FirebaseDb,
+func getFirebaseRealTimeDatabase() *firebaseDatabaseService {
+	if firebaseRealTimeDatabaseService == nil {
+		firebaseRealTimeDatabaseService = &firebaseDatabaseService{
+			db: firebase.FirebaseDb,
+		}
+		println("Firebase Realtime Database Service Initialized")
 	}
+	return firebaseRealTimeDatabaseService
 }
 
 func (s *firebaseDatabaseService) SetData(bullionId string, path []string, data interface{}) error {

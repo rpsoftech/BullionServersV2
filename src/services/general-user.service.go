@@ -25,6 +25,7 @@ func init() {
 		BullionSiteInfoRepo: repos.BullionSiteInfoRepo,
 		generalUserReqRepo:  repos.GeneralUserReqRepo,
 	}
+	println("General User Service Initialized")
 }
 
 func (service *generalUserService) RegisterNew(bullionId string, user interface{}) (*interfaces.GeneralUserEntity, error) {

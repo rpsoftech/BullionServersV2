@@ -15,16 +15,8 @@ var BankDetailsService *bankDetailsService
 
 func init() {
 	BankDetailsService = &bankDetailsService{
-		eventBus:        EventBus,
+		eventBus:        getEventBusService(),
 		bankDetailsRepo: repos.BankDetailsRepo,
-	}
-	if EventBus == nil {
-		go func() {
-			if EventBus == nil {
-				panic("Event Bus Not Initialized")
-			}
-			BankDetailsService.eventBus = EventBus
-		}()
 	}
 	println("Bank Details Service Initialized")
 }

@@ -9,7 +9,7 @@ import (
 type BaseEvent struct {
 	ObjId       string      `bson:"_id" json:"_id"`
 	Id          string      `bson:"id" json:"id"`
-	BullionId   string      `bson:"bullionId" json:"bullionId"`
+	BullionId   string      `bson:"bullionId" json:"bullionId" validate:"required,uuid"`
 	KeyId       string      `bson:"key" json:"key"`
 	EventName   string      `bson:"eventName" json:"eventName"`
 	ParentNames []string    `bson:"parentNames" json:"parentNames"`

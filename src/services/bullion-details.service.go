@@ -15,6 +15,7 @@ func init() {
 	BullionDetailsService = &bullionDetailsService{
 		BullionSiteInfoRepo: repos.BullionSiteInfoRepo,
 	}
+	println("Bullion Site Details Initialized")
 }
 
 func (service *bullionDetailsService) GetBullionDetailsByShortName(shortName string) (*interfaces.BullionSiteInfoEntity, error) {
