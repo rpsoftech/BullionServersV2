@@ -29,3 +29,11 @@ func (s *firebaseDatabaseService) SetData(bullionId string, path []string, data 
 	}
 	return ref.Set(firebase.FirebaseCtx, data)
 }
+func (s *firebaseDatabaseService) SetPublicData(bullionId string, path []string, data interface{}) error {
+	ref := s.db.NewRef("bullions/" + bullionId)
+
+	for _, child := range path {
+		ref = ref.Child(child)
+	}
+	return ref.Set(firebase.FirebaseCtx, data)
+}
