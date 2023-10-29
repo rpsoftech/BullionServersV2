@@ -13,6 +13,9 @@ type EnvInterface struct {
 	PORT                  int    `json:"PORT" validate:"required,port"`
 	DB_URL                string `json:"DB_URL" validate:"required,url"`
 	DB_NAME               string `json:"DB_NAME_KEY" validate:"required,min=3"`
+	REDIS_DB_URL          string `json:"REDIS_DB_URL" validate:"required,url"`
+	REDIS_DB_PASSWORD     string `json:"REDIS_DB_PASSWORD" validate:"required"`
+	REDIS_DB_DATABASE     int    `json:"REDIS_DB_DATABASE" validate:"number,min=0,max=100"`
 	ACCESS_TOKEN_KEY      string `json:"ACCESS_TOKEN_KEY" validate:"required,min=100"`
 	REFRESH_TOKEN_KEY     string `json:"REFRESH_TOKEN_KEY" validate:"required,min=100"`
 	FIREBASE_JSON_STRING  string `json:"FIREBASE_JSON_STRING" validate:"required"`
@@ -28,12 +31,19 @@ func init() {
 		panic("Please Pass Valid Port")
 	}
 	appEnv, _ := parseAppEnv(os.Getenv(app_ENV_KEY))
-
+	redis_DB_DATABASE, err := strconv.Atoi(os.Getenv(redis_DB_DATABASE_KEY))
+	if err != nil {
+		// ... handle error
+		panic(err)
+	}
 	Env = &EnvInterface{
 		APP_ENV:               appEnv,
 		PORT:                  PORT,
 		DB_NAME:               os.Getenv(db_NAME_KEY),
 		DB_URL:                os.Getenv(db_URL_KEY),
+		REDIS_DB_URL:          os.Getenv(redis_DB_URL_KEY),
+		REDIS_DB_PASSWORD:     os.Getenv(redis_DB_PASSWORD_KEY),
+		REDIS_DB_DATABASE:     redis_DB_DATABASE,
 		ACCESS_TOKEN_KEY:      os.Getenv(access_TOKEN_KEY),
 		REFRESH_TOKEN_KEY:     os.Getenv(refresh_TOKEN_KEY),
 		FIREBASE_JSON_STRING:  os.Getenv(firebase_JSON_STRING_KEY),
@@ -41,6 +51,7 @@ func init() {
 	}
 	errs := validator.Validator.Validate(Env)
 	if len(errs) > 0 {
+		println(err)
 		panic(err)
 	}
 }

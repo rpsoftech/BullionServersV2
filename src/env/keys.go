@@ -8,5 +8,8 @@ const access_TOKEN_KEY = "ACCESS_TOKEN_KEY"
 const refresh_TOKEN_KEY = "REFRESH_TOKEN_KEY"
 const firebase_JSON_STRING_KEY = "FIREBASE_JSON_STRING"
 const firebase_DATABASE_URL_KEY = "FIREBASE_DATABASE_URL"
+const redis_DB_URL_KEY = "REDIS_DB_URL"
+const redis_DB_PASSWORD_KEY = "REDIS_DB_PASSWORD"
+const redis_DB_DATABASE_KEY = "REDIS_DB_DATABASE"
 
 const RequestTokenHeaderKey = "X-Api-Token"

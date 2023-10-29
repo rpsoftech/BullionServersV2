@@ -13,6 +13,7 @@ import (
 	"github.com/rpsoftech/bullion-server/src/interfaces"
 	"github.com/rpsoftech/bullion-server/src/middleware"
 	"github.com/rpsoftech/bullion-server/src/mongodb"
+	"github.com/rpsoftech/bullion-server/src/redis"
 	"github.com/rpsoftech/bullion-server/src/services"
 	"github.com/rpsoftech/bullion-server/src/utility/jwt"
 )
@@ -20,6 +21,7 @@ import (
 func deferMainFunc() {
 	println("Closing...")
 	mongodb.DeferFunction()
+	redis.DeferFunction()
 }
 
 func main() {
