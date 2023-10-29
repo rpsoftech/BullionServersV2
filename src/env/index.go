@@ -13,9 +13,9 @@ type EnvInterface struct {
 	PORT                  int    `json:"PORT" validate:"required,port"`
 	DB_URL                string `json:"DB_URL" validate:"required,url"`
 	DB_NAME               string `json:"DB_NAME_KEY" validate:"required,min=3"`
-	REDIS_DB_URL          string `json:"REDIS_DB_URL" validate:"required,url"`
+	REDIS_DB_URL          string `json:"REDIS_DB_URL" validate:"required"`
 	REDIS_DB_PASSWORD     string `json:"REDIS_DB_PASSWORD" validate:"required"`
-	REDIS_DB_DATABASE     int    `json:"REDIS_DB_DATABASE" validate:"number,min=0,max=100"`
+	REDIS_DB_DATABASE     int    `json:"REDIS_DB_DATABASE" validate:"min=0,max=100"`
 	ACCESS_TOKEN_KEY      string `json:"ACCESS_TOKEN_KEY" validate:"required,min=100"`
 	REFRESH_TOKEN_KEY     string `json:"REFRESH_TOKEN_KEY" validate:"required,min=100"`
 	FIREBASE_JSON_STRING  string `json:"FIREBASE_JSON_STRING" validate:"required"`

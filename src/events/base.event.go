@@ -1,6 +1,8 @@
 package events
 
 import (
+	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -16,6 +18,7 @@ type BaseEvent struct {
 	Payload     interface{} `bson:"payload" json:"payload"`
 	AdminId     string      `bson:"adminId" json:"adminId"`
 	OccurredAt  time.Time   `bson:"occurredAt" json:"occurredAt"`
+	DataString  string      `bson:"-" json:"-"`
 }
 
 func (base *BaseEvent) CreateBaseEvent() *BaseEvent {
@@ -23,4 +26,14 @@ func (base *BaseEvent) CreateBaseEvent() *BaseEvent {
 	base.ObjId = base.Id
 	base.OccurredAt = time.Now()
 	return base
+}
+func (base *BaseEvent) GetPayloadString() string {
+	if base.DataString != "" {
+		return base.DataString
+	}
+	payload, _ := json.Marshal(base)
+	return string(payload)
+}
+func (base *BaseEvent) GetEventName() string {
+	return fmt.Sprintf("event/%s/%s", base.EventName, base.Id)
 }
