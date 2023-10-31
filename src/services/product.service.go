@@ -149,7 +149,7 @@ func (service *productService) saveProductEntity(entity *interfaces.ProductEntit
 }
 
 func (service *productService) saveProductEntityToLocalCaches(entity *interfaces.ProductEntity, appendToArray bool) {
-	service.firebaseDatabaseService.SetData(entity.BullionId, []string{"products", entity.ID}, entity)
+	service.firebaseDatabaseService.SetPublicData(entity.BullionId, []string{"products", entity.ID}, entity)
 	if _, ok := service.productsByBullionAndProductId[entity.BullionId]; !ok {
 		service.productsByBullionAndProductId[entity.BullionId] = make(map[string]*interfaces.ProductEntity)
 	}

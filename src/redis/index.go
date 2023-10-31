@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/rpsoftech/bullion-server/src/env"
@@ -53,4 +54,11 @@ func DeferFunction() {
 
 func (r *RedisClientStruct) PublishEvent(event *events.BaseEvent) {
 	r.redisClient.Publish(RedisCTX, event.GetEventName(), event.GetPayloadString())
+}
+func (r *RedisClientStruct) GetStringData(key string) string {
+	return r.redisClient.Get(RedisCTX, key).String()
+}
+
+func (r *RedisClientStruct) SetStringData(key string, value string, expiresIn int) {
+	r.redisClient.Set(RedisCTX, key, value, time.Duration(expiresIn)*time.Second)
 }

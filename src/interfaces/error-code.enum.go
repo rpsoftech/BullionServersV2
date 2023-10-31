@@ -28,4 +28,5 @@ const (
 	ERROR_INVALID_TOKEN                         = 223
 	ERROR_INVALID_TOKEN_SIGNATURE_METHOD        = 224
 	ERROR_MISMATCH_BULLION_ID                   = 225
+	ERROR_DUPLICATE_USER                        = 226
 )

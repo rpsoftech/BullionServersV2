@@ -14,11 +14,18 @@ type bullionDetailsService struct {
 var BullionDetailsService *bullionDetailsService
 
 func init() {
-	BullionDetailsService = &bullionDetailsService{
-		BullionSiteInfoRepo:    repos.BullionSiteInfoRepo,
-		billionSiteInfoMapById: make(map[string]*interfaces.BullionSiteInfoEntity),
+	getBullionService()
+}
+
+func getBullionService() *bullionDetailsService {
+	if BullionDetailsService == nil {
+		BullionDetailsService = &bullionDetailsService{
+			BullionSiteInfoRepo:    repos.BullionSiteInfoRepo,
+			billionSiteInfoMapById: make(map[string]*interfaces.BullionSiteInfoEntity),
+		}
+		println("Bullion Site Details Initialized")
 	}
-	println("Bullion Site Details Initialized")
+	return BullionDetailsService
 }
 
 func (service *bullionDetailsService) GetBullionDetailsByShortName(shortName string) (*interfaces.BullionSiteInfoEntity, error) {
