@@ -7,6 +7,7 @@ import (
 	"github.com/rpsoftech/bullion-server/src/env"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
 	"github.com/rpsoftech/bullion-server/src/mongodb"
+	"github.com/rpsoftech/bullion-server/src/redis"
 	"github.com/rpsoftech/bullion-server/src/utility"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -16,6 +17,7 @@ import (
 type (
 	TradeUserRepoStruct struct {
 		collection *mongo.Collection
+		redis      *redis.RedisClientStruct
 	}
 )
 
@@ -30,6 +32,7 @@ func init() {
 	coll := mongodb.MongoDatabase.Collection(tradeUserCollectionName)
 	TradeUserRepo = &TradeUserRepoStruct{
 		collection: coll,
+		redis:      redis.InitRedisAndRedisClient(),
 	}
 	addUniqueIndexesToCollection([]string{"id"}, TradeUserRepo.collection)
 	addIndexesToCollection([]string{"bullionId", "isActive"}, TradeUserRepo.collection)
