@@ -29,4 +29,5 @@ const (
 	ERROR_INVALID_TOKEN_SIGNATURE_METHOD        = 224
 	ERROR_MISMATCH_BULLION_ID                   = 225
 	ERROR_DUPLICATE_USER                        = 226
+	ERROR_OTP_ALREADY_SENT                      = 227
 )

@@ -56,7 +56,7 @@ func (r *RedisClientStruct) PublishEvent(event *events.BaseEvent) {
 	r.redisClient.Publish(RedisCTX, event.GetEventName(), event.GetPayloadString())
 }
 func (r *RedisClientStruct) GetStringData(key string) string {
-	return r.redisClient.Get(RedisCTX, key).String()
+	return r.redisClient.Get(RedisCTX, key).Val()
 }
 
 func (r *RedisClientStruct) SetStringData(key string, value string, expiresIn int) {
