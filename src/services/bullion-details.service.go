@@ -7,8 +7,8 @@ import (
 
 type bullionDetailsService struct {
 	BullionSiteInfoRepo           *repos.BullionSiteInfoRepoStruct
-	billionSiteInfoMapById        map[string]*interfaces.BullionSiteInfoEntity
-	billionSiteInfoMapByShortName map[string]*interfaces.BullionSiteInfoEntity
+	bullionSiteInfoMapById        map[string]*interfaces.BullionSiteInfoEntity
+	bullionSiteInfoMapByShortName map[string]*interfaces.BullionSiteInfoEntity
 }
 
 var BullionDetailsService *bullionDetailsService
@@ -20,8 +20,9 @@ func init() {
 func getBullionService() *bullionDetailsService {
 	if BullionDetailsService == nil {
 		BullionDetailsService = &bullionDetailsService{
-			BullionSiteInfoRepo:    repos.BullionSiteInfoRepo,
-			billionSiteInfoMapById: make(map[string]*interfaces.BullionSiteInfoEntity),
+			BullionSiteInfoRepo:           repos.BullionSiteInfoRepo,
+			bullionSiteInfoMapById:        make(map[string]*interfaces.BullionSiteInfoEntity),
+			bullionSiteInfoMapByShortName: make(map[string]*interfaces.BullionSiteInfoEntity),
 		}
 		println("Bullion Site Details Initialized")
 	}
@@ -29,24 +30,30 @@ func getBullionService() *bullionDetailsService {
 }
 
 func (service *bullionDetailsService) GetBullionDetailsByShortName(shortName string) (*interfaces.BullionSiteInfoEntity, error) {
-	if bullion, ok := service.billionSiteInfoMapByShortName[shortName]; ok {
+	if bullion, ok := service.bullionSiteInfoMapByShortName[shortName]; ok {
 		return bullion, nil
 	}
 	bullion, err := service.BullionSiteInfoRepo.FindByShortName(shortName)
 	if err != nil {
 		return nil, err
 	}
-	service.billionSiteInfoMapById[shortName] = bullion
+	service.bullionSiteInfoMapById[shortName] = bullion
 	return bullion, nil
 }
 func (service *bullionDetailsService) GetBullionDetailsByBullionId(id string) (*interfaces.BullionSiteInfoEntity, error) {
-	if bullion, ok := service.billionSiteInfoMapById[id]; ok {
+	if bullion, ok := service.bullionSiteInfoMapById[id]; ok {
 		return bullion, nil
 	}
 	bullion, err := service.BullionSiteInfoRepo.FindOne(id)
 	if err != nil {
 		return nil, err
 	}
-	service.billionSiteInfoMapById[id] = bullion
+	service.bullionSiteInfoMapById[id] = bullion
 	return bullion, nil
+}
+
+func (service *bullionDetailsService) UpdateBullionSiteDetails(details *interfaces.BullionSiteInfoEntity) (*interfaces.BullionSiteInfoEntity, error) {
+	service.bullionSiteInfoMapById[details.ID] = details
+	service.bullionSiteInfoMapByShortName[details.ShortName] = details
+	return service.BullionSiteInfoRepo.Save(details)
 }
