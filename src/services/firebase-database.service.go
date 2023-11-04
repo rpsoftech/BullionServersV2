@@ -27,7 +27,6 @@ func (s *firebaseDatabaseService) SetPublicData(bullionId string, path []string,
 
 func (s *firebaseDatabaseService) setPrivateData(base string, path []string, data interface{}) error {
 	ref := s.db.NewRef(base)
-
 	for _, child := range path {
 		ref = ref.Child(child)
 	}

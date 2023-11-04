@@ -14,12 +14,11 @@ func (base *otpReqEvent) Add() *otpReqEvent {
 	return base
 }
 
-func CreateOtpSentEvent(entity *interfaces.OTPReqEntity, adminId string) *BaseEvent {
+func CreateOtpSentEvent(entity *interfaces.OTPReqEntity) *BaseEvent {
 	event := &otpReqEvent{
 		BaseEvent: &BaseEvent{
 			BullionId: entity.BullionId,
 			KeyId:     entity.ID,
-			AdminId:   adminId,
 			Payload:   entity,
 			EventName: "OTPSent",
 		},
@@ -28,12 +27,11 @@ func CreateOtpSentEvent(entity *interfaces.OTPReqEntity, adminId string) *BaseEv
 	return event.BaseEvent
 }
 
-func CreateOtpResendEvent(entity *interfaces.OTPReqEntity, adminId string) *BaseEvent {
+func CreateOtpResendEvent(entity *interfaces.OTPReqEntity) *BaseEvent {
 	event := &otpReqEvent{
 		BaseEvent: &BaseEvent{
 			BullionId: entity.BullionId,
 			KeyId:     entity.ID,
-			AdminId:   adminId,
 			Payload:   entity,
 			EventName: "OTPResent",
 		},
@@ -42,16 +40,30 @@ func CreateOtpResendEvent(entity *interfaces.OTPReqEntity, adminId string) *Base
 	return event.BaseEvent
 }
 
-func CreateOtpVerifiedEvent(entity *interfaces.OTPReqEntity, adminId string) *BaseEvent {
+func CreateOtpVerifiedEvent(entity *interfaces.OTPReqEntity) *BaseEvent {
 	event := &otpReqEvent{
 		BaseEvent: &BaseEvent{
 			BullionId: entity.BullionId,
 			KeyId:     entity.ID,
-			AdminId:   adminId,
 			Payload:   entity,
 			EventName: "OTPVerified",
 		},
 	}
 	event.Add()
 	return event.BaseEvent
+}
+
+func CreateWhatsappMessageSendEvent(bullionId string, templateId string, number string, message string) *BaseEvent {
+	event := &BaseEvent{
+		BullionId: bullionId,
+		KeyId:     templateId,
+		Payload: map[string]string{
+			"number":  number,
+			"message": message,
+		},
+		ParentNames: []string{"WhatsappMessageSend", "MessageEvent"},
+		EventName:   "WhatsappMessageSend",
+	}
+	event.CreateBaseEvent()
+	return event
 }

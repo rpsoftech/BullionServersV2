@@ -30,4 +30,6 @@ const (
 	ERROR_MISMATCH_BULLION_ID                   = 225
 	ERROR_DUPLICATE_USER                        = 226
 	ERROR_OTP_ALREADY_SENT                      = 227
+	ERROR_OTP_REQ_NOT_FOUND                     = 228
+	ERROR_WHILE_FETCHING_MESSAGE_TEMPLATE       = 229
 )

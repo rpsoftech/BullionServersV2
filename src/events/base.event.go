@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/rpsoftech/bullion-server/src/utility"
 )
 
 type BaseEvent struct {
@@ -17,13 +17,13 @@ type BaseEvent struct {
 	// IsProcessed bool        `bson:"isProcessed" json:"isProcessed"`
 	ParentNames []string    `bson:"parentNames" json:"parentNames"`
 	Payload     interface{} `bson:"payload" json:"payload"`
-	AdminId     string      `bson:"adminId" json:"adminId"`
+	AdminId     string      `bson:"adminId,omitempty" json:"adminId,omitempty"`
 	OccurredAt  time.Time   `bson:"occurredAt" json:"occurredAt"`
 	DataString  string      `bson:"-" json:"-"`
 }
 
 func (base *BaseEvent) CreateBaseEvent() *BaseEvent {
-	base.Id = uuid.New().String()
+	base.Id = utility.GenerateNewUUID()
 	base.ObjId = base.Id
 	base.OccurredAt = time.Now()
 	// base.IsProcessed = false

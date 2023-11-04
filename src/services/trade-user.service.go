@@ -40,20 +40,31 @@ func (service *tradeUserServiceStruct) VerifyAndSendOtpForNewUser(tradeUser *int
 			Name:       "ERROR_DUPLICATE_USER",
 		}
 	}
-	service.SendOtp(tradeUser.Name, tradeUser.Number, tradeUser.BullionId)
+	_, err = service.SendOtp(tradeUser.Name, tradeUser.Number, tradeUser.BullionId)
+	if err != nil {
+		return "", err
+	}
 	return "", nil
 }
 
-func (service *tradeUserServiceStruct) SendOtp(name string, number string, bullionId string) error {
-	_, err := service.bullionService.GetBullionDetailsByBullionId(bullionId)
+func (service *tradeUserServiceStruct) SendOtp(name string, number string, bullionId string) (*interfaces.OTPReqEntity, error) {
+	bullionDetails, err := service.bullionService.GetBullionDetailsByBullionId(bullionId)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	service.sendMsgService.SendOtp(&interfaces.OTPReqBase{
+	entity, err := service.sendMsgService.SendOtp(&interfaces.OTPReqBase{
 		BullionId: bullionId,
 		Number:    number,
 		Attempt:   0,
 		ExpiresAt: time.Now(),
-	})
-	return nil
+	}, &interfaces.OTPReqVariablesStruct{
+		BullionName: bullionDetails.Name,
+		Name:        name,
+		Number:      number,
+	}, bullionDetails.BullionConfigs.OTPLength)
+
+	if err != nil {
+		return entity, err
+	}
+	return entity, nil
 }
