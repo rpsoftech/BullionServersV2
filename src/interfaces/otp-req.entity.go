@@ -13,6 +13,7 @@ type (
 	OTPReqEntity struct {
 		*BaseEntity `bson:"inline"`
 		*OTPReqBase `bson:"inline"`
+		RouteToTake string `bson:"routeToTake" json:"routeToTake" validate:"required"`
 		OTP         string `bson:"otp" json:"otp" validate:"required"`
 	}
 
@@ -29,11 +30,12 @@ func (otp *OTPReqEntity) NewAttempt() {
 	otp.Updated()
 }
 
-func CreateOTPEntity(otpBase *OTPReqBase, OTP string) *OTPReqEntity {
+func CreateOTPEntity(otpBase *OTPReqBase, OTP string, routeToTake string) *OTPReqEntity {
 	entity := &OTPReqEntity{
-		BaseEntity: &BaseEntity{},
-		OTPReqBase: otpBase,
-		OTP:        OTP,
+		BaseEntity:  &BaseEntity{},
+		OTPReqBase:  otpBase,
+		RouteToTake: routeToTake,
+		OTP:         OTP,
 	}
 	entity.createNewId()
 	return entity

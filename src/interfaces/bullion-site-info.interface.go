@@ -5,7 +5,8 @@ type bullionGeneralUserConfig struct {
 	AutoLogin   bool `bson:"autoLogin" json:"autoLogin" validate:"boolean"`
 }
 type bullionConfigs struct {
-	OTPLength int `bson:"otpLength" json:"otpLength" validate:"required"`
+	OTPLength               int  `bson:"otpLength" json:"otpLength" validate:"required"`
+	HaveCustomWhatsappAgent bool `bson:"haveCustomWhatsappAgent" json:"haveCustomWhatsappAgent" validate:"boolean"`
 	// AutoApprove bool `bson:"autoApprove" json:"autoApprove" validate:"boolean"`
 	// AutoLogin   bool `bson:"autoLogin" json:"autoLogin" validate:"boolean"`
 }

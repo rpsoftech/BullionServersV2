@@ -48,7 +48,7 @@ func (s *sendMsgService) SendOtp(otpReq *interfaces.OTPReqBase, variable *interf
 		}
 	}
 	variable.OTP = GenerateOTP(otpLength)
-	entity := interfaces.CreateOTPEntity(otpReq, variable.OTP)
+	entity := interfaces.CreateOTPEntity(otpReq, variable.OTP, "")
 	err := s.prepareAndSendOTP(entity, variable)
 	if err != nil {
 		return nil, err
@@ -157,8 +157,16 @@ func (s *sendMsgService) sendWhatsappMessage(template string, templateName strin
 			Extra:      err,
 		}
 	}
+	routeToPost := otpReqEntity.BullionId
+	bullionDetails, err := s.bullionService.GetBullionDetailsByBullionId(otpReqEntity.BullionId)
+	if err != nil {
+		return err
+	}
+	if !bullionDetails.BullionConfigs.HaveCustomWhatsappAgent {
+		routeToPost = "common"
+	}
 	message := s.processMessage(template, &jsonMap)
-	err = s.firebaseDb.setPrivateData("whatsappMessage", []string{otpReqEntity.BullionId, otpReqEntity.ID}, map[string]string{
+	err = s.firebaseDb.setPrivateData("whatsappMessage", []string{routeToPost, otpReqEntity.ID}, map[string]string{
 		"message": message,
 		"number":  otpReqEntity.Number,
 	})
