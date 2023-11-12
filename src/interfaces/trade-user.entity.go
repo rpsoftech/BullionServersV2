@@ -4,7 +4,7 @@ type (
 	TradeUserBase struct {
 		BullionId   string `bson:"bullionId" json:"bullionId" validate:"required,uuid"`
 		Name        string `bson:"name" json:"name" validate:"required,min=2,max=100"`
-		Number      string `bson:"number" json:"number" validate:"required,min=10,max=10"`
+		Number      string `bson:"number" json:"number" validate:"required,min=12,max=12"`
 		Email       string `bson:"email" json:"email" validate:"required"`
 		CompanyName string `bson:"companyName" json:"companyName" validate:"required,min=2,max=50"`
 		GstNumber   string `bson:"gstNumber" json:"gstNumber" validate:"required,gstNumber"`
