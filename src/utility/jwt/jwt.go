@@ -25,8 +25,8 @@ type GeneralUserAccessRefreshToken struct {
 
 type GeneralPurposeTokenGeneration struct {
 	*jwt.RegisteredClaims
-	BullionId  string                 `json:"bullionId" validate:"required,uuid"`
-	ExtraClaim map[string]interface{} `json:"claims,omitempty"`
+	BullionId  string `json:"bullionId" validate:"required,uuid"`
+	ExtraClaim string `json:"claims,omitempty"`
 }
 
 type TokenService struct {

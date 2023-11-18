@@ -15,4 +15,5 @@ func init() {
 	RefreshTokenService = &jwt.TokenService{
 		SigningKey: []byte(env.Env.REFRESH_TOKEN_KEY),
 	}
+	println("Token Service Initialized")
 }
