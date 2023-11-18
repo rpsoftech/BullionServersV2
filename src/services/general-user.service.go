@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/go-faker/faker/v4"
 	"github.com/mitchellh/mapstructure"
@@ -96,7 +97,7 @@ func (service *generalUserService) sendApprovalRequest(user *interfaces.GeneralU
 	if err == nil {
 		if existingReq != nil {
 			return nil, &interfaces.RequestError{
-				StatusCode: 400,
+				StatusCode: http.StatusBadRequest,
 				Code:       interfaces.ERROR_GENERAL_USER_REQ_EXISTS,
 				Message:    "REQUEST ALREADY EXISTS",
 				Name:       "ERROR_GENERAL_USER_REQ_EXISTS",
@@ -125,7 +126,7 @@ func (service *generalUserService) GetGeneralUserDetailsByIdPassword(id string, 
 	}
 	if entity.RandomPass != password {
 		err = &interfaces.RequestError{
-			StatusCode: 400,
+			StatusCode: http.StatusBadRequest,
 			Code:       interfaces.ERROR_GENERAL_USER_INVALID_PASSWORD,
 			Message:    fmt.Sprintf("GeneralUser Entity invalid password %s ", password),
 			Name:       "ERROR_GENERAL_USER_INVALID_PASSWORD",
@@ -146,7 +147,7 @@ func (service *generalUserService) validateApprovalAndGenerateTokenStage2(user *
 	reqEntity, err := service.generalUserReqRepo.FindOneByGeneralUserIdAndBullionId(user.ID, bullionId)
 	if err != nil || reqEntity == nil {
 		return nil, &interfaces.RequestError{
-			StatusCode: 400,
+			StatusCode: http.StatusBadRequest,
 			Code:       interfaces.ERROR_GENERAL_USER_REQ_NOT_FOUND,
 			Message:    "REQUEST DOES NOT EXISTS",
 			Name:       "ERROR_GENERAL_USER_REQ_NOT_FOUND",
@@ -156,14 +157,14 @@ func (service *generalUserService) validateApprovalAndGenerateTokenStage2(user *
 	switch reqEntity.Status {
 	case interfaces.GENERAL_USER_AUTH_STATUS_REQUESTED:
 		return nil, &interfaces.RequestError{
-			StatusCode: 400,
+			StatusCode: http.StatusBadRequest,
 			Code:       interfaces.ERROR_GENERAL_USER_REQ_PENDING,
 			Message:    "REQUEST PENDING",
 			Name:       "ERROR_GENERAL_USER_REQ_PENDING",
 		}
 	case interfaces.GENERAL_USER_AUTH_STATUS_REJECTED:
 		return nil, &interfaces.RequestError{
-			StatusCode: 400,
+			StatusCode: http.StatusBadRequest,
 			Code:       interfaces.ERROR_GENERAL_USER_REQ_REJECTED,
 			Message:    "REQUEST REJECTED",
 			Name:       "ERROR_GENERAL_USER_REQ_REJECTED",
@@ -172,7 +173,7 @@ func (service *generalUserService) validateApprovalAndGenerateTokenStage2(user *
 		return service.generateTokens(user.ID, bullionId)
 	default:
 		return nil, &interfaces.RequestError{
-			StatusCode: 400,
+			StatusCode: http.StatusBadRequest,
 			Code:       interfaces.ERROR_GENERAL_USER_INVALID_STATUS,
 			Message:    "Invalid Request Status",
 			Name:       "ERROR_GENERAL_USER_INVALID_STATUS",

@@ -3,6 +3,7 @@ package repos
 import (
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/rpsoftech/bullion-server/src/env"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
@@ -60,7 +61,7 @@ func (repo *BullionSiteInfoRepoStruct) FindOne(id string) (*interfaces.BullionSi
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			// This error means your query did not match any documents.
 			err = &interfaces.RequestError{
-				StatusCode: 400,
+				StatusCode: http.StatusBadRequest,
 				Code:       interfaces.ERROR_ENTITY_NOT_FOUND,
 				Message:    fmt.Sprintf("Bullion Entity identified by id %s not found", id),
 				Name:       "ENTITY_NOT_FOUND",
@@ -87,7 +88,7 @@ func (repo *BullionSiteInfoRepoStruct) FindOneByDomain(domain string) (*interfac
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			// This error means your query did not match any documents.
 			err = &interfaces.RequestError{
-				StatusCode: 400,
+				StatusCode: http.StatusBadRequest,
 				Code:       interfaces.ERROR_ENTITY_NOT_FOUND,
 				Message:    fmt.Sprintf("Bullion Entity identified by domain %s not found", domain),
 				Name:       "ENTITY_NOT_FOUND",
@@ -114,7 +115,7 @@ func (repo *BullionSiteInfoRepoStruct) FindByShortName(name string) (*interfaces
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			// This error means your query did not match any documents.
 			err = &interfaces.RequestError{
-				StatusCode: 400,
+				StatusCode: http.StatusBadRequest,
 				Code:       interfaces.ERROR_ENTITY_NOT_FOUND,
 				Message:    fmt.Sprintf("Bullion Entity identified by shortname %s not found", name),
 				Name:       "ENTITY_NOT_FOUND",

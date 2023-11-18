@@ -3,6 +3,7 @@ package repos
 import (
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/rpsoftech/bullion-server/src/env"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
@@ -35,7 +36,7 @@ func init() {
 func (repo *GeneralUserReqRepoStruct) Save(entity *interfaces.GeneralUserReqEntity) (*interfaces.GeneralUserReqEntity, error) {
 
 	if err := utility.ValidateStructAndReturnReqError(entity, &interfaces.RequestError{
-		StatusCode: 400,
+		StatusCode: http.StatusBadRequest,
 		Code:       interfaces.ERROR_INVALID_ENTITY,
 		Message:    "",
 		Name:       "ERROR_INVALID_ENTITY",
@@ -71,7 +72,7 @@ func (repo *GeneralUserReqRepoStruct) FindOneByGeneralUserIdAndBullionId(general
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			// This error means your query did not match any documents.
 			err = &interfaces.RequestError{
-				StatusCode: 400,
+				StatusCode: http.StatusBadRequest,
 				Code:       interfaces.ERROR_ENTITY_NOT_FOUND,
 				Message:    fmt.Sprintf("GeneralUserReq Entity identified by generalUserID %s and bullionId %s not found", generalUserId, bullionId),
 				Name:       "ENTITY_NOT_FOUND",
@@ -98,7 +99,7 @@ func (repo *GeneralUserReqRepoStruct) FindOne(id string) (*interfaces.GeneralUse
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			// This error means your query did not match any documents.
 			err = &interfaces.RequestError{
-				StatusCode: 400,
+				StatusCode: http.StatusBadRequest,
 				Code:       interfaces.ERROR_ENTITY_NOT_FOUND,
 				Message:    fmt.Sprintf("GeneralUserReq Entity identified by id %s not found", id),
 				Name:       "ENTITY_NOT_FOUND",

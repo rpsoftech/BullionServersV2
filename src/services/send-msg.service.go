@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -16,10 +17,11 @@ import (
 )
 
 type sendMsgService struct {
-	redisRepo      *redis.RedisClientStruct
-	eventBus       *eventBusService
-	firebaseDb     *firebaseDatabaseService
-	bullionService *bullionDetailsService
+	redisRepo                *redis.RedisClientStruct
+	eventBus                 *eventBusService
+	firebaseDb               *firebaseDatabaseService
+	bullionService           *bullionDetailsService
+	regExpForMessageVariable *regexp.Regexp
 }
 
 var SendMsgService *sendMsgService
@@ -27,10 +29,11 @@ var SendMsgService *sendMsgService
 func getSendMsgService() *sendMsgService {
 	if SendMsgService == nil {
 		SendMsgService = &sendMsgService{
-			redisRepo:      redis.InitRedisAndRedisClient(),
-			eventBus:       getEventBusService(),
-			firebaseDb:     getFirebaseRealTimeDatabase(),
-			bullionService: getBullionService(),
+			redisRepo:                redis.InitRedisAndRedisClient(),
+			eventBus:                 getEventBusService(),
+			firebaseDb:               getFirebaseRealTimeDatabase(),
+			bullionService:           getBullionService(),
+			regExpForMessageVariable: regexp.MustCompile(`##\S*##`),
 		}
 		println("Send Msg Service Initialized")
 	}
@@ -41,7 +44,7 @@ func (s *sendMsgService) SendOtp(otpReq *interfaces.OTPReqBase, variable *interf
 	data := s.redisRepo.GetStringData("otp/" + otpReq.BullionId + "/" + otpReq.Number)
 	if len(data) > 0 {
 		return nil, &interfaces.RequestError{
-			StatusCode: 400,
+			StatusCode: http.StatusBadRequest,
 			Code:       interfaces.ERROR_OTP_ALREADY_SENT,
 			Message:    "Otp Already Sent",
 			Name:       "ERROR_OTP_ALREADY_SENT",
@@ -61,7 +64,7 @@ func (s *sendMsgService) ResendOtp(otpReqId string) error {
 	data := s.redisRepo.GetStringData("otp/" + otpReqId)
 	if len(data) != 1 {
 		return &interfaces.RequestError{
-			StatusCode: 400,
+			StatusCode: http.StatusBadRequest,
 			Code:       interfaces.ERROR_OTP_EXPIRED,
 			Message:    "OTP Req Expired",
 			Name:       "ERROR_OTP_EXPIRED",
@@ -76,7 +79,14 @@ func (s *sendMsgService) ResendOtp(otpReqId string) error {
 			Message:    "Unable to parse OTP REQ JSON",
 		}
 	}
-	// s.bu
+	if time.Now().Before(otpReqEntity.ExpiresAt.Add(time.Second * 10)) {
+		return &interfaces.RequestError{
+			StatusCode: http.StatusBadRequest,
+			Code:       interfaces.ERROR_OTP_ALREADY_SENT,
+			Message:    "Please Wait For 10 Seconds Before Requesting",
+		}
+	}
+	otpReqEntity.NewAttempt()
 	bullionDetails, err := s.bullionService.GetBullionDetailsByBullionId(otpReqEntity.BullionId)
 	if err != nil {
 		return err
@@ -92,24 +102,6 @@ func (s *sendMsgService) ResendOtp(otpReqId string) error {
 	}
 	s.eventBus.Publish(events.CreateOtpResendEvent(otpReqEntity))
 	return err
-}
-
-func (s *sendMsgService) saveAndUpdateOTPService(otpEntity *interfaces.OTPReqEntity) error {
-	otpEntity.ExpiresAt = otpEntity.ExpiresAt.Add(120 * time.Second)
-	otpEntityStringBytes, err := json.Marshal(otpEntity)
-	if err != nil {
-		return &interfaces.RequestError{
-			StatusCode: http.StatusInternalServerError,
-			Code:       interfaces.ERROR_INTERNAL_SERVER,
-			Message:    "Unable convert OTP REQ to string",
-			Name:       "OTPReq Entity Marshal Error",
-			Extra:      err,
-		}
-	}
-	otpEntityString := string(otpEntityStringBytes)
-	s.redisRepo.SetStringData(fmt.Sprintf("otp/%s/%s", otpEntity.BullionId, otpEntity.Number), otpEntityString, 120)
-	s.redisRepo.SetStringData(fmt.Sprintf("otp/%s", otpEntity.ID), otpEntityString, 120)
-	return nil
 }
 
 func (s *sendMsgService) prepareAndSendOTP(otpReq *interfaces.OTPReqEntity, variable *interfaces.OTPReqVariablesStruct) error {
@@ -143,6 +135,24 @@ func (s *sendMsgService) prepareAndSendOTP(otpReq *interfaces.OTPReqEntity, vari
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (s *sendMsgService) saveAndUpdateOTPService(otpEntity *interfaces.OTPReqEntity) error {
+	otpEntity.ExpiresAt = otpEntity.ExpiresAt.Add(120 * time.Second)
+	otpEntityStringBytes, err := json.Marshal(otpEntity)
+	if err != nil {
+		return &interfaces.RequestError{
+			StatusCode: http.StatusInternalServerError,
+			Code:       interfaces.ERROR_INTERNAL_SERVER,
+			Message:    "Unable convert OTP REQ to string",
+			Name:       "OTPReq Entity Marshal Error",
+			Extra:      err,
+		}
+	}
+	otpEntityString := string(otpEntityStringBytes)
+	s.redisRepo.SetStringData(fmt.Sprintf("otp/%s/%s", otpEntity.BullionId, otpEntity.Number), otpEntityString, 120)
+	s.redisRepo.SetStringData(fmt.Sprintf("otp/%s", otpEntity.ID), otpEntityString, 120)
 	return nil
 }
 
@@ -186,6 +196,7 @@ func (s *sendMsgService) processMessage(template string, variables *map[string]s
 	for key, value := range *variables {
 		template = strings.ReplaceAll(template, fmt.Sprintf("##%s##", key), value)
 	}
+	template = s.regExpForMessageVariable.ReplaceAllString(template, "")
 	return template
 }
 

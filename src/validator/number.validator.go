@@ -6,7 +6,7 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-var numberRegex = regexp.MustCompile(`\d`)
+var numberRegex = regexp.MustCompile(`^\d*$`)
 
 func validateStringIsNumber(fl validator.FieldLevel) bool {
 	fieldValue := fl.Field().String()

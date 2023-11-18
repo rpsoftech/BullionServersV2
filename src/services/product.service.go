@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"net/http"
 	"reflect"
 
 	"github.com/rpsoftech/bullion-server/src/events"
@@ -202,7 +203,7 @@ func (service *productService) GetProductsById(bullionId string, productId strin
 		}
 	}
 	return nil, &interfaces.RequestError{
-		StatusCode: 400,
+		StatusCode: http.StatusBadRequest,
 		Code:       interfaces.ERROR_ENTITY_NOT_FOUND,
 		Message:    fmt.Sprintf("Product Entities identified by bullionId %s and productId %s not found", bullionId, productId),
 		Name:       "ENTITY_NOT_FOUND",

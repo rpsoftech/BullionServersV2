@@ -3,6 +3,7 @@ package repos
 import (
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/rpsoftech/bullion-server/src/env"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
@@ -44,7 +45,7 @@ func init() {
 
 func (repo *TradeUserRepoStruct) Save(entity *interfaces.TradeUserEntity) (*interfaces.TradeUserEntity, error) {
 	if err := utility.ValidateStructAndReturnReqError(entity, &interfaces.RequestError{
-		StatusCode: 400,
+		StatusCode: http.StatusBadRequest,
 		Code:       interfaces.ERROR_INVALID_ENTITY,
 		Message:    "",
 		Name:       "ERROR_INVALID_ENTITY",
@@ -112,7 +113,7 @@ func (repo *TradeUserRepoStruct) findByFilter(filter *mongoDbFilter) (*[]interfa
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			// This error means your query did not match any documents.
 			err = &interfaces.RequestError{
-				StatusCode: 400,
+				StatusCode: http.StatusBadRequest,
 				Code:       interfaces.ERROR_ENTITY_NOT_FOUND,
 				Message:    fmt.Sprintf("Feeds Entities filtered By %v not found", filter),
 				Name:       "ENTITY_NOT_FOUND",
@@ -140,7 +141,7 @@ func (repo *TradeUserRepoStruct) FindOne(id string) (*interfaces.TradeUserEntity
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			// This error means your query did not match any documents.
 			err = &interfaces.RequestError{
-				StatusCode: 400,
+				StatusCode: http.StatusBadRequest,
 				Code:       interfaces.ERROR_ENTITY_NOT_FOUND,
 				Message:    fmt.Sprintf("Feeds Entity identified by id %s not found", id),
 				Name:       "ENTITY_NOT_FOUND",
@@ -169,7 +170,7 @@ func (repo *TradeUserRepoStruct) findOneByCondition(bullionId string, condition 
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			// This error means your query did not match any documents.
 			err = &interfaces.RequestError{
-				StatusCode: 400,
+				StatusCode: http.StatusBadRequest,
 				Code:       interfaces.ERROR_ENTITY_NOT_FOUND,
 				Message:    fmt.Sprintf("Feeds Entity identified by %s %s not found", condition.Key, condition.Value),
 				Name:       "ENTITY_NOT_FOUND",

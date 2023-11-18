@@ -3,6 +3,7 @@ package repos
 import (
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/rpsoftech/bullion-server/src/env"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
@@ -60,7 +61,7 @@ func (repo *AdminUserRepoStruct) FindOne(id string) (*interfaces.AdminUserEntity
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			// This error means your query did not match any documents.
 			err = &interfaces.RequestError{
-				StatusCode: 400,
+				StatusCode: http.StatusBadRequest,
 				Code:       interfaces.ERROR_ENTITY_NOT_FOUND,
 				Message:    fmt.Sprintf("GeneralUser Entity identified by id %s not found", id),
 				Name:       "ENTITY_NOT_FOUND",
@@ -88,7 +89,7 @@ func (repo *AdminUserRepoStruct) FindOneUserNameAndBullionId(uname string, bulli
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			// This error means your query did not match any documents.
 			err = &interfaces.RequestError{
-				StatusCode: 400,
+				StatusCode: http.StatusBadRequest,
 				Code:       interfaces.ERROR_ENTITY_NOT_FOUND,
 				Message:    fmt.Sprintf("GeneralUser Entity identified by uname %s and bullionId %s not found", uname, bullionId),
 				Name:       "ENTITY_NOT_FOUND",

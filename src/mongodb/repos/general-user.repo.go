@@ -3,6 +3,7 @@ package repos
 import (
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/rpsoftech/bullion-server/src/env"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
@@ -59,7 +60,7 @@ func (repo *GeneralUserRepoStruct) FindOne(id string) (*interfaces.GeneralUserEn
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			// This error means your query did not match any documents.
 			err = &interfaces.RequestError{
-				StatusCode: 400,
+				StatusCode: http.StatusBadRequest,
 				Code:       interfaces.ERROR_ENTITY_NOT_FOUND,
 				Message:    fmt.Sprintf("GeneralUser Entity identified by id %s not found", id),
 				Name:       "ENTITY_NOT_FOUND",

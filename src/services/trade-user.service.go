@@ -1,6 +1,7 @@
 package services
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/rpsoftech/bullion-server/src/interfaces"
@@ -27,14 +28,14 @@ func init() {
 	}
 }
 
-func (service *tradeUserServiceStruct) VerifyAndSendOtpForNewUser(tradeUser *interfaces.TradeUserBase, bullionId string) (string, error) {
+func (service *tradeUserServiceStruct) VerifyAndSendOtpForNewUser(tradeUser *interfaces.TradeUserBase, bullionId string) (*interfaces.ApiTradeUserRegisterResponse, error) {
 	users, err := service.tradeUserRepo.FindDuplicateUser(tradeUser.Email, tradeUser.Number, tradeUser.Email, bullionId)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if len(*users) > 0 {
-		return "", &interfaces.RequestError{
-			StatusCode: 400,
+		return nil, &interfaces.RequestError{
+			StatusCode: http.StatusBadRequest,
 			Code:       interfaces.ERROR_DUPLICATE_USER,
 			Message:    "User Exists With Matching With Wither Email,Number Or Username",
 			Name:       "ERROR_DUPLICATE_USER",
@@ -42,9 +43,9 @@ func (service *tradeUserServiceStruct) VerifyAndSendOtpForNewUser(tradeUser *int
 	}
 	_, err = service.SendOtp(tradeUser.Name, tradeUser.Number, tradeUser.BullionId)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return "", nil
+	return nil, nil
 }
 
 func (service *tradeUserServiceStruct) SendOtp(name string, number string, bullionId string) (*interfaces.OTPReqEntity, error) {
