@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"net/http"
 	"reflect"
 
 	"github.com/rpsoftech/bullion-server/src/events"
@@ -149,7 +150,7 @@ func (service *productService) saveProductEntity(entity *interfaces.ProductEntit
 }
 
 func (service *productService) saveProductEntityToLocalCaches(entity *interfaces.ProductEntity, appendToArray bool) {
-	service.firebaseDatabaseService.SetData(entity.BullionId, []string{"products", entity.ID}, entity)
+	service.firebaseDatabaseService.SetPublicData(entity.BullionId, []string{"products", entity.ID}, entity)
 	if _, ok := service.productsByBullionAndProductId[entity.BullionId]; !ok {
 		service.productsByBullionAndProductId[entity.BullionId] = make(map[string]*interfaces.ProductEntity)
 	}
@@ -202,7 +203,7 @@ func (service *productService) GetProductsById(bullionId string, productId strin
 		}
 	}
 	return nil, &interfaces.RequestError{
-		StatusCode: 400,
+		StatusCode: http.StatusBadRequest,
 		Code:       interfaces.ERROR_ENTITY_NOT_FOUND,
 		Message:    fmt.Sprintf("Product Entities identified by bullionId %s and productId %s not found", bullionId, productId),
 		Name:       "ENTITY_NOT_FOUND",

@@ -2,6 +2,7 @@ package auth
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/rpsoftech/bullion-server/src/middleware"
 )
 
 func AddAuthPackages(router fiber.Router) {
@@ -20,5 +21,11 @@ func AddAuthPackages(router fiber.Router) {
 	{
 		adminAuthGroup := router.Group("admin")
 		adminAuthGroup.Post("/login", apiAdminLogin)
+	}
+	{
+		tradeUserGroup := router.Group("trade-user")
+		tradeUserGroup.Use(middleware.AllowOnlyValidTokenMiddleWare)
+		tradeUserGroup.Use(middleware.AllowAllUsers.Validate)
+		tradeUserGroup.Post("register", apiTradeUserRegister)
 	}
 }

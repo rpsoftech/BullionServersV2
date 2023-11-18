@@ -3,6 +3,7 @@ package repos
 import (
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/rpsoftech/bullion-server/src/env"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
@@ -34,7 +35,7 @@ func init() {
 
 func (repo *ProductRepoStruct) Save(entity *interfaces.ProductEntity) (*interfaces.ProductEntity, error) {
 	if err := utility.ValidateStructAndReturnReqError(entity, &interfaces.RequestError{
-		StatusCode: 400,
+		StatusCode: http.StatusBadRequest,
 		Code:       interfaces.ERROR_INVALID_ENTITY,
 		Message:    "",
 		Name:       "ERROR_INVALID_ENTITY",
@@ -64,7 +65,7 @@ func (repo *ProductRepoStruct) BulkUpdate(entities *[]interfaces.ProductEntity) 
 	models := make([]mongo.WriteModel, len(*entities))
 	for i, entity := range *entities {
 		if err := utility.ValidateStructAndReturnReqError(entity, &interfaces.RequestError{
-			StatusCode: 400,
+			StatusCode: http.StatusBadRequest,
 			Code:       interfaces.ERROR_INVALID_ENTITY,
 			Message:    "",
 			Name:       "ERROR_INVALID_ENTITY",
@@ -101,7 +102,7 @@ func (repo *ProductRepoStruct) FindByBullionId(bullionId string) (*[]interfaces.
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			// This error means your query did not match any documents.
 			err = &interfaces.RequestError{
-				StatusCode: 400,
+				StatusCode: http.StatusBadRequest,
 				Code:       interfaces.ERROR_ENTITY_NOT_FOUND,
 				Message:    fmt.Sprintf("Product Entities identified by bullionId %s not found", bullionId),
 				Name:       "ENTITY_NOT_FOUND",
@@ -129,7 +130,7 @@ func (repo *ProductRepoStruct) FindOne(id string) (*interfaces.ProductEntity, er
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			// This error means your query did not match any documents.
 			err = &interfaces.RequestError{
-				StatusCode: 400,
+				StatusCode: http.StatusBadRequest,
 				Code:       interfaces.ERROR_ENTITY_NOT_FOUND,
 				Message:    fmt.Sprintf("GeneralUserReq Entity identified by id %s not found", id),
 				Name:       "ENTITY_NOT_FOUND",

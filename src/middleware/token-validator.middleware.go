@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"net/http"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/rpsoftech/bullion-server/src/env"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
@@ -40,7 +42,7 @@ func TokenDecrypter(c *fiber.Ctx) error {
 	if !interfaces.ValidateEnumUserRole(role) {
 
 		c.Locals(interfaces.REQ_LOCAL_ERROR_KEY, &interfaces.RequestError{
-			StatusCode: 400,
+			StatusCode: http.StatusBadRequest,
 			Code:       interfaces.ERROR_TOKEN_ROLE_NOT_FOUND,
 			Message:    "Invalid Token Role Or Not Found",
 			Name:       "INVALID_TOKEN_ROLE",

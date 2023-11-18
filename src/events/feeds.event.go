@@ -1,8 +1,8 @@
 package events
 
 import (
-	"github.com/google/uuid"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
+	"github.com/rpsoftech/bullion-server/src/utility"
 )
 
 type feedEvent struct {
@@ -47,7 +47,7 @@ func CreateNotificationSendEvent(entity *interfaces.FeedsBase, adminId string) *
 	event := &feedEvent{
 		BaseEvent: &BaseEvent{
 			BullionId: entity.BullionId,
-			KeyId:     uuid.New().String(),
+			KeyId:     utility.GenerateNewUUID(),
 			AdminId:   adminId,
 			Payload:   entity,
 			EventName: "NotificationSendEvent",

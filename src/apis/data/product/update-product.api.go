@@ -1,6 +1,8 @@
 package product
 
 import (
+	"net/http"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
 	"github.com/rpsoftech/bullion-server/src/services"
@@ -12,7 +14,7 @@ func apiUpdateProducts(c *fiber.Ctx) error {
 	c.BodyParser(body)
 	if len(*body) == 0 {
 		return &interfaces.RequestError{
-			StatusCode: 400,
+			StatusCode: http.StatusBadRequest,
 			Code:       interfaces.ERROR_INVALID_INPUT,
 			Message:    "Please pass at least 1 product to update",
 			Name:       "ERROR_INVALID_INPUT",
@@ -55,7 +57,7 @@ func apiUpdateProductCalcSnapshot(c *fiber.Ctx) error {
 	c.BodyParser(body)
 	if len(*body) == 0 {
 		return &interfaces.RequestError{
-			StatusCode: 400,
+			StatusCode: http.StatusBadRequest,
 			Code:       interfaces.ERROR_INVALID_INPUT,
 			Message:    "Please pass at least 1 product to update",
 			Name:       "ERROR_INVALID_INPUT",
@@ -98,7 +100,7 @@ func apiUpdateProductSequence(c *fiber.Ctx) error {
 	c.BodyParser(body)
 	if len(*body) < 2 {
 		return &interfaces.RequestError{
-			StatusCode: 400,
+			StatusCode: http.StatusBadRequest,
 			Code:       interfaces.ERROR_INVALID_INPUT,
 			Message:    "Please pass at least 2 product to update",
 			Name:       "ERROR_INVALID_INPUT",

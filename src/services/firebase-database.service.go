@@ -21,11 +21,22 @@ func getFirebaseRealTimeDatabase() *firebaseDatabaseService {
 	return firebaseRealTimeDatabaseService
 }
 
-func (s *firebaseDatabaseService) SetData(bullionId string, path []string, data interface{}) error {
-	ref := s.db.NewRef("bullions/" + bullionId)
+func (s *firebaseDatabaseService) SetPublicData(bullionId string, path []string, data interface{}) error {
+	return s.setPrivateData("bullions/"+bullionId, path, data)
+}
 
+func (s *firebaseDatabaseService) setPrivateData(base string, path []string, data interface{}) error {
+	ref := s.db.NewRef(base)
 	for _, child := range path {
 		ref = ref.Child(child)
 	}
 	return ref.Set(firebase.FirebaseCtx, data)
+}
+
+func (s *firebaseDatabaseService) GetData(base string, path []string, v interface{}) error {
+	ref := s.db.NewRef(base)
+	for _, child := range path {
+		ref = ref.Child(child)
+	}
+	return ref.Get(firebase.FirebaseCtx, v)
 }

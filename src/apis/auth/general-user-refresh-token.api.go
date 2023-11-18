@@ -2,6 +2,7 @@ package auth
 
 import (
 	"encoding/json"
+	"net/http"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
@@ -14,7 +15,7 @@ func apiGeneralUSerRefreshToken(c *fiber.Ctx) error {
 	token, ok := body["token"]
 	if !ok {
 		return &interfaces.RequestError{
-			StatusCode: 400,
+			StatusCode: http.StatusBadRequest,
 			Code:       interfaces.ERROR_INVALID_INPUT,
 			Message:    "Please Pass Valid Token",
 			Name:       "INVALID_INPUT",

@@ -48,8 +48,8 @@ func CreateProductUpdatedEvent(bullionId string, productId string, product *inte
 	return event
 }
 
-func CreateProductSequenceChangedEvent(bullionId string, product *[]interfaces.ProductEntity, adminId string) *[]interface{} {
-	events := make([]interface{}, len(*product))
+func CreateProductSequenceChangedEvent(bullionId string, product *[]interfaces.ProductEntity, adminId string) *[]BaseEvent {
+	events := make([]BaseEvent, len(*product))
 	for i, pro := range *product {
 		event := productEvent{
 			BaseEvent: &BaseEvent{
@@ -66,7 +66,7 @@ func CreateProductSequenceChangedEvent(bullionId string, product *[]interfaces.P
 			},
 		}
 		event.Add()
-		events[i] = event
+		events[i] = *event.BaseEvent
 
 	}
 	return &events
