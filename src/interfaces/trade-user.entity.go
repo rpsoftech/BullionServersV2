@@ -8,7 +8,7 @@ type (
 		Email       string `bson:"email" json:"email" validate:"required"`
 		CompanyName string `bson:"companyName" json:"companyName" validate:"required,min=2,max=50"`
 		GstNumber   string `bson:"gstNumber" json:"gstNumber" validate:"required,gstNumber"`
-		RawPassword string ` json:"password" validate:"required,min=4"`
+		RawPassword string `bson:"rawPassword" json:"password" validate:"required,min=4"`
 	}
 
 	TradeUserAdvanced struct {

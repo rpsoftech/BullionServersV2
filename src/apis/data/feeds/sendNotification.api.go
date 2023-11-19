@@ -24,8 +24,6 @@ func apiSendFeedAsNotification(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	} else {
-		return c.JSON(fiber.Map{
-			"success": true,
-		})
+		return c.JSON(utility.SuccessResponse)
 	}
 }

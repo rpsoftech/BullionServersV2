@@ -1,7 +1,6 @@
 package services
 
 import (
-	"encoding/json"
 	"net/http"
 	"time"
 
@@ -33,7 +32,7 @@ func init() {
 	}
 }
 
-func (service *tradeUserServiceStruct) VerifyAndSendOtpForNewUser(tradeUser *interfaces.TradeUserBase, bullionId string) (*interfaces.ApiTradeUserRegisterResponse, error) {
+func (service *tradeUserServiceStruct) VerifyAndSendOtpForNewUser(tradeUser *interfaces.TradeUserBase, bullionId string) (*string, error) {
 	users, err := service.tradeUserRepo.FindDuplicateUser(tradeUser.Email, tradeUser.Number, tradeUser.Email, bullionId)
 	if err != nil {
 		return nil, err
@@ -51,40 +50,49 @@ func (service *tradeUserServiceStruct) VerifyAndSendOtpForNewUser(tradeUser *int
 		return nil, err
 	}
 	now := time.Now()
-	otpReqEntityString, err := json.Marshal(otpReqEntity.OTPReqBase)
-	if err != nil {
-		return nil, err
-	}
-	otpReqToken, err := service.accessTokenService.GenerateToken(&localJwt.GeneralPurposeTokenGeneration{
+	tokenString, err := service.accessTokenService.GenerateToken(&localJwt.GeneralPurposeTokenGeneration{
 		RegisteredClaims: &jwt.RegisteredClaims{
 			IssuedAt:  &jwt.NumericDate{Time: now},
-			ExpiresAt: &jwt.NumericDate{Time: now.Add(time.Minute * 10)},
+			ExpiresAt: &jwt.NumericDate{Time: now.Add(time.Minute * 2)},
 		},
-		BullionId:  bullionId,
-		ExtraClaim: string(otpReqEntityString),
+		BullionId: bullionId,
+		ExtraClaim: map[string]interface{}{
+			"otpReqEntityId": otpReqEntity.ID,
+			"tradeUser":      tradeUser,
+		},
 	})
 	if err != nil {
 		return nil, err
 	}
-	tradeUserString, err := json.Marshal(tradeUser)
+	return &tokenString, nil
+}
+
+func (service *tradeUserServiceStruct) VerifyTokenAndResendOTP(token string) error {
+	claims, err := service.accessTokenService.VerifyTokenGeneralPurpose(token)
 	if err != nil {
-		return nil, err
+		return &interfaces.RequestError{
+			StatusCode: http.StatusBadRequest,
+			Code:       interfaces.ERROR_INVALID_INPUT,
+			Message:    "OTP Req Token Expired",
+			Name:       "ERROR_INVALID_INPUT",
+			Extra:      err,
+		}
 	}
-	tradeUserToken, err := service.accessTokenService.GenerateToken(&localJwt.GeneralPurposeTokenGeneration{
-		RegisteredClaims: &jwt.RegisteredClaims{
-			IssuedAt:  &jwt.NumericDate{Time: now},
-			ExpiresAt: &jwt.NumericDate{Time: now.Add(time.Minute * 10)},
-		},
-		BullionId:  bullionId,
-		ExtraClaim: string(tradeUserString),
-	})
+	otpReqId, ok := claims.ExtraClaim["otpReqEntityId"].(string)
+	if !ok {
+		return &interfaces.RequestError{
+			StatusCode: http.StatusBadRequest,
+			Code:       interfaces.ERROR_INVALID_INPUT,
+			Message:    "OTP Req Id Not Found",
+			Name:       "ERROR_INVALID_INPUT",
+		}
+	}
+
+	err = service.sendMsgService.ResendOtp(otpReqId)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return &interfaces.ApiTradeUserRegisterResponse{
-		UserToken:   tradeUserToken,
-		OtpReqToken: otpReqToken,
-	}, nil
+	return nil
 }
 
 func (service *tradeUserServiceStruct) SendOtp(name string, number string, bullionId string) (*interfaces.OTPReqEntity, error) {
@@ -95,6 +103,7 @@ func (service *tradeUserServiceStruct) SendOtp(name string, number string, bulli
 	entity, err := service.sendMsgService.SendOtp(&interfaces.OTPReqBase{
 		BullionId: bullionId,
 		Number:    number,
+		Name:      name,
 		Attempt:   0,
 		ExpiresAt: time.Now(),
 	}, &interfaces.OTPReqVariablesStruct{

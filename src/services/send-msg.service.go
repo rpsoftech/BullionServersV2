@@ -51,7 +51,7 @@ func (s *sendMsgService) SendOtp(otpReq *interfaces.OTPReqBase, variable *interf
 		}
 	}
 	variable.OTP = GenerateOTP(otpLength)
-	entity := interfaces.CreateOTPEntity(otpReq, variable.OTP, "")
+	entity := interfaces.CreateOTPEntity(otpReq, variable.OTP)
 	err := s.prepareAndSendOTP(entity, variable)
 	if err != nil {
 		return nil, err
@@ -62,7 +62,7 @@ func (s *sendMsgService) SendOtp(otpReq *interfaces.OTPReqBase, variable *interf
 
 func (s *sendMsgService) ResendOtp(otpReqId string) error {
 	data := s.redisRepo.GetStringData("otp/" + otpReqId)
-	if len(data) != 1 {
+	if data == "" {
 		return &interfaces.RequestError{
 			StatusCode: http.StatusBadRequest,
 			Code:       interfaces.ERROR_OTP_EXPIRED,
@@ -79,7 +79,8 @@ func (s *sendMsgService) ResendOtp(otpReqId string) error {
 			Message:    "Unable to parse OTP REQ JSON",
 		}
 	}
-	if time.Now().Before(otpReqEntity.ExpiresAt.Add(time.Second * 10)) {
+	println(time.Now().Before(otpReqEntity.CreatedAt.Add(time.Second * 15)))
+	if time.Now().Before(otpReqEntity.CreatedAt.Add(time.Second * 15)) {
 		return &interfaces.RequestError{
 			StatusCode: http.StatusBadRequest,
 			Code:       interfaces.ERROR_OTP_ALREADY_SENT,
