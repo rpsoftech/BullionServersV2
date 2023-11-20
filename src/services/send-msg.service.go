@@ -79,12 +79,13 @@ func (s *sendMsgService) ResendOtp(otpReqId string) error {
 			Message:    "Unable to parse OTP REQ JSON",
 		}
 	}
-	println(time.Now().Before(otpReqEntity.CreatedAt.Add(time.Second * 15)))
-	if time.Now().Before(otpReqEntity.CreatedAt.Add(time.Second * 15)) {
+	otpReqEntity.RestoreTimeStamp()
+	if time.Now().Before(otpReqEntity.ModifiedAt.Add(time.Second * 15)) {
 		return &interfaces.RequestError{
 			StatusCode: http.StatusBadRequest,
 			Code:       interfaces.ERROR_OTP_ALREADY_SENT,
 			Message:    "Please Wait For 10 Seconds Before Requesting",
+			Name:       "ERROR_OTP_ALREADY_SENT",
 		}
 	}
 	otpReqEntity.NewAttempt()
@@ -141,6 +142,8 @@ func (s *sendMsgService) prepareAndSendOTP(otpReq *interfaces.OTPReqEntity, vari
 
 func (s *sendMsgService) saveAndUpdateOTPService(otpEntity *interfaces.OTPReqEntity) error {
 	otpEntity.ExpiresAt = otpEntity.ExpiresAt.Add(120 * time.Second)
+	otpEntity.AddTimeStamps()
+	fmt.Printf("%#v", otpEntity)
 	otpEntityStringBytes, err := json.Marshal(otpEntity)
 	if err != nil {
 		return &interfaces.RequestError{
