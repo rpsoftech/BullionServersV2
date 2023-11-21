@@ -84,8 +84,17 @@ func (s *sendMsgService) ResendOtp(otpReqId string) error {
 		return &interfaces.RequestError{
 			StatusCode: http.StatusBadRequest,
 			Code:       interfaces.ERROR_OTP_ALREADY_SENT,
-			Message:    "Please Wait For 10 Seconds Before Requesting",
+			Message:    "Please Wait For 15 Seconds Before Requesting",
 			Name:       "ERROR_OTP_ALREADY_SENT",
+		}
+	}
+	if otpReqEntity.Attempt >= 5 {
+
+		return &interfaces.RequestError{
+			StatusCode: http.StatusBadRequest,
+			Code:       interfaces.ERROR_TOO_MANY_ATTEMPTS,
+			Message:    "OTP REQUESTED TOO MANY TIMES, Wait for 2 Minutes Before Requesting Again",
+			Name:       "ERROR_TOO_MANY_ATTEMPTS",
 		}
 	}
 	otpReqEntity.NewAttempt()
@@ -104,6 +113,38 @@ func (s *sendMsgService) ResendOtp(otpReqId string) error {
 	}
 	s.eventBus.Publish(events.CreateOtpResendEvent(otpReqEntity))
 	return err
+}
+
+func (s *sendMsgService) VerifyOtp(otpReqId string, otp string) error {
+	data := s.redisRepo.GetStringData("otp/" + otpReqId)
+	if data == "" {
+		return &interfaces.RequestError{
+			StatusCode: http.StatusBadRequest,
+			Code:       interfaces.ERROR_OTP_EXPIRED,
+			Message:    "OTP Req Expired",
+			Name:       "ERROR_OTP_EXPIRED",
+		}
+	}
+	otpReqEntity := new(interfaces.OTPReqEntity)
+	err := json.Unmarshal([]byte(data), otpReqEntity)
+	if err != nil {
+		return &interfaces.RequestError{
+			StatusCode: http.StatusInternalServerError,
+			Code:       interfaces.ERROR_INTERNAL_SERVER,
+			Message:    "Unable to parse OTP REQ JSON",
+		}
+	}
+	otpReqEntity.RestoreTimeStamp()
+	if otpReqEntity.OTP != otp {
+		return &interfaces.RequestError{
+			StatusCode: http.StatusBadRequest,
+			Code:       interfaces.ERROR_OTP_INVALID,
+			Message:    "Invalid OTP",
+			Name:       "ERROR_OTP_INVALID",
+		}
+	}
+	s.eventBus.Publish(events.CreateOtpVerifiedEvent(otpReqEntity))
+	return nil
 }
 
 func (s *sendMsgService) prepareAndSendOTP(otpReq *interfaces.OTPReqEntity, variable *interfaces.OTPReqVariablesStruct) error {

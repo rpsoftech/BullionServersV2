@@ -22,8 +22,8 @@ type (
 	}
 
 	TradeUserMargins struct {
-		AllotedMargins   UserMarginsDataStruct `bson:"allotedMargins" json:"allotedMargins" validate:"required"`
-		AvailableMargins UserMarginsDataStruct `bson:"availableMargins" json:"availableMargins" validate:"required"`
+		AllotedMargins   *UserMarginsDataStruct `bson:"allotedMargins" json:"allotedMargins" validate:"required"`
+		AvailableMargins *UserMarginsDataStruct `bson:"availableMargins" json:"availableMargins" validate:"required"`
 	}
 
 	TradeUserEntity struct {
@@ -31,7 +31,7 @@ type (
 		*TradeUserBase     `bson:"inline"`
 		*passwordEntity    `bson:"inline"`
 		*TradeUserAdvanced `bson:"inline"`
-		*TradeUserMargins  `bson:"inline"`
+		*TradeUserMargins  `bson:"margins" json:"margins"`
 	}
 
 	ApiTradeUserRegisterResponse struct {
@@ -42,5 +42,11 @@ type (
 
 func (user *TradeUserEntity) CreateNew() (r *TradeUserEntity) {
 	user.createNewId()
+	return user
+}
+
+func (user *TradeUserEntity) UpdateUser() (r *TradeUserEntity) {
+	user.passwordEntity = CreatePasswordEntity(user.RawPassword)
+	user.Updated()
 	return user
 }

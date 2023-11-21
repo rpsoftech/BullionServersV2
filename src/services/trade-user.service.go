@@ -1,14 +1,15 @@
 package services
 
 import (
-	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
 	"github.com/rpsoftech/bullion-server/src/mongodb/repos"
+	"github.com/rpsoftech/bullion-server/src/utility"
 	localJwt "github.com/rpsoftech/bullion-server/src/utility/jwt"
 )
 
@@ -17,6 +18,7 @@ type tradeUserServiceStruct struct {
 	tradeUserRepo      *repos.TradeUserRepoStruct
 	eventBus           *eventBusService
 	bullionService     *bullionDetailsService
+	firebaseDb         *firebaseDatabaseService
 	sendMsgService     *sendMsgService
 	realtimeDatabase   *firebaseDatabaseService
 }
@@ -28,6 +30,7 @@ func init() {
 		tradeUserRepo:      repos.TradeUserRepo,
 		accessTokenService: AccessTokenService,
 		eventBus:           getEventBusService(),
+		firebaseDb:         getFirebaseRealTimeDatabase(),
 		sendMsgService:     getSendMsgService(),
 		bullionService:     getBullionService(),
 		realtimeDatabase:   getFirebaseRealTimeDatabase(),
@@ -89,8 +92,10 @@ func (service *tradeUserServiceStruct) verifyRegistrationToken(token string, ret
 			Name:       "ERROR_INVALID_INPUT",
 		}
 	}
+	if !returnTradeUser {
+		return claims, otpReqId, nil, nil
+	}
 	tradeUserMap, ok := claims.ExtraClaim["tradeUser"]
-
 	if !ok {
 		return nil, "", nil, &interfaces.RequestError{
 			StatusCode: http.StatusBadRequest,
@@ -113,8 +118,7 @@ func (service *tradeUserServiceStruct) verifyRegistrationToken(token string, ret
 }
 
 func (service *tradeUserServiceStruct) VerifyTokenAndResendOTP(token string) (*string, error) {
-	claim, otpReqId, tradeUser, err := service.verifyRegistrationToken(token, true)
-	fmt.Printf("Trade User %#v \n", tradeUser)
+	claim, otpReqId, _, err := service.verifyRegistrationToken(token, false)
 	if err != nil {
 		return nil, err
 	}
@@ -153,4 +157,53 @@ func (service *tradeUserServiceStruct) SendOtp(name string, number string, bulli
 	return entity, nil
 }
 
-func (service *tradeUserServiceStruct) VerifyTokenAndVerifyOTP() {}
+func (service *tradeUserServiceStruct) VerifyTokenAndVerifyOTP(token string, otp string) (*interfaces.TradeUserEntity, error) {
+	_, otpReqId, tradeUser, err := service.verifyRegistrationToken(token, true)
+	if err != nil {
+		return nil, err
+	}
+	err = service.sendMsgService.VerifyOtp(otpReqId, otp)
+	if err != nil {
+		return nil, err
+	}
+	tradeUserEntity, err := service.RegisterNewTradeUser(tradeUser, &interfaces.TradeUserAdvanced{
+		UserName: tradeUser.Name,
+		IsActive: false,
+		UNumber:  "0",
+	}, &interfaces.TradeUserMargins{
+		AllotedMargins: &interfaces.UserMarginsDataStruct{
+			Gold:   0,
+			Silver: 0,
+		},
+		AvailableMargins: &interfaces.UserMarginsDataStruct{
+			Gold:   0,
+			Silver: 0,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return tradeUserEntity, nil
+}
+
+func (service *tradeUserServiceStruct) RegisterNewTradeUser(base *interfaces.TradeUserBase, advance *interfaces.TradeUserAdvanced, margins *interfaces.TradeUserMargins) (*interfaces.TradeUserEntity, error) {
+	entity := &interfaces.TradeUserEntity{
+		TradeUserBase:     base,
+		TradeUserAdvanced: advance,
+		TradeUserMargins:  margins,
+		BaseEntity:        &interfaces.BaseEntity{},
+	}
+	entity.CreateNew().UpdateUser()
+	newUserNumber := 0
+	service.firebaseDb.GetData("tradeUsersNumbers", []string{entity.BullionId}, &newUserNumber)
+	newUserNumber++
+	entity.UNumber = strconv.Itoa(newUserNumber)
+	if err := utility.ValidateReqInput(entity); err != nil {
+		return nil, err
+	}
+	service.tradeUserRepo.Save(entity)
+	service.firebaseDb.setPrivateData("tradeUsersNumbers", []string{entity.BullionId}, newUserNumber)
+	// TODO Create And Publish Event
+	// TODO Create And Send Registration Message
+	return entity, nil
+}
