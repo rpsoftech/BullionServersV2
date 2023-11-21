@@ -1,10 +1,12 @@
 package services
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/mitchellh/mapstructure"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
 	"github.com/rpsoftech/bullion-server/src/mongodb/repos"
 	localJwt "github.com/rpsoftech/bullion-server/src/utility/jwt"
@@ -67,10 +69,10 @@ func (service *tradeUserServiceStruct) VerifyAndSendOtpForNewUser(tradeUser *int
 	return &tokenString, nil
 }
 
-func (service *tradeUserServiceStruct) VerifyTokenAndResendOTP(token string) error {
+func (service *tradeUserServiceStruct) verifyRegistrationToken(token string, returnTradeUser bool) (*localJwt.GeneralPurposeTokenGeneration, string, *interfaces.TradeUserBase, error) {
 	claims, err := service.accessTokenService.VerifyTokenGeneralPurpose(token)
 	if err != nil {
-		return &interfaces.RequestError{
+		return nil, "", nil, &interfaces.RequestError{
 			StatusCode: http.StatusBadRequest,
 			Code:       interfaces.ERROR_INVALID_INPUT,
 			Message:    "OTP Req Token Expired",
@@ -80,19 +82,52 @@ func (service *tradeUserServiceStruct) VerifyTokenAndResendOTP(token string) err
 	}
 	otpReqId, ok := claims.ExtraClaim["otpReqEntityId"].(string)
 	if !ok {
-		return &interfaces.RequestError{
+		return nil, "", nil, &interfaces.RequestError{
 			StatusCode: http.StatusBadRequest,
 			Code:       interfaces.ERROR_INVALID_INPUT,
 			Message:    "OTP Req Id Not Found",
 			Name:       "ERROR_INVALID_INPUT",
 		}
 	}
+	tradeUserMap, ok := claims.ExtraClaim["tradeUser"]
 
+	if !ok {
+		return nil, "", nil, &interfaces.RequestError{
+			StatusCode: http.StatusBadRequest,
+			Code:       interfaces.ERROR_INVALID_INPUT,
+			Message:    "TradeUser Details Not Found",
+			Name:       "ERROR_INVALID_INPUT",
+		}
+	}
+	tradeUser := new(interfaces.TradeUserBase)
+	err = mapstructure.Decode(tradeUserMap, &tradeUser)
+	if err != nil {
+		return nil, "", nil, &interfaces.RequestError{
+			StatusCode: http.StatusBadRequest,
+			Code:       interfaces.ERROR_INVALID_INPUT,
+			Message:    "TradeUser Details Not Found",
+			Name:       "ERROR_INVALID_INPUT",
+		}
+	}
+	return claims, otpReqId, tradeUser, nil
+}
+
+func (service *tradeUserServiceStruct) VerifyTokenAndResendOTP(token string) (*string, error) {
+	claim, otpReqId, tradeUser, err := service.verifyRegistrationToken(token, true)
+	fmt.Printf("Trade User %#v \n", tradeUser)
+	if err != nil {
+		return nil, err
+	}
 	err = service.sendMsgService.ResendOtp(otpReqId)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	claim.ExpiresAt = &jwt.NumericDate{Time: time.Now().Add(time.Minute * 2)}
+	tokenString, err := service.accessTokenService.GenerateToken(claim)
+	if err != nil {
+		return nil, err
+	}
+	return &tokenString, nil
 }
 
 func (service *tradeUserServiceStruct) SendOtp(name string, number string, bullionId string) (*interfaces.OTPReqEntity, error) {
@@ -117,3 +152,5 @@ func (service *tradeUserServiceStruct) SendOtp(name string, number string, bulli
 	}
 	return entity, nil
 }
+
+func (service *tradeUserServiceStruct) VerifyTokenAndVerifyOTP() {}

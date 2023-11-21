@@ -7,7 +7,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
 	"github.com/rpsoftech/bullion-server/src/services"
-	"github.com/rpsoftech/bullion-server/src/utility"
 )
 
 func apiTradeUserResendOtp(c *fiber.Ctx) error {
@@ -24,10 +23,12 @@ func apiTradeUserResendOtp(c *fiber.Ctx) error {
 		}
 	}
 
-	err := services.TradeUserService.VerifyTokenAndResendOTP(token)
+	entity, err := services.TradeUserService.VerifyTokenAndResendOTP(token)
 	if err != nil {
 		return err
 	} else {
-		return c.JSON(utility.SuccessResponse)
+		return c.JSON(fiber.Map{
+			"token": entity,
+		})
 	}
 }

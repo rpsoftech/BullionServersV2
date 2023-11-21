@@ -143,7 +143,6 @@ func (s *sendMsgService) prepareAndSendOTP(otpReq *interfaces.OTPReqEntity, vari
 func (s *sendMsgService) saveAndUpdateOTPService(otpEntity *interfaces.OTPReqEntity) error {
 	otpEntity.ExpiresAt = otpEntity.ExpiresAt.Add(120 * time.Second)
 	otpEntity.AddTimeStamps()
-	fmt.Printf("%#v", otpEntity)
 	otpEntityStringBytes, err := json.Marshal(otpEntity)
 	if err != nil {
 		return &interfaces.RequestError{
@@ -204,9 +203,6 @@ func (s *sendMsgService) processMessage(template string, variables *map[string]s
 	return template
 }
 
-// func (s *sendMsgService) sendMsg91(){}
-
-// func (s *sendMsgService)
 var table = [...]byte{'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'}
 
 func GenerateOTP(max int) string {
