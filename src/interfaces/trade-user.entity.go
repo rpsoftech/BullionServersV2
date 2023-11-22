@@ -13,7 +13,7 @@ type (
 
 	TradeUserAdvanced struct {
 		UserName string `bson:"userName" json:"userName" validate:"required"`
-		IsActive bool   `bson:"isActive" json:"isActive" validate:"required"`
+		IsActive bool   `bson:"isActive" json:"isActive" validate:"boolean"`
 		UNumber  string `bson:"uNumber" json:"uNumber" validate:"required"`
 	}
 	UserMarginsDataStruct struct {

@@ -53,7 +53,6 @@ func TokenDecrypter(c *fiber.Ctx) error {
 	c.Locals(interfaces.REQ_LOCAL_KEY_ROLE, role)
 	c.Locals(interfaces.REQ_LOCAL_KEY_TOKEN_RAW_DATA, userRolesCustomClaim)
 	return c.Next()
-	// TODO: Base on role decrypt interface of users
 }
 
 func AllowOnlyValidTokenMiddleWare(c *fiber.Ctx) error {

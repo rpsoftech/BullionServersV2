@@ -40,7 +40,7 @@ func getSendMsgService() *sendMsgService {
 	return SendMsgService
 }
 
-func (s *sendMsgService) SendOtp(otpReq *interfaces.OTPReqBase, variable *interfaces.OTPReqVariablesStruct, otpLength int) (*interfaces.OTPReqEntity, error) {
+func (s *sendMsgService) SendOtp(otpReq *interfaces.OTPReqBase, variable *interfaces.MsgVariablesOTPReqStruct, otpLength int) (*interfaces.OTPReqEntity, error) {
 	data := s.redisRepo.GetStringData("otp/" + otpReq.BullionId + "/" + otpReq.Number)
 	if len(data) > 0 {
 		return nil, &interfaces.RequestError{
@@ -102,7 +102,7 @@ func (s *sendMsgService) ResendOtp(otpReqId string) error {
 	if err != nil {
 		return err
 	}
-	err = s.prepareAndSendOTP(otpReqEntity, &interfaces.OTPReqVariablesStruct{
+	err = s.prepareAndSendOTP(otpReqEntity, &interfaces.MsgVariablesOTPReqStruct{
 		OTP:         otpReqEntity.OTP,
 		Name:        otpReqEntity.Name,
 		Number:      otpReqEntity.Number,
@@ -147,7 +147,7 @@ func (s *sendMsgService) VerifyOtp(otpReqId string, otp string) error {
 	return nil
 }
 
-func (s *sendMsgService) prepareAndSendOTP(otpReq *interfaces.OTPReqEntity, variable *interfaces.OTPReqVariablesStruct) error {
+func (s *sendMsgService) prepareAndSendOTP(otpReq *interfaces.OTPReqEntity, variable *interfaces.MsgVariablesOTPReqStruct) error {
 	msgTemplate := new(interfaces.MsgTemplateBase)
 	err := s.firebaseDb.GetData("msgTemplates", []string{otpReq.BullionId, "otp"}, msgTemplate)
 	if msgTemplate.WhatsappTemplate == "" && msgTemplate.MSG91Id == "" {
@@ -174,7 +174,11 @@ func (s *sendMsgService) prepareAndSendOTP(otpReq *interfaces.OTPReqEntity, vari
 	if err != nil {
 		return err
 	}
-	err = s.sendWhatsappMessage(msgTemplate.WhatsappTemplate, "OTP", variable, otpReq)
+	err = s.sendWhatsappMessage(msgTemplate.WhatsappTemplate, "OTP", variable, &interfaces.MsgEntity{
+		BullionId:  otpReq.BullionId,
+		Number:     otpReq.Number,
+		BaseEntity: otpReq.BaseEntity,
+	})
 	if err != nil {
 		return err
 	}
@@ -200,7 +204,30 @@ func (s *sendMsgService) saveAndUpdateOTPService(otpEntity *interfaces.OTPReqEnt
 	return nil
 }
 
-func (s *sendMsgService) sendWhatsappMessage(template string, templateName string, variables interface{}, otpReqEntity *interfaces.OTPReqEntity) error {
+func (s *sendMsgService) SendMessage(bullionId string, templateName string, number string, variables interface{}) error {
+	msgTemplate := new(interfaces.MsgTemplateBase)
+	err := s.firebaseDb.GetData("msgTemplates", []string{bullionId, templateName}, msgTemplate)
+	if err != nil {
+		return &interfaces.RequestError{
+			StatusCode: http.StatusInternalServerError,
+			Code:       interfaces.ERROR_WHILE_FETCHING_MESSAGE_TEMPLATE,
+			Message:    "Message Template NOT Found",
+			Name:       "ERROR_WHILE_FETCHING_MESSAGE_TEMPLATE",
+			Extra:      err,
+		}
+	}
+	msgEntity := &interfaces.MsgEntity{
+		BullionId: bullionId,
+		Number:    number,
+	}
+	msgEntity.Create()
+	if msgTemplate.WhatsappTemplate != "" {
+		s.sendWhatsappMessage(msgTemplate.WhatsappTemplate, templateName, variables, msgEntity)
+	}
+	return nil
+}
+
+func (s *sendMsgService) sendWhatsappMessage(template string, templateName string, variables interface{}, msgEntity *interfaces.MsgEntity) error {
 	jsonMap, err := utility.StructToStringMap(variables)
 	if err != nil {
 		return &interfaces.RequestError{
@@ -211,8 +238,8 @@ func (s *sendMsgService) sendWhatsappMessage(template string, templateName strin
 			Extra:      err,
 		}
 	}
-	routeToPost := otpReqEntity.BullionId
-	bullionDetails, err := s.bullionService.GetBullionDetailsByBullionId(otpReqEntity.BullionId)
+	routeToPost := msgEntity.BullionId
+	bullionDetails, err := s.bullionService.GetBullionDetailsByBullionId(msgEntity.BullionId)
 	if err != nil {
 		return err
 	}
@@ -220,9 +247,9 @@ func (s *sendMsgService) sendWhatsappMessage(template string, templateName strin
 		routeToPost = "common"
 	}
 	message := s.processMessage(template, &jsonMap)
-	err = s.firebaseDb.setPrivateData("whatsappMessage", []string{routeToPost, otpReqEntity.ID}, map[string]string{
+	err = s.firebaseDb.setPrivateData("whatsappMessage", []string{routeToPost, msgEntity.ID}, map[string]string{
 		"message": message,
-		"number":  otpReqEntity.Number,
+		"number":  msgEntity.Number,
 	})
 	if err != nil {
 		return &interfaces.RequestError{
@@ -233,7 +260,7 @@ func (s *sendMsgService) sendWhatsappMessage(template string, templateName strin
 			Extra:      err,
 		}
 	}
-	s.eventBus.Publish(events.CreateWhatsappMessageSendEvent(otpReqEntity.BullionId, templateName, otpReqEntity.Number, message))
+	s.eventBus.Publish(events.CreateWhatsappMessageSendEvent(msgEntity.BullionId, templateName, msgEntity.Number, message))
 	return nil
 }
 func (s *sendMsgService) processMessage(template string, variables *map[string]string) string {

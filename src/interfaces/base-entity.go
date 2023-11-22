@@ -8,8 +8,8 @@ import (
 
 type BaseEntity struct {
 	ID                 string    `bson:"id" json:"id" validate:"required,uuid"`
-	CreatedAtExported  time.Time `bson:"-" json:"createdAt,omitempty" validate:"required"`
-	ModifiedAtExported time.Time `bson:"-" json:"modifiedAt,omitempty" validate:"required"`
+	CreatedAtExported  time.Time `bson:"-" json:"createdAt,omitempty"`
+	ModifiedAtExported time.Time `bson:"-" json:"modifiedAt,omitempty"`
 	CreatedAt          time.Time `bson:"createdAt" json:"-" validate:"required"`
 	ModifiedAt         time.Time `bson:"modifiedAt" json:"-" validate:"required"`
 }

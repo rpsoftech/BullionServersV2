@@ -7,6 +7,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/mitchellh/mapstructure"
+	"github.com/rpsoftech/bullion-server/src/events"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
 	"github.com/rpsoftech/bullion-server/src/mongodb/repos"
 	"github.com/rpsoftech/bullion-server/src/utility"
@@ -145,7 +146,7 @@ func (service *tradeUserServiceStruct) SendOtp(name string, number string, bulli
 		Name:      name,
 		Attempt:   0,
 		ExpiresAt: time.Now(),
-	}, &interfaces.OTPReqVariablesStruct{
+	}, &interfaces.MsgVariablesOTPReqStruct{
 		BullionName: bullionDetails.Name,
 		Name:        name,
 		Number:      number,
@@ -203,7 +204,24 @@ func (service *tradeUserServiceStruct) RegisterNewTradeUser(base *interfaces.Tra
 	}
 	service.tradeUserRepo.Save(entity)
 	service.firebaseDb.setPrivateData("tradeUsersNumbers", []string{entity.BullionId}, newUserNumber)
-	// TODO Create And Publish Event
-	// TODO Create And Send Registration Message
+	go service.afterSuccessFullRegistration(entity.ID)
 	return entity, nil
+}
+
+func (service *tradeUserServiceStruct) afterSuccessFullRegistration(userId string) {
+	tradeUser, err := service.tradeUserRepo.FindOne(userId)
+	if err != nil {
+		return
+	}
+	bullionDetails, err := service.bullionService.GetBullionDetailsByBullionId(tradeUser.BullionId)
+	if err != nil {
+		return
+	}
+	service.eventBus.Publish(events.CreateTradeUserRegisteredEvent(tradeUser.BullionId, tradeUser, tradeUser.ID))
+	service.sendMsgService.SendMessage(tradeUser.BullionId, "tradeUserRegistration", tradeUser.Number, &interfaces.MsgVariableTradeUserRegisteredSuccessFullyStruct{
+		UserIdNumber: tradeUser.UNumber,
+		BullionName:  bullionDetails.Name,
+		Name:         tradeUser.Name,
+		Number:       tradeUser.Number,
+	})
 }
