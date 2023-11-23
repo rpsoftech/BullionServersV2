@@ -40,7 +40,7 @@ func getSendMsgService() *sendMsgService {
 	return SendMsgService
 }
 
-func (s *sendMsgService) SendOtp(otpReq *interfaces.OTPReqBase, variable *interfaces.OTPReqVariablesStruct, otpLength int) (*interfaces.OTPReqEntity, error) {
+func (s *sendMsgService) SendOtp(otpReq *interfaces.OTPReqBase, variable *interfaces.MsgVariablesOTPReqStruct, otpLength int) (*interfaces.OTPReqEntity, error) {
 	data := s.redisRepo.GetStringData("otp/" + otpReq.BullionId + "/" + otpReq.Number)
 	if len(data) > 0 {
 		return nil, &interfaces.RequestError{
@@ -51,7 +51,7 @@ func (s *sendMsgService) SendOtp(otpReq *interfaces.OTPReqBase, variable *interf
 		}
 	}
 	variable.OTP = GenerateOTP(otpLength)
-	entity := interfaces.CreateOTPEntity(otpReq, variable.OTP, "")
+	entity := interfaces.CreateOTPEntity(otpReq, variable.OTP)
 	err := s.prepareAndSendOTP(entity, variable)
 	if err != nil {
 		return nil, err
@@ -62,7 +62,7 @@ func (s *sendMsgService) SendOtp(otpReq *interfaces.OTPReqBase, variable *interf
 
 func (s *sendMsgService) ResendOtp(otpReqId string) error {
 	data := s.redisRepo.GetStringData("otp/" + otpReqId)
-	if len(data) != 1 {
+	if data == "" {
 		return &interfaces.RequestError{
 			StatusCode: http.StatusBadRequest,
 			Code:       interfaces.ERROR_OTP_EXPIRED,
@@ -79,11 +79,22 @@ func (s *sendMsgService) ResendOtp(otpReqId string) error {
 			Message:    "Unable to parse OTP REQ JSON",
 		}
 	}
-	if time.Now().Before(otpReqEntity.ExpiresAt.Add(time.Second * 10)) {
+	otpReqEntity.RestoreTimeStamp()
+	if time.Now().Before(otpReqEntity.ModifiedAt.Add(time.Second * 15)) {
 		return &interfaces.RequestError{
 			StatusCode: http.StatusBadRequest,
 			Code:       interfaces.ERROR_OTP_ALREADY_SENT,
-			Message:    "Please Wait For 10 Seconds Before Requesting",
+			Message:    "Please Wait For 15 Seconds Before Requesting",
+			Name:       "ERROR_OTP_ALREADY_SENT",
+		}
+	}
+	if otpReqEntity.Attempt >= 5 {
+
+		return &interfaces.RequestError{
+			StatusCode: http.StatusBadRequest,
+			Code:       interfaces.ERROR_TOO_MANY_ATTEMPTS,
+			Message:    "OTP REQUESTED TOO MANY TIMES, Wait for 2 Minutes Before Requesting Again",
+			Name:       "ERROR_TOO_MANY_ATTEMPTS",
 		}
 	}
 	otpReqEntity.NewAttempt()
@@ -91,7 +102,7 @@ func (s *sendMsgService) ResendOtp(otpReqId string) error {
 	if err != nil {
 		return err
 	}
-	err = s.prepareAndSendOTP(otpReqEntity, &interfaces.OTPReqVariablesStruct{
+	err = s.prepareAndSendOTP(otpReqEntity, &interfaces.MsgVariablesOTPReqStruct{
 		OTP:         otpReqEntity.OTP,
 		Name:        otpReqEntity.Name,
 		Number:      otpReqEntity.Number,
@@ -104,7 +115,39 @@ func (s *sendMsgService) ResendOtp(otpReqId string) error {
 	return err
 }
 
-func (s *sendMsgService) prepareAndSendOTP(otpReq *interfaces.OTPReqEntity, variable *interfaces.OTPReqVariablesStruct) error {
+func (s *sendMsgService) VerifyOtp(otpReqId string, otp string) error {
+	data := s.redisRepo.GetStringData("otp/" + otpReqId)
+	if data == "" {
+		return &interfaces.RequestError{
+			StatusCode: http.StatusBadRequest,
+			Code:       interfaces.ERROR_OTP_EXPIRED,
+			Message:    "OTP Req Expired",
+			Name:       "ERROR_OTP_EXPIRED",
+		}
+	}
+	otpReqEntity := new(interfaces.OTPReqEntity)
+	err := json.Unmarshal([]byte(data), otpReqEntity)
+	if err != nil {
+		return &interfaces.RequestError{
+			StatusCode: http.StatusInternalServerError,
+			Code:       interfaces.ERROR_INTERNAL_SERVER,
+			Message:    "Unable to parse OTP REQ JSON",
+		}
+	}
+	otpReqEntity.RestoreTimeStamp()
+	if otpReqEntity.OTP != otp {
+		return &interfaces.RequestError{
+			StatusCode: http.StatusBadRequest,
+			Code:       interfaces.ERROR_OTP_INVALID,
+			Message:    "Invalid OTP",
+			Name:       "ERROR_OTP_INVALID",
+		}
+	}
+	s.eventBus.Publish(events.CreateOtpVerifiedEvent(otpReqEntity))
+	return nil
+}
+
+func (s *sendMsgService) prepareAndSendOTP(otpReq *interfaces.OTPReqEntity, variable *interfaces.MsgVariablesOTPReqStruct) error {
 	msgTemplate := new(interfaces.MsgTemplateBase)
 	err := s.firebaseDb.GetData("msgTemplates", []string{otpReq.BullionId, "otp"}, msgTemplate)
 	if msgTemplate.WhatsappTemplate == "" && msgTemplate.MSG91Id == "" {
@@ -131,7 +174,11 @@ func (s *sendMsgService) prepareAndSendOTP(otpReq *interfaces.OTPReqEntity, vari
 	if err != nil {
 		return err
 	}
-	err = s.sendWhatsappMessage(msgTemplate.WhatsappTemplate, "OTP", variable, otpReq)
+	err = s.sendWhatsappMessage(msgTemplate.WhatsappTemplate, "OTP", variable, &interfaces.MsgEntity{
+		BullionId:  otpReq.BullionId,
+		Number:     otpReq.Number,
+		BaseEntity: otpReq.BaseEntity,
+	})
 	if err != nil {
 		return err
 	}
@@ -140,6 +187,7 @@ func (s *sendMsgService) prepareAndSendOTP(otpReq *interfaces.OTPReqEntity, vari
 
 func (s *sendMsgService) saveAndUpdateOTPService(otpEntity *interfaces.OTPReqEntity) error {
 	otpEntity.ExpiresAt = otpEntity.ExpiresAt.Add(120 * time.Second)
+	otpEntity.AddTimeStamps()
 	otpEntityStringBytes, err := json.Marshal(otpEntity)
 	if err != nil {
 		return &interfaces.RequestError{
@@ -156,7 +204,30 @@ func (s *sendMsgService) saveAndUpdateOTPService(otpEntity *interfaces.OTPReqEnt
 	return nil
 }
 
-func (s *sendMsgService) sendWhatsappMessage(template string, templateName string, variables interface{}, otpReqEntity *interfaces.OTPReqEntity) error {
+func (s *sendMsgService) SendMessage(bullionId string, templateName string, number string, variables interface{}) error {
+	msgTemplate := new(interfaces.MsgTemplateBase)
+	err := s.firebaseDb.GetData("msgTemplates", []string{bullionId, templateName}, msgTemplate)
+	if err != nil {
+		return &interfaces.RequestError{
+			StatusCode: http.StatusInternalServerError,
+			Code:       interfaces.ERROR_WHILE_FETCHING_MESSAGE_TEMPLATE,
+			Message:    "Message Template NOT Found",
+			Name:       "ERROR_WHILE_FETCHING_MESSAGE_TEMPLATE",
+			Extra:      err,
+		}
+	}
+	msgEntity := &interfaces.MsgEntity{
+		BullionId: bullionId,
+		Number:    number,
+	}
+	msgEntity.Create()
+	if msgTemplate.WhatsappTemplate != "" {
+		s.sendWhatsappMessage(msgTemplate.WhatsappTemplate, templateName, variables, msgEntity)
+	}
+	return nil
+}
+
+func (s *sendMsgService) sendWhatsappMessage(template string, templateName string, variables interface{}, msgEntity *interfaces.MsgEntity) error {
 	jsonMap, err := utility.StructToStringMap(variables)
 	if err != nil {
 		return &interfaces.RequestError{
@@ -167,8 +238,8 @@ func (s *sendMsgService) sendWhatsappMessage(template string, templateName strin
 			Extra:      err,
 		}
 	}
-	routeToPost := otpReqEntity.BullionId
-	bullionDetails, err := s.bullionService.GetBullionDetailsByBullionId(otpReqEntity.BullionId)
+	routeToPost := msgEntity.BullionId
+	bullionDetails, err := s.bullionService.GetBullionDetailsByBullionId(msgEntity.BullionId)
 	if err != nil {
 		return err
 	}
@@ -176,9 +247,9 @@ func (s *sendMsgService) sendWhatsappMessage(template string, templateName strin
 		routeToPost = "common"
 	}
 	message := s.processMessage(template, &jsonMap)
-	err = s.firebaseDb.setPrivateData("whatsappMessage", []string{routeToPost, otpReqEntity.ID}, map[string]string{
+	err = s.firebaseDb.setPrivateData("whatsappMessage", []string{routeToPost, msgEntity.ID}, map[string]string{
 		"message": message,
-		"number":  otpReqEntity.Number,
+		"number":  msgEntity.Number,
 	})
 	if err != nil {
 		return &interfaces.RequestError{
@@ -189,7 +260,7 @@ func (s *sendMsgService) sendWhatsappMessage(template string, templateName strin
 			Extra:      err,
 		}
 	}
-	s.eventBus.Publish(events.CreateWhatsappMessageSendEvent(otpReqEntity.BullionId, templateName, otpReqEntity.Number, message))
+	s.eventBus.Publish(events.CreateWhatsappMessageSendEvent(msgEntity.BullionId, templateName, msgEntity.Number, message))
 	return nil
 }
 func (s *sendMsgService) processMessage(template string, variables *map[string]string) string {
@@ -200,9 +271,6 @@ func (s *sendMsgService) processMessage(template string, variables *map[string]s
 	return template
 }
 
-// func (s *sendMsgService) sendMsg91(){}
-
-// func (s *sendMsgService)
 var table = [...]byte{'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'}
 
 func GenerateOTP(max int) string {
