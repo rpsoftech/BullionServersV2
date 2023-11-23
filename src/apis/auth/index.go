@@ -21,8 +21,6 @@ func AddAuthPackages(router fiber.Router) {
 	{
 		adminAuthGroup := router.Group("admin")
 		adminAuthGroup.Post("/login", apiAdminLogin)
-		// adminApiGroup := adminAuthGroup.Use(middleware.AllowOnlyBigAdmins.Validate)
-
 	}
 	{
 		tradeUserGroup := router.Group("trade-user")

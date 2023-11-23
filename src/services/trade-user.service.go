@@ -176,7 +176,7 @@ func (service *tradeUserServiceStruct) VerifyTokenAndVerifyOTP(token string, otp
 			Gold:   0,
 			Silver: 0,
 		},
-		AvailableMargins: &interfaces.UserMarginsDataStruct{
+		UsedMargins: &interfaces.UserMarginsDataStruct{
 			Gold:   0,
 			Silver: 0,
 		},
@@ -225,3 +225,9 @@ func (service *tradeUserServiceStruct) afterSuccessFullRegistration(userId strin
 		Number:       tradeUser.Number,
 	})
 }
+
+// func (service *tradeUserServiceStruct) generateTokensForTradeUser(userId string) (*interfaces.TradeUserEntity, error) {
+
+// }
+
+// func (service *tradeUserServiceStruct) UpdateTradeUserDetails(){}

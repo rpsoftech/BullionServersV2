@@ -22,8 +22,8 @@ type (
 	}
 
 	TradeUserMargins struct {
-		AllotedMargins   *UserMarginsDataStruct `bson:"allotedMargins" json:"allotedMargins" validate:"required"`
-		AvailableMargins *UserMarginsDataStruct `bson:"availableMargins" json:"availableMargins" validate:"required"`
+		AllotedMargins *UserMarginsDataStruct `bson:"allotedMargins" json:"allotedMargins" validate:"required"`
+		UsedMargins    *UserMarginsDataStruct `bson:"usedMargins" json:"availableMargins" validate:"required"`
 	}
 
 	TradeUserEntity struct {

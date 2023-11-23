@@ -60,7 +60,7 @@ func CreateTradeUserMarginModifiedEvent(bullionId string, tradeUser *interfaces.
 			BullionId: bullionId,
 			KeyId:     tradeUser.ID,
 			AdminId:   adminId,
-			Payload:   tradeUser.AvailableMargins,
+			Payload:   tradeUser.UsedMargins,
 			EventName: "TradeUserMarginModifiedEvent",
 		},
 	}
