@@ -32,8 +32,10 @@ func init() {
 	ProductGroupMapRepo = &ProductGroupMapRepoStruct{
 		collection: coll,
 	}
+
 	addUniqueIndexesToCollection([]string{"id"}, ProductGroupMapRepo.collection)
 	addUniqueIndexesToCollection([]string{"groupId", "productId"}, ProductGroupMapRepo.collection)
+	addComboIndexesToCollection([]string{"bullionId", "groupId"}, ProductGroupMapRepo.collection)
 	addIndexesToCollection([]string{"bullionId", "createdAt", "groupId"}, ProductGroupMapRepo.collection)
 }
 

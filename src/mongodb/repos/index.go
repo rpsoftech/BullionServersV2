@@ -40,6 +40,7 @@ func addIndexesToCollection(indexesString []string, collection *mongo.Collection
 	}
 	collection.Indexes().CreateMany(mongodb.MongoCtx, indexArray)
 }
+
 func addUniqueIndexesToCollection(UniqueIndexes []string, collection *mongo.Collection) {
 	indexes := make([]mongo.IndexModel, len(UniqueIndexes))
 	for i, element := range UniqueIndexes {
@@ -49,4 +50,14 @@ func addUniqueIndexesToCollection(UniqueIndexes []string, collection *mongo.Coll
 		}
 	}
 	collection.Indexes().CreateMany(mongodb.MongoCtx, indexes)
+}
+
+func addComboIndexesToCollection(UniqueIndexes []string, collection *mongo.Collection) {
+	i := bson.D{}
+	for _, element := range UniqueIndexes {
+		i = append(i, bson.E{Key: element, Value: 1})
+	}
+	collection.Indexes().CreateOne(mongodb.MongoCtx, mongo.IndexModel{
+		Keys: i,
+	})
 }
