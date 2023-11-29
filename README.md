@@ -23,6 +23,16 @@ To run this project, you will need to add the following environment variables to
 
 `REFRESH_TOKEN_KEY` 128 char long string
 
+`FIREBASE_JSON_STRING` Firebase Admin Serialized JSON
+
+`FIREBASE_DATABASE_URL` Firebase Realtime Database URL
+
+`REDIS_DB_URL` Redis Database URL `"host:port" "127.0.0.1:7777"`
+
+`REDIS_DB_PASSWORD` (Optional)Redis Database Password
+
+`REDIS_DB_DATABASE` (Optional)Redis Database Number
+
 ## Authors
 
 - [Keyur Shah](https://www.github.com/keyurboss)
