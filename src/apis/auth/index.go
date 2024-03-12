@@ -29,5 +29,6 @@ func AddAuthPackages(router fiber.Router) {
 		tradeUserGroup.Post("register", apiTradeUserRegister)
 		tradeUserGroup.Post("resend-otp", apiTradeUserResendOtp)
 		tradeUserGroup.Put("verify-otp", apiTradeUserVerifyOtp)
+		tradeUserGroup.Post("login-number", apiTradeUserLoginNumber)
 	}
 }

@@ -199,6 +199,8 @@ func (service *tradeUserServiceStruct) RegisterNewTradeUser(base *interfaces.Tra
 	service.firebaseDb.GetData("tradeUsersNumbers", []string{entity.BullionId}, &newUserNumber)
 	newUserNumber++
 	entity.UNumber = strconv.Itoa(newUserNumber)
+	// raw, _ := bson.Marshal(entity)
+	// fmt.Printf("raw: %v\n", string(raw))
 	if err := utility.ValidateReqInput(entity); err != nil {
 		return nil, err
 	}
@@ -225,6 +227,48 @@ func (service *tradeUserServiceStruct) afterSuccessFullRegistration(userId strin
 		Number:       tradeUser.Number,
 	})
 }
+
+func (service *tradeUserServiceStruct) LoginWithNumberAndPassword(number string, password string, bullionId string) (*interfaces.TradeUserEntity, error) {
+	tradeUser, err := service.tradeUserRepo.FindOneByNumber(bullionId, number)
+	if err != nil || tradeUser == nil {
+		return nil, &interfaces.RequestError{
+			StatusCode: http.StatusUnauthorized,
+			Code:       interfaces.ERROR_ENTITY_NOT_FOUND,
+			Message:    "User Not Registered With Number",
+			Name:       "Number not found",
+		}
+	}
+	if tradeUser.TradeUserBase.RawPassword != password {
+		return nil, &interfaces.RequestError{
+			StatusCode: http.StatusUnauthorized,
+			Code:       interfaces.ERROR_INVALID_PASSWORD,
+			Message:    "Incorrect Password",
+			Name:       "ERROR_INVALID_PASSWORD",
+		}
+	}
+	return tradeUser, nil
+}
+
+// func (service *tradeUserServiceStruct) FindUserByNumberAndPassword(number string, password string, bullionId string) (*interfaces.TradeUserEntity, error) {
+// 	tradeUser, err := service.tradeUserRepo.FindOneByNumber(bullionId, number)
+// 	if err != nil || tradeUser == nil {
+// 		return nil, &interfaces.RequestError{
+// 			StatusCode: http.StatusUnauthorized,
+// 			Code:       interfaces.ERROR_ENTITY_NOT_FOUND,
+// 			Message:    "User Not Registered With Number",
+// 			Name:       "Number not found",
+// 		}
+// 	}
+// 	if !tradeUser.MatchPassword(password) {
+// 		return nil, &interfaces.RequestError{
+// 			StatusCode: http.StatusUnauthorized,
+// 			Code:       interfaces.ERROR_INVALID_PASSWORD,
+// 			Message:    "Incorrect Password",
+// 			Name:       "ERROR_INVALID_PASSWORD",
+// 		}
+// 	}
+// 	return tradeUser, nil
+// }
 
 // func (service *tradeUserServiceStruct) generateTokensForTradeUser(userId string) (*interfaces.TradeUserEntity, error) {
 
