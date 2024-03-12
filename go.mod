@@ -7,9 +7,9 @@ require (
 	firebase.google.com/go/v4 v4.12.1
 	github.com/go-faker/faker/v4 v4.2.0
 	github.com/go-playground/validator/v10 v10.15.5
-	github.com/gofiber/fiber/v2 v2.50.0
+	github.com/gofiber/fiber/v2 v2.52.1
 	github.com/golang-jwt/jwt/v5 v5.0.0
-	github.com/google/uuid v1.3.1
+	github.com/google/uuid v1.5.0
 	github.com/joho/godotenv v1.5.1
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/redis/go-redis/v9 v9.2.1
@@ -47,7 +47,7 @@ require (
 	github.com/montanaflynn/stats v0.7.1 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.50.0 // indirect
+	github.com/valyala/fasthttp v1.51.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
