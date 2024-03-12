@@ -50,3 +50,7 @@ func (user *TradeUserEntity) UpdateUser() (r *TradeUserEntity) {
 	user.Updated()
 	return user
 }
+func (user *TradeUserEntity) DeletePassword() (r *TradeUserEntity) {
+	user.RawPassword = ""
+	return user
+}

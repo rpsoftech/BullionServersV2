@@ -4,6 +4,7 @@ import "golang.org/x/crypto/bcrypt"
 
 type passwordEntity struct {
 	Password []byte `bson:"password" json:"-" validate:"required"`
+	// Password []byte `bson:"hashedPassword" json:"-" validate:"required"`
 }
 
 func (e *passwordEntity) MatchPassword(password string) bool {

@@ -54,6 +54,19 @@ func CreateTradeUserDisabledEvent(bullionId string, tradeUser *interfaces.TradeU
 	return event.BaseEvent
 }
 
+func CreateTradeUserUpdated(bullionId string, tradeUser *interfaces.TradeUserEntity, adminId string) *BaseEvent {
+	event := &tradeUserEvent{
+		BaseEvent: &BaseEvent{
+			BullionId: bullionId,
+			KeyId:     tradeUser.ID,
+			AdminId:   adminId,
+			Payload:   tradeUser,
+			EventName: "TradeUserUpdatedEvent",
+		},
+	}
+	event.Add()
+	return event.BaseEvent
+}
 func CreateTradeUserMarginModifiedEvent(bullionId string, tradeUser *interfaces.TradeUserEntity, adminId string) *BaseEvent {
 	event := &tradeUserEvent{
 		BaseEvent: &BaseEvent{

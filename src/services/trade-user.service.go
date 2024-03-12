@@ -199,6 +199,8 @@ func (service *tradeUserServiceStruct) RegisterNewTradeUser(base *interfaces.Tra
 	service.firebaseDb.GetData("tradeUsersNumbers", []string{entity.BullionId}, &newUserNumber)
 	newUserNumber++
 	entity.UNumber = strconv.Itoa(newUserNumber)
+	// raw, _ := bson.Marshal(entity)
+	// fmt.Printf("raw: %v\n", string(raw))
 	if err := utility.ValidateReqInput(entity); err != nil {
 		return nil, err
 	}
@@ -226,8 +228,142 @@ func (service *tradeUserServiceStruct) afterSuccessFullRegistration(userId strin
 	})
 }
 
-// func (service *tradeUserServiceStruct) generateTokensForTradeUser(userId string) (*interfaces.TradeUserEntity, error) {
+func (service *tradeUserServiceStruct) LoginWithEmailAndPassword(email string, password string, bullionId string) (*interfaces.TokenResponseBody, error) {
+	tradeUser, err := service.tradeUserRepo.FindOneByEmail(bullionId, email)
+	if err != nil || tradeUser == nil {
+		return nil, &interfaces.RequestError{
+			StatusCode: http.StatusUnauthorized,
+			Code:       interfaces.ERROR_ENTITY_NOT_FOUND,
+			Message:    "User Not Registered With Number",
+			Name:       "Number not found",
+		}
+	}
+	return service.generateTokensForTradeUserWithPasswordMatching(tradeUser, password)
+}
+func (service *tradeUserServiceStruct) LoginWithUNumberAndPassword(uNumber string, password string, bullionId string) (*interfaces.TokenResponseBody, error) {
+	tradeUser, err := service.tradeUserRepo.FindOneByUNumber(bullionId, uNumber)
+	if err != nil || tradeUser == nil {
+		return nil, &interfaces.RequestError{
+			StatusCode: http.StatusUnauthorized,
+			Code:       interfaces.ERROR_ENTITY_NOT_FOUND,
+			Message:    "User Not Registered With Number",
+			Name:       "Number not found",
+		}
+	}
+	return service.generateTokensForTradeUserWithPasswordMatching(tradeUser, password)
+}
+func (service *tradeUserServiceStruct) LoginWithNumberAndPassword(number string, password string, bullionId string) (*interfaces.TokenResponseBody, error) {
+	tradeUser, err := service.tradeUserRepo.FindOneByNumber(bullionId, number)
+	if err != nil || tradeUser == nil {
+		return nil, &interfaces.RequestError{
+			StatusCode: http.StatusUnauthorized,
+			Code:       interfaces.ERROR_ENTITY_NOT_FOUND,
+			Message:    "User Not Registered With Number",
+			Name:       "Number not found",
+		}
+	}
+	return service.generateTokensForTradeUserWithPasswordMatching(tradeUser, password)
+}
 
+func (service *tradeUserServiceStruct) UpdateTradeUser(entity *interfaces.TradeUserEntity, adminId string) error {
+	user, err := service.tradeUserRepo.FindOne(entity.ID)
+	if err != nil {
+		return err
+	}
+	if user.BullionId != entity.BullionId {
+		return &interfaces.RequestError{
+			StatusCode: http.StatusUnauthorized,
+			Code:       interfaces.ERROR_PERMISSION_NOT_ALLOWED,
+			Message:    "Cannot Update Different Bullion Id User",
+			Name:       "CANNOT_UPDATE_DIFFERENT_BULLION_ID_USER",
+		}
+	}
+	user.TradeUserBase = entity.TradeUserBase
+	user.TradeUserAdvanced.IsActive = entity.TradeUserAdvanced.IsActive
+	user.TradeUserMargins = entity.TradeUserMargins
+	service.tradeUserRepo.Save(user)
+	service.eventBus.Publish(events.CreateTradeUserUpdated(entity.BullionId, user, adminId))
+	return nil
+}
+
+func (service *tradeUserServiceStruct) generateTokensForTradeUserWithPasswordMatching(tradeUser *interfaces.TradeUserEntity, password string) (*interfaces.TokenResponseBody, error) {
+	if tradeUser.TradeUserBase.RawPassword != password {
+		return nil, &interfaces.RequestError{
+			StatusCode: http.StatusUnauthorized,
+			Code:       interfaces.ERROR_INVALID_PASSWORD,
+			Message:    "Incorrect Password",
+			Name:       "ERROR_INVALID_PASSWORD",
+		}
+	}
+	if !tradeUser.IsActive {
+		return nil, &interfaces.RequestError{
+			StatusCode: http.StatusUnauthorized,
+			Code:       interfaces.ERROR_PERMISSION_NOT_ALLOWED,
+			Message:    "Account Is Not Active Please Contact Admin",
+			Name:       "ERROR_PERMISSION_NOT_ALLOWED",
+		}
+	}
+	return service.generateTokensForTradeUser(tradeUser)
+}
+
+func (service *tradeUserServiceStruct) FindOneUserById(id string) (*interfaces.TradeUserEntity, error) {
+	return service.tradeUserRepo.FindOne(id)
+}
+func (service *tradeUserServiceStruct) TradeUserChangeStatus(id string, bullionId string, isActive bool, adminId string) error {
+	entity, err := service.tradeUserRepo.FindOne(id)
+	if entity.BullionId != bullionId {
+		return &interfaces.RequestError{
+			StatusCode: http.StatusUnauthorized,
+			Code:       interfaces.ERROR_MISMATCH_BULLION_ID,
+			Message:    "Bullion Id Mismatch For Trade User",
+			Name:       "BULLION_ID_MISMATCH_FOR_TRADE_USER",
+		}
+	}
+
+	if err != nil {
+		return err
+	}
+	entity.IsActive = isActive
+	service.tradeUserRepo.Save(entity)
+	if isActive {
+		service.eventBus.Publish(events.CreateTradeUserActivatedEvent(entity.BullionId, entity, adminId))
+	} else {
+		service.eventBus.Publish(events.CreateTradeUserDisabledEvent(entity.BullionId, entity, adminId))
+
+	}
+	return nil
+}
+
+// func (service *tradeUserServiceStruct) FindUserByNumberAndPassword(number string, password string, bullionId string) (*interfaces.TradeUserEntity, error) {
+// 	tradeUser, err := service.tradeUserRepo.FindOneByNumber(bullionId, number)
+// 	if err != nil || tradeUser == nil {
+// 		return nil, &interfaces.RequestError{
+// 			StatusCode: http.StatusUnauthorized,
+// 			Code:       interfaces.ERROR_ENTITY_NOT_FOUND,
+// 			Message:    "User Not Registered With Number",
+// 			Name:       "Number not found",
+// 		}
+// 	}
+// 	if !tradeUser.MatchPassword(password) {
+// 		return nil, &interfaces.RequestError{
+// 			StatusCode: http.StatusUnauthorized,
+// 			Code:       interfaces.ERROR_INVALID_PASSWORD,
+// 			Message:    "Incorrect Password",
+// 			Name:       "ERROR_INVALID_PASSWORD",
+// 		}
+// 	}
+// 	return tradeUser, nil
 // }
+
+//	func (service *tradeUserServiceStruct) generateTokensForTradeUserById(userId string) (*interfaces.TokenResponseBody, error) {
+//		user, err := service.tradeUserRepo.FindOne(userId)
+//		if err != nil {
+//			return nil, err
+//		}
+//		return service.generateTokensForTradeUser(user)
+//	}
+func (service *tradeUserServiceStruct) generateTokensForTradeUser(user *interfaces.TradeUserEntity) (*interfaces.TokenResponseBody, error) {
+	return generateTokens(user.ID, user.BullionId, interfaces.ROLE_TRADE_USER)
+}
 
 // func (service *tradeUserServiceStruct) UpdateTradeUserDetails(){}
