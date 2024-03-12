@@ -8,12 +8,12 @@ type (
 		Email       string `bson:"email" json:"email" validate:"required"`
 		CompanyName string `bson:"companyName" json:"companyName" validate:"required,min=2,max=50"`
 		GstNumber   string `bson:"gstNumber" json:"gstNumber" validate:"required,gstNumber"`
-		RawPassword string ` json:"password" validate:"required,min=4"`
+		RawPassword string `bson:"rawPassword" json:"password" mapstructure:"password" validate:"required,min=4"`
 	}
 
 	TradeUserAdvanced struct {
 		UserName string `bson:"userName" json:"userName" validate:"required"`
-		IsActive bool   `bson:"isActive" json:"isActive" validate:"required"`
+		IsActive bool   `bson:"isActive" json:"isActive" validate:"boolean"`
 		UNumber  string `bson:"uNumber" json:"uNumber" validate:"required"`
 	}
 	UserMarginsDataStruct struct {
@@ -22,8 +22,8 @@ type (
 	}
 
 	TradeUserMargins struct {
-		AllotedMargins   UserMarginsDataStruct `bson:"allotedMargins" json:"allotedMargins" validate:"required"`
-		AvailableMargins UserMarginsDataStruct `bson:"availableMargins" json:"availableMargins" validate:"required"`
+		AllotedMargins *UserMarginsDataStruct `bson:"allotedMargins" json:"allotedMargins" validate:"required"`
+		UsedMargins    *UserMarginsDataStruct `bson:"usedMargins" json:"availableMargins" validate:"required"`
 	}
 
 	TradeUserEntity struct {
@@ -31,7 +31,7 @@ type (
 		*TradeUserBase     `bson:"inline"`
 		*passwordEntity    `bson:"inline"`
 		*TradeUserAdvanced `bson:"inline"`
-		*TradeUserMargins  `bson:"inline"`
+		*TradeUserMargins  `bson:"margins" json:"margins"`
 	}
 
 	ApiTradeUserRegisterResponse struct {
@@ -42,5 +42,15 @@ type (
 
 func (user *TradeUserEntity) CreateNew() (r *TradeUserEntity) {
 	user.createNewId()
+	return user
+}
+
+func (user *TradeUserEntity) UpdateUser() (r *TradeUserEntity) {
+	user.passwordEntity = CreatePasswordEntity(user.RawPassword)
+	user.Updated()
+	return user
+}
+func (user *TradeUserEntity) DeletePassword() (r *TradeUserEntity) {
+	user.RawPassword = ""
 	return user
 }
