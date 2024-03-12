@@ -1,6 +1,6 @@
 module github.com/rpsoftech/bullion-server
 
-go 1.21.1
+go 1.21.6
 
 require (
 	cloud.google.com/go/firestore v1.15.0
