@@ -14,14 +14,18 @@ type apiGetTradeUserDetailsBody struct {
 
 func apiCreateNewTradeGroup(c *fiber.Ctx) error {
 	body := new(apiGetTradeUserDetailsBody)
-	c.QueryParser(body)
+	c.BodyParser(body)
 	if err := utility.ValidateReqInput(body); err != nil {
 		return err
 	}
 	if err := interfaces.ValidateBullionIdMatchingInToken(c, body.BullionId); err != nil {
 		return err
 	}
-	entity, err := services.TradeUserGroupService.CreateNewTradeUserGroup(body.BullionId, body.Name)
+	userID, err := interfaces.ExtractTokenUserIdFromCtx(c)
+	if err != nil {
+		return err
+	}
+	entity, err := services.TradeUserGroupService.CreateNewTradeUserGroup(body.BullionId, body.Name, userID)
 	if err != nil {
 		return err
 	} else {

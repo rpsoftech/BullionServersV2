@@ -1,6 +1,7 @@
 package services
 
 import (
+	"github.com/rpsoftech/bullion-server/src/events"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
 	"github.com/rpsoftech/bullion-server/src/mongodb/repos"
 	"github.com/rpsoftech/bullion-server/src/redis"
@@ -39,7 +40,7 @@ func getTradeUserGroupService() *tradeUserGroupService {
 }
 
 // Create New Trade User Group And Create Mapping
-func (t *tradeUserGroupService) CreateNewTradeUserGroup(bullionId string, name string) (*interfaces.TradeUserGroupEntity, error) {
+func (t *tradeUserGroupService) CreateNewTradeUserGroup(bullionId string, name string, adminId string) (*interfaces.TradeUserGroupEntity, error) {
 	entity := &interfaces.TradeUserGroupEntity{
 		BaseEntity: &interfaces.BaseEntity{},
 		TradeUserGroupBase: &interfaces.TradeUserGroupBase{
@@ -54,22 +55,23 @@ func (t *tradeUserGroupService) CreateNewTradeUserGroup(bullionId string, name s
 	if _, err := t.tradeUserGroupRepo.Save(entity); err != nil {
 		return nil, err
 	}
-	err := t.createGroupMapFromNewGroup(entity.ID, bullionId)
+	err := t.createGroupMapFromNewGroup(entity.ID, bullionId, adminId)
 	if err != nil {
 		return nil, err
 	}
+	t.eventBus.Publish(events.CreateTradeUserGroupCreated(bullionId, entity, adminId))
 	return entity, nil
 }
 
-func (t *tradeUserGroupService) createGroupMapFromNewGroup(groupId string, bullionId string) error {
+func (t *tradeUserGroupService) createGroupMapFromNewGroup(groupId string, bullionId string, adminId string) error {
 	entities, err := t.productService.GetProductsByBullionId(bullionId)
 	if err != nil {
 		return err
 	}
-	groupMapEntity := make([]interfaces.TradeUserGroupMapEntity, len(*entities))
+	groupMapEntities := make([]interfaces.TradeUserGroupMapEntity, len(*entities))
 
 	for i, entity := range *entities {
-		groupMapEntity[i] = interfaces.TradeUserGroupMapEntity{
+		groupMapEntities[i] = interfaces.TradeUserGroupMapEntity{
 			BaseEntity: &interfaces.BaseEntity{},
 			TradeUserGroupMapBase: &interfaces.TradeUserGroupMapBase{
 				BullionId: bullionId,
@@ -88,8 +90,9 @@ func (t *tradeUserGroupService) createGroupMapFromNewGroup(groupId string, bulli
 				},
 			},
 		}
-		groupMapEntity[i].CreateNew()
+		groupMapEntities[i].CreateNew()
 	}
-	t.productGroupMapRepo.BulkUpdate(&groupMapEntity)
+	t.productGroupMapRepo.BulkUpdate(&groupMapEntities)
+	t.eventBus.Publish(events.CreateTradeUserGroupMapUpdated(bullionId, &groupMapEntities, groupId, adminId))
 	return nil
 }

@@ -34,7 +34,7 @@ func init() {
 	}
 
 	addUniqueIndexesToCollection([]string{"id"}, ProductGroupMapRepo.collection)
-	addUniqueIndexesToCollection([]string{"groupId", "productId"}, ProductGroupMapRepo.collection)
+	addComboUniqueIndexesToCollection([]string{"groupId", "productId"}, ProductGroupMapRepo.collection)
 	addComboIndexesToCollection([]string{"bullionId", "groupId"}, ProductGroupMapRepo.collection)
 	addIndexesToCollection([]string{"bullionId", "createdAt", "groupId"}, ProductGroupMapRepo.collection)
 }
@@ -80,7 +80,7 @@ func (repo *ProductGroupMapRepoStruct) BulkUpdate(entities *[]interfaces.TradeUs
 		}
 		entity.Updated()
 		models[i] = mongo.NewUpdateOneModel().SetFilter(bson.D{{Key: "_id", Value: entity.ID}}).SetUpdate(
-			bson.D{{Key: "$set", Value: entity}})
+			bson.D{{Key: "$set", Value: entity}}).SetUpsert(true)
 	}
 	_, err := repo.collection.BulkWrite(mongodb.MongoCtx, models)
 	if err != nil {
