@@ -67,7 +67,6 @@ func CreateProductSequenceChangedEvent(bullionId string, product *[]interfaces.P
 		}
 		event.Add()
 		events[i] = *event.BaseEvent
-
 	}
 	return &events
 }

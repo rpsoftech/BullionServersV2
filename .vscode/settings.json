@@ -14,6 +14,7 @@
         "Phonenumber",
         "rpsoftech",
         "tradeuser",
+        "tradeusergroup",
         "Upsert"
     ]
 }

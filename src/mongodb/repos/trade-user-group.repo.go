@@ -33,6 +33,7 @@ func init() {
 		collection: coll,
 	}
 	addUniqueIndexesToCollection([]string{"id"}, TradeUserGroupRepo.collection)
+	addComboUniqueIndexesToCollection([]string{"bullionId", "name"}, TradeUserGroupRepo.collection)
 	addIndexesToCollection([]string{"bullionId", "createdAt"}, TradeUserGroupRepo.collection)
 }
 

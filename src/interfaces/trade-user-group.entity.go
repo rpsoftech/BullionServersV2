@@ -25,11 +25,18 @@ type (
 		IsActive          bool   `bson:"isActive" json:"isActive" validate:"boolean"`
 		CanTrade          bool   `bson:"canTrade" json:"canTrade" validate:"boolean"`
 		*GroupPremiumBase `bson:"groupPremiumBase" json:"groupPremiumBase" validate:"required"`
+		*GroupVolumeBase  `bson:"groupVolumeBase" json:"groupVolumeBase" validate:"required"`
 	}
 
 	GroupPremiumBase struct {
 		Buy  float64 `bson:"buy" json:"buy"`
 		Sell float64 `bson:"sell" json:"sell"`
+	}
+
+	GroupVolumeBase struct {
+		OneClick int `bson:"oneClick" json:"oneClick"`
+		Step     int `bson:"step" json:"step"`
+		Total    int `bson:"total" json:"total"`
 	}
 )
 

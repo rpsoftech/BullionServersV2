@@ -67,6 +67,37 @@ func (repo *ProductGroupMapRepoStruct) Save(entity *interfaces.TradeUserGroupMap
 	return entity, err
 }
 
+func (repo *ProductGroupMapRepoStruct) BulkUpdate(entities *[]interfaces.TradeUserGroupMapEntity) (*[]interfaces.TradeUserGroupMapEntity, error) {
+	models := make([]mongo.WriteModel, len(*entities))
+	for i, entity := range *entities {
+		if err := utility.ValidateStructAndReturnReqError(entity, &interfaces.RequestError{
+			StatusCode: http.StatusBadRequest,
+			Code:       interfaces.ERROR_INVALID_ENTITY,
+			Message:    "",
+			Name:       "ERROR_INVALID_ENTITY",
+		}); err != nil {
+			return nil, err
+		}
+		entity.Updated()
+		models[i] = mongo.NewUpdateOneModel().SetFilter(bson.D{{Key: "_id", Value: entity.ID}}).SetUpdate(
+			bson.D{{Key: "$set", Value: entity}})
+	}
+	_, err := repo.collection.BulkWrite(mongodb.MongoCtx, models)
+	if err != nil {
+		if !errors.Is(err, mongo.ErrNoDocuments) {
+			err = &interfaces.RequestError{
+				StatusCode: 500,
+				Code:       interfaces.ERROR_INTERNAL_SERVER,
+				Message:    fmt.Sprintf("Internal Server Error: %s", err.Error()),
+				Name:       "INTERNAL_ERROR",
+			}
+		} else {
+			err = nil
+		}
+	}
+	return entities, err
+}
+
 func (repo *ProductGroupMapRepoStruct) findByFilter(filter *mongoDbFilter) (*[]interfaces.TradeUserGroupMapEntity, error) {
 	var result []interfaces.TradeUserGroupMapEntity
 	opt := options.Find()
@@ -117,7 +148,6 @@ func (repo *ProductGroupMapRepoStruct) GetAllByGroupId(groupId string) (*[]inter
 
 func (repo *ProductGroupMapRepoStruct) FindOne(id string) (*interfaces.TradeUserGroupMapEntity, error) {
 	var result interfaces.TradeUserGroupMapEntity
-
 	err := repo.collection.FindOne(mongodb.MongoCtx, bson.D{{
 		Key: "id", Value: id,
 	}}).Decode(&result)
