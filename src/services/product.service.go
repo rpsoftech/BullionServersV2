@@ -54,6 +54,7 @@ func (service *productService) AddNewProduct(productBase *interfaces.ProductBase
 	if err != nil {
 		return nil, err
 	}
+	getTradeUserGroupService().CreateGroupMapFromNewProduct(entity.ID, entity.BullionId, adminId)
 	event := events.CreateProductCreatedEvent(entity.BullionId, entity.ID, entity, adminId)
 	service.eventBus.Publish(event.BaseEvent)
 	return entity, nil

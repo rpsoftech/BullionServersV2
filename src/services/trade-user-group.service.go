@@ -102,3 +102,40 @@ func (t *tradeUserGroupService) createGroupMapFromNewGroup(groupId string, bulli
 	t.eventBus.Publish(events.CreateTradeUserGroupMapUpdated(bullionId, &groupMapEntities, groupId, adminId))
 	return nil
 }
+
+func (t *tradeUserGroupService) CreateGroupMapFromNewProduct(productId string, bullionId string, adminId string) error {
+	entities, err := t.tradeUserGroupRepo.GetAllByBullionId(bullionId)
+	if err != nil {
+		return err
+	}
+	groupMapEntities := make([]interfaces.TradeUserGroupMapEntity, len(*entities))
+	for i, entity := range *entities {
+		groupMapEntities[i] = interfaces.TradeUserGroupMapEntity{
+			BaseEntity: &interfaces.BaseEntity{},
+			TradeUserGroupMapBase: &interfaces.TradeUserGroupMapBase{
+				BullionId: bullionId,
+				GroupId:   entity.ID,
+				ProductId: productId,
+				IsActive:  false,
+				CanTrade:  false,
+				GroupPremiumBase: &interfaces.GroupPremiumBase{
+					Buy:  0,
+					Sell: 0,
+				},
+				GroupVolumeBase: &interfaces.GroupVolumeBase{
+					OneClick: 0,
+					Step:     0,
+					Total:    0,
+				},
+			},
+		}
+		groupMapEntities[i].CreateNew()
+	}
+	t.productGroupMapRepo.BulkUpdate(&groupMapEntities)
+	go func() {
+		for _, entity := range groupMapEntities {
+			t.eventBus.Publish(events.CreateTradeUserGroupMapUpdated(bullionId, &[]interfaces.TradeUserGroupMapEntity{entity}, entity.GroupId, adminId))
+		}
+	}()
+	return nil
+}
