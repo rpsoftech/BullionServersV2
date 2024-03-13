@@ -59,6 +59,12 @@ func (t *tradeUserGroupService) CreateNewTradeUserGroup(bullionId string, name s
 	if err != nil {
 		return nil, err
 	}
+	if siteDetails, _ := t.bullionService.GetBullionDetailsByBullionId(bullionId); siteDetails != nil {
+		if siteDetails.BullionConfigs.DefaultGroupIdForTradeUser == "" {
+			siteDetails.BullionConfigs.DefaultGroupIdForTradeUser = entity.ID
+			t.bullionService.UpdateBullionSiteDetails(siteDetails)
+		}
+	}
 	t.eventBus.Publish(events.CreateTradeUserGroupCreated(bullionId, entity, adminId))
 	return entity, nil
 }
