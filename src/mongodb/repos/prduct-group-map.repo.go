@@ -140,9 +140,12 @@ func (repo *ProductGroupMapRepoStruct) GetAllByBullionId(bullionId string) (*[]i
 		conditions: &bson.D{{Key: "bullionId", Value: bullionId}},
 	})
 }
-func (repo *ProductGroupMapRepoStruct) GetAllByGroupId(groupId string) (*[]interfaces.TradeUserGroupMapEntity, error) {
+func (repo *ProductGroupMapRepoStruct) GetAllByGroupId(groupId string, bullionId string) (*[]interfaces.TradeUserGroupMapEntity, error) {
 	return repo.findByFilter(&mongoDbFilter{
-		conditions: &bson.D{{Key: "groupId", Value: groupId}},
+		conditions: &bson.D{
+			{Key: "groupId", Value: groupId},
+			{Key: "bullionId", Value: bullionId},
+		},
 	})
 }
 

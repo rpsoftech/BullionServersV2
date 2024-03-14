@@ -1,6 +1,8 @@
 package services
 
 import (
+	"net/http"
+
 	"github.com/rpsoftech/bullion-server/src/events"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
 	"github.com/rpsoftech/bullion-server/src/mongodb/repos"
@@ -8,13 +10,16 @@ import (
 )
 
 type tradeUserGroupService struct {
-	redisRepo           *redis.RedisClientStruct
-	eventBus            *eventBusService
-	firebaseDb          *firebaseDatabaseService
-	bullionService      *bullionDetailsService
-	tradeUserGroupRepo  *repos.TradeUserGroupRepoStruct
-	productService      *productService
-	productGroupMapRepo *repos.ProductGroupMapRepoStruct
+	redisRepo                     *redis.RedisClientStruct
+	eventBus                      *eventBusService
+	firebaseDb                    *firebaseDatabaseService
+	bullionService                *bullionDetailsService
+	tradeUserGroupRepo            *repos.TradeUserGroupRepoStruct
+	productService                *productService
+	productGroupMapRepo           *repos.ProductGroupMapRepoStruct
+	groupsMapGroupIdMapStructure  map[string]*[]interfaces.TradeUserGroupMapEntity
+	groupsByBullionIdMapStructure map[string]*[]interfaces.TradeUserGroupEntity
+	groupByGroupIdMapStructure    map[string]*interfaces.TradeUserGroupEntity
 }
 
 var TradeUserGroupService *tradeUserGroupService
@@ -26,13 +31,16 @@ func init() {
 func getTradeUserGroupService() *tradeUserGroupService {
 	if TradeUserGroupService == nil {
 		TradeUserGroupService = &tradeUserGroupService{
-			redisRepo:           redis.InitRedisAndRedisClient(),
-			eventBus:            getEventBusService(),
-			firebaseDb:          getFirebaseRealTimeDatabase(),
-			bullionService:      getBullionService(),
-			productService:      getProductService(),
-			tradeUserGroupRepo:  repos.TradeUserGroupRepo,
-			productGroupMapRepo: repos.ProductGroupMapRepo,
+			redisRepo:                     redis.InitRedisAndRedisClient(),
+			eventBus:                      getEventBusService(),
+			firebaseDb:                    getFirebaseRealTimeDatabase(),
+			bullionService:                getBullionService(),
+			productService:                getProductService(),
+			tradeUserGroupRepo:            repos.TradeUserGroupRepo,
+			productGroupMapRepo:           repos.ProductGroupMapRepo,
+			groupsMapGroupIdMapStructure:  map[string]*[]interfaces.TradeUserGroupMapEntity{},
+			groupsByBullionIdMapStructure: map[string]*[]interfaces.TradeUserGroupEntity{},
+			groupByGroupIdMapStructure:    map[string]*interfaces.TradeUserGroupEntity{},
 		}
 		println("Trade User Group Service Initialized")
 	}
@@ -138,4 +146,54 @@ func (t *tradeUserGroupService) CreateGroupMapFromNewProduct(productId string, b
 		}
 	}()
 	return nil
+}
+
+func (t *tradeUserGroupService) GetAllGroupsByBullionId(bullionId string) (*[]interfaces.TradeUserGroupEntity, error) {
+	if entity, ok := t.groupsByBullionIdMapStructure[bullionId]; ok {
+		return entity, nil
+	}
+	if entity, err := t.tradeUserGroupRepo.GetAllByBullionId(bullionId); err == nil || len(*entity) == 0 {
+		t.groupsByBullionIdMapStructure[bullionId] = entity
+		return entity, nil
+	}
+	return nil, &interfaces.RequestError{
+		StatusCode: http.StatusBadRequest,
+		Code:       interfaces.ERROR_ENTITY_NOT_FOUND,
+		Message:    "Groups Not Found For This Bullion",
+		Name:       "GROUPS_NOT_FOUND_FOR_THIS_BULLION",
+	}
+}
+
+func (t *tradeUserGroupService) GetGroupMapByGroupId(groupId string, bullionId string) (*[]interfaces.TradeUserGroupMapEntity, error) {
+	if entity, ok := t.groupsMapGroupIdMapStructure[groupId]; ok {
+		return entity, nil
+	}
+
+	if entity, err := t.productGroupMapRepo.GetAllByGroupId(groupId, bullionId); err == nil || len(*entity) == 0 {
+		t.groupsMapGroupIdMapStructure[groupId] = entity
+		return entity, nil
+	}
+
+	return nil, &interfaces.RequestError{
+		StatusCode: http.StatusBadRequest,
+		Code:       interfaces.ERROR_ENTITY_NOT_FOUND,
+		Message:    "Groups Map Not Found For This Bullion And Group Id",
+		Name:       "GROUPS_MAP_NOT_FOUND_FOR_THIS_BULLION_AND_GROUP_ID",
+	}
+}
+
+func (t *tradeUserGroupService) GetGroupByGroupId(groupId string, bullionId string) (*interfaces.TradeUserGroupEntity, error) {
+	if entity, ok := t.groupByGroupIdMapStructure[groupId]; ok {
+		return entity, nil
+	}
+	if entity, err := t.tradeUserGroupRepo.FindOne(groupId); err == nil && entity.BullionId == bullionId {
+		t.groupByGroupIdMapStructure[groupId] = entity
+		return entity, nil
+	}
+	return nil, &interfaces.RequestError{
+		StatusCode: http.StatusBadRequest,
+		Code:       interfaces.ERROR_ENTITY_NOT_FOUND,
+		Message:    "Groups Map Not Found For This Bullion And Group Id",
+		Name:       "GROUPS_MAP_NOT_FOUND_FOR_THIS_BULLION_AND_GROUP_ID",
+	}
 }

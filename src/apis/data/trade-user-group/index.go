@@ -6,10 +6,11 @@ import (
 )
 
 func AddTradeUserAPIs(router fiber.Router) {
-	{
-		adminGroup := router.Use(middleware.AllowAllAdmins.Validate)
-		adminGroup.Post("/createNewTradeGroup", apiCreateNewTradeGroup)
-		// adminGroup.Post("/updateTradeUserDetails", apiUpdateTradeUserDetails)
-		// adminGroup.Post("/updateTradeUserStatus", apiChangeTradeUserStatus)
-	}
+
+	adminAndTradeGroup := router.Use(middleware.AllowAllAdminsAndTradeUsers.Validate)
+	adminAndTradeGroup.Get("/getTradeGroupDetailsByID", apiGetTradeGroupDetailsById)
+	adminAndTradeGroup.Get("/getTradeGroupDetailsByBullionId", apiGetTradeGroupDetailsByBullionId)
+	adminAndTradeGroup.Get("/getTradeGroupMapDetailsByGroupId", apiGetTradeGroupMapDetailsByGroupId)
+	adminGroup := router.Use(middleware.AllowAllAdmins.Validate)
+	adminGroup.Post("/createNewTradeGroup", apiCreateNewTradeGroup)
 }

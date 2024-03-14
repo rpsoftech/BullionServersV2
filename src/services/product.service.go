@@ -48,8 +48,9 @@ func (service *productService) AddNewProduct(productBase *interfaces.ProductBase
 		return nil, err
 	}
 	currentCount := len(*currentProducts)
+
 	entity := interfaces.CreateNewProduct(productBase, calcBase, currentCount+1)
-	// TODO: Create Product Group Map
+
 	_, err = service.saveProductEntity(entity)
 	if err != nil {
 		return nil, err
