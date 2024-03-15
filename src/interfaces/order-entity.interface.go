@@ -12,7 +12,7 @@ type (
 		*OrderBase            `bson:"inline"`
 		*LimitWatcherRequired `bson:"inline"`
 		*AfterSuccessOrder    `bson:"inline,omitempty"`
-		Identity              *Identity       `bson:"inline"`
+		*Identity             `bson:"inline"`
 		FromAdmin             *FromAdmin      `bson:"inline,omitempty"`
 		DeliveryData          *[]DeliveryData `bson:"inline,omitempty"`
 	}
