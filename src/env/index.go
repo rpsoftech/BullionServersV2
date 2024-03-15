@@ -51,7 +51,7 @@ func init() {
 	}
 	errs := validator.Validator.Validate(Env)
 	if len(errs) > 0 {
-		println(err)
-		panic(err)
+		println(errs)
+		panic(errs[0])
 	}
 }
