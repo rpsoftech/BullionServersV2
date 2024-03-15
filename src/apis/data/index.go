@@ -6,6 +6,7 @@ import (
 	"github.com/rpsoftech/bullion-server/src/apis/data/feeds"
 	"github.com/rpsoftech/bullion-server/src/apis/data/product"
 	tradeuser "github.com/rpsoftech/bullion-server/src/apis/data/trade-user"
+	tradeusergroup "github.com/rpsoftech/bullion-server/src/apis/data/trade-user-group"
 	"github.com/rpsoftech/bullion-server/src/middleware"
 )
 
@@ -25,7 +26,11 @@ func AddDataPackage(router fiber.Router) {
 		bankdetails.AddBankDetailsAPIs(bankGroup)
 	}
 	{
-		tradeUserGroup := router.Group("/trade-user")
-		tradeuser.AddTradeUserAPIs(tradeUserGroup)
+		tradeUserRoute := router.Group("/trade-user")
+		tradeuser.AddTradeUserAPIs(tradeUserRoute)
+	}
+	{
+		tradeUserGroupGroup := router.Group("/tradeUserGroup")
+		tradeusergroup.AddTradeUserGroupAPIs(tradeUserGroupGroup)
 	}
 }

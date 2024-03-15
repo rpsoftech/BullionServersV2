@@ -12,6 +12,7 @@ type (
 	}
 
 	TradeUserAdvanced struct {
+		GroupId  string `bson:"groupId" json:"groupId" validate:"required,uuid"`
 		UserName string `bson:"userName" json:"userName" validate:"required"`
 		IsActive bool   `bson:"isActive" json:"isActive" validate:"boolean"`
 		UNumber  string `bson:"uNumber" json:"uNumber" validate:"required"`

@@ -6,7 +6,7 @@ import (
 )
 
 func AddTradeUserAPIs(router fiber.Router) {
-	adminGroup := router.Use(middleware.AllowAllAdmins.Validate)
+	adminGroup := router.Use(middleware.AllowOnlyBigAdmins.Validate)
 	adminGroup.Get("/getTradeUser", apiGetTradeUserDetails)
 	adminGroup.Post("/updateTradeUserDetails", apiUpdateTradeUserDetails)
 	adminGroup.Post("/updateTradeUserStatus", apiChangeTradeUserStatus)

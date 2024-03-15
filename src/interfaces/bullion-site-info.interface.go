@@ -8,8 +8,6 @@ type bullionConfigs struct {
 	OTPLength                  int    `bson:"otpLength" json:"otpLength" validate:"required"`
 	HaveCustomWhatsappAgent    bool   `bson:"haveCustomWhatsappAgent" json:"haveCustomWhatsappAgent" validate:"boolean"`
 	DefaultGroupIdForTradeUser string `bson:"defaultGroupIdForTradeUser" json:"defaultGroupIdForTradeUser" validate:"required,uuid"`
-	// AutoApprove bool `bson:"autoApprove" json:"autoApprove" validate:"boolean"`
-	// AutoLogin   bool `bson:"autoLogin" json:"autoLogin" validate:"boolean"`
 }
 
 type BullionSiteBasicInfo struct {

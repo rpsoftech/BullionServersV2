@@ -8,11 +8,13 @@
         "gofiber",
         "ifsc",
         "joho",
+        "Keyur",
         "mapstructure",
         "mitchellh",
         "Phonenumber",
         "rpsoftech",
         "tradeuser",
+        "tradeusergroup",
         "Upsert"
     ]
 }

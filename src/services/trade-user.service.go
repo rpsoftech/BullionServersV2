@@ -199,6 +199,11 @@ func (service *tradeUserServiceStruct) RegisterNewTradeUser(base *interfaces.Tra
 	service.firebaseDb.GetData("tradeUsersNumbers", []string{entity.BullionId}, &newUserNumber)
 	newUserNumber++
 	entity.UNumber = strconv.Itoa(newUserNumber)
+	if bullionDetails, _ := service.bullionService.GetBullionDetailsByBullionId(entity.BullionId); bullionDetails != nil {
+		if bullionDetails.BullionConfigs.DefaultGroupIdForTradeUser != "" {
+			entity.GroupId = bullionDetails.BullionConfigs.DefaultGroupIdForTradeUser
+		}
+	}
 	// raw, _ := bson.Marshal(entity)
 	// fmt.Printf("raw: %v\n", string(raw))
 	if err := utility.ValidateReqInput(entity); err != nil {

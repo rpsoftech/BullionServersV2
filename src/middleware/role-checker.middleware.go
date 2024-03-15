@@ -22,10 +22,19 @@ var (
 		interfaces.ROLE_TRADE_USER.String(),
 	}
 
-	AllowAllUsers = roleCheckerMiddlewareWithRolesArray{
+	AllowAllUsers = &roleCheckerMiddlewareWithRolesArray{
 		roles: allUserRoles,
 	}
-	AllowAllAdmins = roleCheckerMiddlewareWithRolesArray{
+	AllowAllAdminsAndTradeUsers = &roleCheckerMiddlewareWithRolesArray{
+		roles: []string{
+			interfaces.ROLE_ADMIN.String(),
+			interfaces.ROLE_RATE_ADMIN.String(),
+			interfaces.ROLE_SUPER_ADMIN.String(),
+			interfaces.ROLE_GOD.String(),
+			interfaces.ROLE_TRADE_USER.String(),
+		},
+	}
+	AllowAllAdmins = &roleCheckerMiddlewareWithRolesArray{
 		roles: []string{
 			interfaces.ROLE_ADMIN.String(),
 			interfaces.ROLE_RATE_ADMIN.String(),
@@ -33,7 +42,7 @@ var (
 			interfaces.ROLE_GOD.String(),
 		},
 	}
-	AllowOnlyBigAdmins = roleCheckerMiddlewareWithRolesArray{
+	AllowOnlyBigAdmins = &roleCheckerMiddlewareWithRolesArray{
 		roles: []string{
 			interfaces.ROLE_ADMIN.String(),
 			interfaces.ROLE_SUPER_ADMIN.String(),
