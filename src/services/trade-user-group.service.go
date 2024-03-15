@@ -75,6 +75,7 @@ func (t *tradeUserGroupServiceStruct) CreateNewTradeUserGroup(bullionId string, 
 	}
 	delete(t.groupsByBullionIdMapStructure, bullionId)
 	t.eventBus.Publish(events.CreateTradeUserGroupCreated(bullionId, entity, adminId))
+	t.updateGroupInFirebase(bullionId, entity)
 	return entity, nil
 }
 
@@ -108,6 +109,7 @@ func (t *tradeUserGroupServiceStruct) createGroupMapFromNewGroup(groupId string,
 		groupMapEntities[i].CreateNew()
 	}
 	t.productGroupMapRepo.BulkUpdate(&groupMapEntities)
+	t.updateGroupMapInFirebase(bullionId, groupId, &groupMapEntities)
 	t.eventBus.Publish(events.CreateTradeUserGroupMapUpdated(bullionId, &groupMapEntities, groupId, adminId))
 	return nil
 }
@@ -125,6 +127,7 @@ func (t *tradeUserGroupServiceStruct) UpdateTradeGroup(base *interfaces.TradeUse
 	delete(t.groupMapByGroupIdMap, groupId)
 	delete(t.groupsByBullionIdMapStructure, base.BullionId)
 	t.eventBus.Publish(events.CreateTradeUserGroupUpdated(base.BullionId, entity, adminId))
+	go t.updateGroupInFirebase(base.BullionId, entity)
 	return entity, nil
 }
 
@@ -205,6 +208,9 @@ func (t *tradeUserGroupServiceStruct) GetAllGroupsByBullionId(bullionId string) 
 	}
 	if entity, err := t.tradeUserGroupRepo.GetAllByBullionId(bullionId); err == nil || len(*entity) == 0 {
 		t.groupsByBullionIdMapStructure[bullionId] = entity
+		for _, group := range *entity {
+			go t.updateGroupInFirebase(bullionId, &group)
+		}
 		return entity, nil
 	}
 	return nil, &interfaces.RequestError{
@@ -222,6 +228,7 @@ func (t *tradeUserGroupServiceStruct) GetGroupMapByGroupId(groupId string, bulli
 
 	if entity, err := t.productGroupMapRepo.GetAllByGroupId(groupId, bullionId); err == nil || len(*entity) == 0 {
 		t.groupMapByGroupIdMap[groupId] = entity
+		go t.updateGroupMapInFirebase(bullionId, groupId, entity)
 		return entity, nil
 	}
 
@@ -239,6 +246,7 @@ func (t *tradeUserGroupServiceStruct) GetGroupByGroupId(groupId string, bullionI
 	}
 	if entity, err := t.tradeUserGroupRepo.FindOne(groupId); err == nil && entity.BullionId == bullionId {
 		t.groupByGroupIdMapStructure[groupId] = entity
+		go t.updateGroupInFirebase(bullionId, entity)
 		return entity, nil
 	}
 	return nil, &interfaces.RequestError{
@@ -247,4 +255,14 @@ func (t *tradeUserGroupServiceStruct) GetGroupByGroupId(groupId string, bullionI
 		Message:    "Groups Map Not Found For This Bullion And Group Id",
 		Name:       "GROUPS_MAP_NOT_FOUND_FOR_THIS_BULLION_AND_GROUP_ID",
 	}
+}
+
+func (t *tradeUserGroupServiceStruct) updateGroupInFirebase(bullionId string, group *interfaces.TradeUserGroupEntity) error {
+	return t.firebaseDb.SetPublicData(bullionId, []string{"trade", "groups", group.ID}, group)
+
+}
+func (t *tradeUserGroupServiceStruct) updateGroupMapInFirebase(bullionId string, groupId string, maps *[]interfaces.TradeUserGroupMapEntity) error {
+	// return t.firebaseDb.SetPublicData(bullionId, []string{"trade", "groups", group.ID}, group)
+	return t.firebaseDb.SetPublicData(bullionId, []string{"trade", "groupMaps", groupId}, maps)
+
 }
