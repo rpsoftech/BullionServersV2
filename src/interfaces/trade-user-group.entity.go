@@ -51,3 +51,11 @@ func (r *TradeUserGroupMapEntity) CreateNew() *TradeUserGroupMapEntity {
 	r.createNewId()
 	return r
 }
+
+func (r *TradeUserGroupMapBase) UpdateDetails(base *TradeUserGroupMapBase) *TradeUserGroupMapBase {
+	r.IsActive = base.IsActive
+	r.CanTrade = base.CanTrade
+	r.GroupPremiumBase = base.GroupPremiumBase
+	r.GroupVolumeBase = base.GroupVolumeBase
+	return r
+}

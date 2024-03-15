@@ -17,7 +17,7 @@ type tradeUserGroupServiceStruct struct {
 	tradeUserGroupRepo            *repos.TradeUserGroupRepoStruct
 	productService                *productService
 	productGroupMapRepo           *repos.ProductGroupMapRepoStruct
-	groupsMapGroupIdMapStructure  map[string]*[]interfaces.TradeUserGroupMapEntity
+	groupMapByGroupIdMap          map[string]*[]interfaces.TradeUserGroupMapEntity
 	groupsByBullionIdMapStructure map[string]*[]interfaces.TradeUserGroupEntity
 	groupByGroupIdMapStructure    map[string]*interfaces.TradeUserGroupEntity
 }
@@ -38,7 +38,7 @@ func getTradeUserGroupService() *tradeUserGroupServiceStruct {
 			productService:                getProductService(),
 			tradeUserGroupRepo:            repos.TradeUserGroupRepo,
 			productGroupMapRepo:           repos.ProductGroupMapRepo,
-			groupsMapGroupIdMapStructure:  map[string]*[]interfaces.TradeUserGroupMapEntity{},
+			groupMapByGroupIdMap:          map[string]*[]interfaces.TradeUserGroupMapEntity{},
 			groupsByBullionIdMapStructure: map[string]*[]interfaces.TradeUserGroupEntity{},
 			groupByGroupIdMapStructure:    map[string]*interfaces.TradeUserGroupEntity{},
 		}
@@ -73,6 +73,7 @@ func (t *tradeUserGroupServiceStruct) CreateNewTradeUserGroup(bullionId string, 
 			t.bullionService.UpdateBullionSiteDetails(siteDetails)
 		}
 	}
+	delete(t.groupsByBullionIdMapStructure, bullionId)
 	t.eventBus.Publish(events.CreateTradeUserGroupCreated(bullionId, entity, adminId))
 	return entity, nil
 }
@@ -121,10 +122,44 @@ func (t *tradeUserGroupServiceStruct) UpdateTradeGroup(base *interfaces.TradeUse
 	if _, err := t.tradeUserGroupRepo.Save(entity); err != nil {
 		return nil, err
 	}
+	delete(t.groupMapByGroupIdMap, groupId)
+	delete(t.groupsByBullionIdMapStructure, base.BullionId)
 	t.eventBus.Publish(events.CreateTradeUserGroupUpdated(base.BullionId, entity, adminId))
 	return entity, nil
 }
 
+func (t *tradeUserGroupServiceStruct) UpdateTradeGroupMap(base *[]interfaces.TradeUserGroupMapEntity, groupId string, bullionId string, adminId string) (*[]interfaces.TradeUserGroupMapEntity, error) {
+	entity, err := t.GetGroupMapByGroupId(groupId, bullionId)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(*entity) != len(*base) {
+		return nil, &interfaces.RequestError{
+			StatusCode: http.StatusBadRequest,
+			Code:       interfaces.ERROR_INVALID_INPUT,
+			Message:    "Please Pass All Group Map Entities",
+			Name:       "PLEASE_PASS_ALL_GROUP_MAP_ENTITIES",
+		}
+	}
+	for i, record := range *entity {
+		for _, baseRecord := range *base {
+			if record.ID == baseRecord.ID {
+				(*entity)[i].TradeUserGroupMapBase.UpdateDetails(baseRecord.TradeUserGroupMapBase)
+			}
+		}
+	}
+
+	if _, err := t.productGroupMapRepo.BulkUpdate(entity); err != nil {
+		return nil, err
+	}
+	// Clear Cache Of Product Group Map
+	delete(t.groupMapByGroupIdMap, groupId)
+	t.eventBus.Publish(events.CreateTradeUserGroupMapUpdated(bullionId, entity, groupId, adminId))
+	return entity, nil
+}
+
+// Creating New Mapping Of Group And Product After Creating New Product
 func (t *tradeUserGroupServiceStruct) CreateGroupMapFromNewProduct(productId string, bullionId string, adminId string) error {
 	entities, err := t.tradeUserGroupRepo.GetAllByBullionId(bullionId)
 	if err != nil {
@@ -156,6 +191,8 @@ func (t *tradeUserGroupServiceStruct) CreateGroupMapFromNewProduct(productId str
 	t.productGroupMapRepo.BulkUpdate(&groupMapEntities)
 	go func() {
 		for _, entity := range groupMapEntities {
+			// Clearing Cache
+			delete(t.groupMapByGroupIdMap, entity.GroupId)
 			t.eventBus.Publish(events.CreateTradeUserGroupMapUpdated(bullionId, &[]interfaces.TradeUserGroupMapEntity{entity}, entity.GroupId, adminId))
 		}
 	}()
@@ -179,12 +216,12 @@ func (t *tradeUserGroupServiceStruct) GetAllGroupsByBullionId(bullionId string) 
 }
 
 func (t *tradeUserGroupServiceStruct) GetGroupMapByGroupId(groupId string, bullionId string) (*[]interfaces.TradeUserGroupMapEntity, error) {
-	if entity, ok := t.groupsMapGroupIdMapStructure[groupId]; ok {
+	if entity, ok := t.groupMapByGroupIdMap[groupId]; ok {
 		return entity, nil
 	}
 
 	if entity, err := t.productGroupMapRepo.GetAllByGroupId(groupId, bullionId); err == nil || len(*entity) == 0 {
-		t.groupsMapGroupIdMapStructure[groupId] = entity
+		t.groupMapByGroupIdMap[groupId] = entity
 		return entity, nil
 	}
 

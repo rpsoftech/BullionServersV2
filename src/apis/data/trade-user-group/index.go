@@ -12,6 +12,7 @@ func AddTradeUserGroupAPIs(router fiber.Router) {
 		adminGroup := router.Group("/admin", middleware.AllowOnlyBigAdmins.Validate)
 		adminGroup.Put("/createNewTradeGroup", apiCreateNewTradeGroup)
 		adminGroup.Post("/updateTradeGroup", apiUpdateTradeUserGroup)
+		adminGroup.Post("/updateTradeGroupProductMap", apiUpdateTradeUserGroupMap)
 	}
 	adminAndTradeGroup := router.Use(middleware.AllowAllAdminsAndTradeUsers.Validate)
 	adminAndTradeGroup.Get("/getTradeGroupDetailsByID", apiGetTradeGroupDetailsById)
