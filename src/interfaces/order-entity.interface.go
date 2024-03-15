@@ -17,6 +17,7 @@ type (
 		DeliveryData          *[]DeliveryData `bson:"inline,omitempty"`
 	}
 	OrderBase struct {
+		BullionId   string      `bson:"bullionId" json:"bullionId" validate:"required,uuid"`
 		OrderType   OrderType   `bson:"orderType" json:"orderType" validate:"required,enum=OrderStatus"`
 		OrderStatus OrderStatus `bson:"orderStatus" json:"orderStatus" validate:"required,enum=OrderStatus"`
 		BuySell     BuySell     `bson:"buySell" json:"buySell" validate:"required,enum=BuySell"`

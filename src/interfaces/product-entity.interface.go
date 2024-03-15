@@ -46,7 +46,7 @@ type (
 	}
 )
 
-func CreateNewProduct(productBase *ProductBaseStruct, calcSnapShot *CalcSnapshotStruct, sequence int) (r *ProductEntity) {
+func CreateNewProduct(productBase *ProductBaseStruct, calcSnapShot *CalcSnapshotStruct, sequence int) *ProductEntity {
 	b := &ProductEntity{
 		ProductBaseStruct: productBase,
 		CalcSnapshot:      calcSnapShot,

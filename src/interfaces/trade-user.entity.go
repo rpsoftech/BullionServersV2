@@ -1,5 +1,7 @@
 package interfaces
 
+import "net/http"
+
 type (
 	TradeUserBase struct {
 		BullionId   string `bson:"bullionId" json:"bullionId" validate:"required,uuid"`
@@ -18,8 +20,8 @@ type (
 		UNumber  string `bson:"uNumber" json:"uNumber" validate:"required"`
 	}
 	UserMarginsDataStruct struct {
-		Gold   int32 `bson:"gold" json:"gold" validate:"min=0"`
-		Silver int32 `bson:"silver" json:"silver" validate:"min=0"`
+		Gold   int `bson:"gold" json:"gold" validate:"min=0"`
+		Silver int `bson:"silver" json:"silver" validate:"min=0"`
 	}
 
 	TradeUserMargins struct {
@@ -41,17 +43,43 @@ type (
 	}
 )
 
-func (user *TradeUserEntity) CreateNew() (r *TradeUserEntity) {
+func (user *TradeUserEntity) CreateNew() *TradeUserEntity {
 	user.createNewId()
 	return user
 }
 
-func (user *TradeUserEntity) UpdateUser() (r *TradeUserEntity) {
+func (user *TradeUserEntity) UpdateUser() *TradeUserEntity {
 	user.passwordEntity = CreatePasswordEntity(user.RawPassword)
 	user.Updated()
 	return user
 }
-func (user *TradeUserEntity) DeletePassword() (r *TradeUserEntity) {
+func (user *TradeUserEntity) DeletePassword() *TradeUserEntity {
 	user.RawPassword = ""
 	return user
+}
+
+func (user *TradeUserEntity) UpdateMarginAfterOrder(weight int, symbol SymbolsEnum) (*TradeUserEntity, error) {
+	availableMargin := 0
+	if symbol == SYMBOL_GOLD {
+		availableMargin = user.AllotedMargins.Gold - user.UsedMargins.Gold
+	} else if symbol == SYMBOL_SILVER {
+		availableMargin = user.AllotedMargins.Silver - user.UsedMargins.Silver
+	}
+
+	if availableMargin < 0 || availableMargin-weight < 0 {
+		return nil, &RequestError{
+			StatusCode: http.StatusBadRequest,
+			Code:       ERROR_INSUFFICIENT_MARGIN,
+			Message:    "Insufficient Margin",
+			Name:       "INSUFFICIENT_MARGIN",
+			Extra:      map[string]interface{}{"margins": user.TradeUserMargins, "weight": weight},
+		}
+	}
+
+	if symbol == SYMBOL_GOLD {
+		user.UsedMargins.Gold = user.UsedMargins.Gold + weight
+	} else if symbol == SYMBOL_SILVER {
+		user.UsedMargins.Silver = user.UsedMargins.Silver + weight
+	}
+	return user, nil
 }

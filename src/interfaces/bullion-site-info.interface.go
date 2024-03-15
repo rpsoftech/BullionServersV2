@@ -22,7 +22,7 @@ type BullionSiteInfoEntity struct {
 	GeneralUserInfo       *bullionGeneralUserConfig `bson:"generalUserInfo" json:"-" validate:"required"`
 }
 
-func (b *BullionSiteInfoEntity) AddGeneralUserInfo(AutoApprove bool, AutoLogin bool) (r *BullionSiteInfoEntity) {
+func (b *BullionSiteInfoEntity) AddGeneralUserInfo(AutoApprove bool, AutoLogin bool) *BullionSiteInfoEntity {
 	b.GeneralUserInfo = &bullionGeneralUserConfig{
 		AutoApprove: AutoApprove,
 		AutoLogin:   AutoLogin,
