@@ -32,17 +32,17 @@ type BaseEntity struct {
 // 	return json.Marshal(base)
 // }
 
-func (b *BaseEntity) AddTimeStamps() (r *BaseEntity) {
+func (b *BaseEntity) AddTimeStamps() *BaseEntity {
 	b.CreatedAtExported = b.CreatedAt
 	b.ModifiedAtExported = b.ModifiedAt
 	return b
 }
-func (b *BaseEntity) RestoreTimeStamp() (r *BaseEntity) {
+func (b *BaseEntity) RestoreTimeStamp() *BaseEntity {
 	b.CreatedAt = b.CreatedAtExported
 	b.ModifiedAt = b.ModifiedAtExported
 	return b
 }
-func (b *BaseEntity) createNewId() (r *BaseEntity) {
+func (b *BaseEntity) createNewId() *BaseEntity {
 	id := uuid.New().String()
 	b.ID = id
 	b.CreatedAt = time.Now()
@@ -50,7 +50,7 @@ func (b *BaseEntity) createNewId() (r *BaseEntity) {
 	return b
 }
 
-func (b *BaseEntity) Updated() (r *BaseEntity) {
+func (b *BaseEntity) Updated() *BaseEntity {
 	b.ModifiedAt = time.Now()
 	return b
 }
