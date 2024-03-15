@@ -14,10 +14,6 @@ func AddDataPackage(router fiber.Router) {
 	router.Use(middleware.AllowOnlyValidTokenMiddleWare)
 	router.Use(middleware.AllowAllUsers.Validate)
 	{
-		tradeUserGroup := router.Name("/trade-user")
-		tradeuser.AddTradeUserAPIs(tradeUserGroup)
-	}
-	{
 		productGroup := router.Group("/product")
 		product.AddProduct(productGroup)
 	}
@@ -30,7 +26,11 @@ func AddDataPackage(router fiber.Router) {
 		bankdetails.AddBankDetailsAPIs(bankGroup)
 	}
 	{
-		tradeUserGroupGroup := router.Name("/tradeUserGroup")
-		tradeusergroup.AddTradeUserAPIs(tradeUserGroupGroup)
+		tradeUserRoute := router.Group("/trade-user")
+		tradeuser.AddTradeUserAPIs(tradeUserRoute)
+	}
+	{
+		tradeUserGroupGroup := router.Group("/tradeUserGroup")
+		tradeusergroup.AddTradeUserGroupAPIs(tradeUserGroupGroup)
 	}
 }

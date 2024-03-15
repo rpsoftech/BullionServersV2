@@ -5,12 +5,12 @@ import (
 	"github.com/rpsoftech/bullion-server/src/middleware"
 )
 
-func AddTradeUserAPIs(router fiber.Router) {
-
+func AddTradeUserGroupAPIs(router fiber.Router) {
+	// router.
+	// adminGroup := router.Group("/admin", middleware.AllowOnlyBigAdmins.Validate)
+	router.Group("/admin", middleware.AllowOnlyBigAdmins.Validate).Post("/createNewTradeGroup", apiCreateNewTradeGroup)
 	adminAndTradeGroup := router.Use(middleware.AllowAllAdminsAndTradeUsers.Validate)
 	adminAndTradeGroup.Get("/getTradeGroupDetailsByID", apiGetTradeGroupDetailsById)
 	adminAndTradeGroup.Get("/getTradeGroupDetailsByBullionId", apiGetTradeGroupDetailsByBullionId)
 	adminAndTradeGroup.Get("/getTradeGroupMapDetailsByGroupId", apiGetTradeGroupMapDetailsByGroupId)
-	adminGroup := router.Use(middleware.AllowAllAdmins.Validate)
-	adminGroup.Post("/createNewTradeGroup", apiCreateNewTradeGroup)
 }
