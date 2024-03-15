@@ -9,7 +9,7 @@ import (
 	"github.com/rpsoftech/bullion-server/src/redis"
 )
 
-type tradeUserGroupService struct {
+type tradeUserGroupServiceStruct struct {
 	redisRepo                     *redis.RedisClientStruct
 	eventBus                      *eventBusService
 	firebaseDb                    *firebaseDatabaseService
@@ -22,15 +22,15 @@ type tradeUserGroupService struct {
 	groupByGroupIdMapStructure    map[string]*interfaces.TradeUserGroupEntity
 }
 
-var TradeUserGroupService *tradeUserGroupService
+var TradeUserGroupService *tradeUserGroupServiceStruct
 
 func init() {
 	getTradeUserGroupService()
 }
 
-func getTradeUserGroupService() *tradeUserGroupService {
+func getTradeUserGroupService() *tradeUserGroupServiceStruct {
 	if TradeUserGroupService == nil {
-		TradeUserGroupService = &tradeUserGroupService{
+		TradeUserGroupService = &tradeUserGroupServiceStruct{
 			redisRepo:                     redis.InitRedisAndRedisClient(),
 			eventBus:                      getEventBusService(),
 			firebaseDb:                    getFirebaseRealTimeDatabase(),
@@ -48,7 +48,7 @@ func getTradeUserGroupService() *tradeUserGroupService {
 }
 
 // Create New Trade User Group And Create Mapping
-func (t *tradeUserGroupService) CreateNewTradeUserGroup(bullionId string, name string, adminId string) (*interfaces.TradeUserGroupEntity, error) {
+func (t *tradeUserGroupServiceStruct) CreateNewTradeUserGroup(bullionId string, name string, adminId string) (*interfaces.TradeUserGroupEntity, error) {
 	entity := &interfaces.TradeUserGroupEntity{
 		BaseEntity: &interfaces.BaseEntity{},
 		TradeUserGroupBase: &interfaces.TradeUserGroupBase{
@@ -77,7 +77,7 @@ func (t *tradeUserGroupService) CreateNewTradeUserGroup(bullionId string, name s
 	return entity, nil
 }
 
-func (t *tradeUserGroupService) createGroupMapFromNewGroup(groupId string, bullionId string, adminId string) error {
+func (t *tradeUserGroupServiceStruct) createGroupMapFromNewGroup(groupId string, bullionId string, adminId string) error {
 	entities, err := t.productService.GetProductsByBullionId(bullionId)
 	if err != nil {
 		return err
@@ -111,7 +111,21 @@ func (t *tradeUserGroupService) createGroupMapFromNewGroup(groupId string, bulli
 	return nil
 }
 
-func (t *tradeUserGroupService) CreateGroupMapFromNewProduct(productId string, bullionId string, adminId string) error {
+func (t *tradeUserGroupServiceStruct) UpdateTradeGroup(base *interfaces.TradeUserGroupBase, groupId string, adminId string) (*interfaces.TradeUserGroupEntity, error) {
+	entity, err := t.GetGroupByGroupId(groupId, base.BullionId)
+	if err != nil {
+		return nil, err
+	}
+	entity.TradeUserGroupBase = base
+
+	if _, err := t.tradeUserGroupRepo.Save(entity); err != nil {
+		return nil, err
+	}
+	t.eventBus.Publish(events.CreateTradeUserGroupUpdated(base.BullionId, entity, adminId))
+	return entity, nil
+}
+
+func (t *tradeUserGroupServiceStruct) CreateGroupMapFromNewProduct(productId string, bullionId string, adminId string) error {
 	entities, err := t.tradeUserGroupRepo.GetAllByBullionId(bullionId)
 	if err != nil {
 		return err
@@ -148,7 +162,7 @@ func (t *tradeUserGroupService) CreateGroupMapFromNewProduct(productId string, b
 	return nil
 }
 
-func (t *tradeUserGroupService) GetAllGroupsByBullionId(bullionId string) (*[]interfaces.TradeUserGroupEntity, error) {
+func (t *tradeUserGroupServiceStruct) GetAllGroupsByBullionId(bullionId string) (*[]interfaces.TradeUserGroupEntity, error) {
 	if entity, ok := t.groupsByBullionIdMapStructure[bullionId]; ok {
 		return entity, nil
 	}
@@ -164,7 +178,7 @@ func (t *tradeUserGroupService) GetAllGroupsByBullionId(bullionId string) (*[]in
 	}
 }
 
-func (t *tradeUserGroupService) GetGroupMapByGroupId(groupId string, bullionId string) (*[]interfaces.TradeUserGroupMapEntity, error) {
+func (t *tradeUserGroupServiceStruct) GetGroupMapByGroupId(groupId string, bullionId string) (*[]interfaces.TradeUserGroupMapEntity, error) {
 	if entity, ok := t.groupsMapGroupIdMapStructure[groupId]; ok {
 		return entity, nil
 	}
@@ -182,7 +196,7 @@ func (t *tradeUserGroupService) GetGroupMapByGroupId(groupId string, bullionId s
 	}
 }
 
-func (t *tradeUserGroupService) GetGroupByGroupId(groupId string, bullionId string) (*interfaces.TradeUserGroupEntity, error) {
+func (t *tradeUserGroupServiceStruct) GetGroupByGroupId(groupId string, bullionId string) (*interfaces.TradeUserGroupEntity, error) {
 	if entity, ok := t.groupByGroupIdMapStructure[groupId]; ok {
 		return entity, nil
 	}

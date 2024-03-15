@@ -8,7 +8,11 @@ import (
 func AddTradeUserGroupAPIs(router fiber.Router) {
 	// router.
 	// adminGroup := router.Group("/admin", middleware.AllowOnlyBigAdmins.Validate)
-	router.Group("/admin", middleware.AllowOnlyBigAdmins.Validate).Post("/createNewTradeGroup", apiCreateNewTradeGroup)
+	{
+		adminGroup := router.Group("/admin", middleware.AllowOnlyBigAdmins.Validate)
+		adminGroup.Put("/createNewTradeGroup", apiCreateNewTradeGroup)
+		adminGroup.Post("/updateTradeGroup", apiUpdateTradeUserGroup)
+	}
 	adminAndTradeGroup := router.Use(middleware.AllowAllAdminsAndTradeUsers.Validate)
 	adminAndTradeGroup.Get("/getTradeGroupDetailsByID", apiGetTradeGroupDetailsById)
 	adminAndTradeGroup.Get("/getTradeGroupDetailsByBullionId", apiGetTradeGroupDetailsByBullionId)

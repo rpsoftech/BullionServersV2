@@ -32,6 +32,7 @@ func apiChangeTradeUserStatus(c *fiber.Ctx) error {
 	} else {
 		return c.JSON(fiber.Map{
 			"success": true,
+			"status":  body.IsActive,
 		})
 	}
 

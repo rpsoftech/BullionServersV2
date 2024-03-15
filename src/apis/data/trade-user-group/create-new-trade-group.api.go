@@ -7,13 +7,13 @@ import (
 	"github.com/rpsoftech/bullion-server/src/utility"
 )
 
-type apiGetTradeUserDetailsBody struct {
+type apiCreateNewTradeGroupBody struct {
 	Name      string `bson:"name" json:"name" validate:"required"`
 	BullionId string `bson:"bullionId" json:"bullionId" validate:"required,uuid"`
 }
 
 func apiCreateNewTradeGroup(c *fiber.Ctx) error {
-	body := new(apiGetTradeUserDetailsBody)
+	body := new(apiCreateNewTradeGroupBody)
 	c.BodyParser(body)
 	if err := utility.ValidateReqInput(body); err != nil {
 		return err
