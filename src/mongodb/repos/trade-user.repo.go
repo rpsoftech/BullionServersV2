@@ -1,13 +1,16 @@
 package repos
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/rpsoftech/bullion-server/src/env"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
 	"github.com/rpsoftech/bullion-server/src/mongodb"
+	"github.com/rpsoftech/bullion-server/src/redis"
 	"github.com/rpsoftech/bullion-server/src/utility"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -17,6 +20,7 @@ import (
 type (
 	TradeUserRepoStruct struct {
 		collection *mongo.Collection
+		redis      *redis.RedisClientStruct
 	}
 )
 
@@ -31,6 +35,7 @@ func init() {
 	coll := mongodb.MongoDatabase.Collection(tradeUserCollectionName)
 	TradeUserRepo = &TradeUserRepoStruct{
 		collection: coll,
+		redis:      redis.InitRedisAndRedisClient(),
 	}
 	addUniqueIndexesToCollection([]string{"id"}, TradeUserRepo.collection)
 	addIndexesToCollection([]string{"bullionId", "isActive"}, TradeUserRepo.collection)
@@ -65,6 +70,7 @@ func (repo *TradeUserRepoStruct) Save(entity *interfaces.TradeUserEntity) (*inte
 			err = nil
 		}
 	}
+	go repo.cacheDataToRedis(entity)
 	return entity, err
 }
 
@@ -129,7 +135,12 @@ func (repo *TradeUserRepoStruct) findByFilter(filter *mongoDbFilter) (*[]interfa
 
 func (repo *TradeUserRepoStruct) FindOne(id string) (*interfaces.TradeUserEntity, error) {
 	var result interfaces.TradeUserEntity
-
+	if redisData := repo.redis.GetStringData(fmt.Sprintf("tradeUser/%s", id)); redisData != "" {
+		entity := new(interfaces.TradeUserEntity)
+		if err := json.Unmarshal([]byte(redisData), entity); err == nil {
+			return entity, err
+		}
+	}
 	err := repo.collection.FindOne(mongodb.MongoCtx, bson.D{{
 		Key: "id", Value: id,
 	}}).Decode(&result)
@@ -152,9 +163,16 @@ func (repo *TradeUserRepoStruct) FindOne(id string) (*interfaces.TradeUserEntity
 			}
 		}
 	}
+	go repo.cacheDataToRedis(&result)
 	return &result, err
 }
 
+func (repo *TradeUserRepoStruct) cacheDataToRedis(entity *interfaces.TradeUserEntity) {
+	if entityStringBytes, err := json.Marshal(entity); err == nil {
+		entityString := string(entityStringBytes)
+		repo.redis.SetStringDataWithExpiry(fmt.Sprintf("tradeUser/%s", entity.ID), entityString, time.Duration(24)*time.Hour)
+	}
+}
 func (repo *TradeUserRepoStruct) findOneByCondition(bullionId string, condition *bson.E) (*interfaces.TradeUserEntity, error) {
 	var result interfaces.TradeUserEntity
 

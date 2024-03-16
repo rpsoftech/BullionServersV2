@@ -63,5 +63,8 @@ func (r *RedisClientStruct) RemoveKey(key ...string) {
 	r.redisClient.Del(RedisCTX, key...)
 }
 func (r *RedisClientStruct) SetStringData(key string, value string, expiresIn int) {
-	r.redisClient.Set(RedisCTX, key, value, time.Duration(expiresIn)*time.Second)
+	r.SetStringDataWithExpiry(key, value, time.Duration(expiresIn)*time.Second)
+}
+func (r *RedisClientStruct) SetStringDataWithExpiry(key string, value string, expiresIn time.Duration) {
+	r.redisClient.Set(RedisCTX, key, value, expiresIn)
 }
