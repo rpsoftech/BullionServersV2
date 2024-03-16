@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/rpsoftech/bullion-server/src/env"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
@@ -62,6 +63,37 @@ func (repo *OrderRepoStruct) Save(entity *interfaces.OrderEntity) (*interfaces.O
 		}
 	}
 	return entity, err
+}
+
+func (repo *OrderRepoStruct) BulkUpdate(entities *[]interfaces.OrderEntity) (*[]interfaces.OrderEntity, error) {
+	models := make([]mongo.WriteModel, len(*entities))
+	for i, entity := range *entities {
+		if err := utility.ValidateStructAndReturnReqError(entity, &interfaces.RequestError{
+			StatusCode: http.StatusBadRequest,
+			Code:       interfaces.ERROR_INVALID_ENTITY,
+			Message:    "",
+			Name:       "ERROR_INVALID_ENTITY",
+		}); err != nil {
+			return nil, err
+		}
+		entity.Updated()
+		models[i] = mongo.NewUpdateOneModel().SetFilter(bson.D{{Key: "_id", Value: entity.ID}}).SetUpdate(
+			bson.D{{Key: "$set", Value: entity}}).SetUpsert(true)
+	}
+	_, err := repo.collection.BulkWrite(mongodb.MongoCtx, models)
+	if err != nil {
+		if !errors.Is(err, mongo.ErrNoDocuments) {
+			err = &interfaces.RequestError{
+				StatusCode: 500,
+				Code:       interfaces.ERROR_INTERNAL_SERVER,
+				Message:    fmt.Sprintf("Internal Server Error: %s", err.Error()),
+				Name:       "INTERNAL_ERROR",
+			}
+		} else {
+			err = nil
+		}
+	}
+	return entities, err
 }
 
 func (repo *OrderRepoStruct) findByFilter(filter *mongoDbFilter) (*[]interfaces.OrderEntity, error) {
@@ -127,4 +159,45 @@ func (repo *OrderRepoStruct) FindOne(id string) (*interfaces.OrderEntity, error)
 		}
 	}
 	return &result, err
+}
+
+func (repo *OrderRepoStruct) DeleteOrderHistoryById(id string) error {
+	_, err := repo.collection.DeleteOne(mongodb.MongoCtx, bson.D{{
+		Key: "_id", Value: id,
+	}})
+	return err
+}
+
+func (repo *OrderRepoStruct) GetOrdersByBullionIdWithDateRangeAndOrderStatus(bullionId string, startDate time.Time, endDate time.Time, orderStatusArray *[]interfaces.OrderStatus) (*[]interfaces.OrderEntity, error) {
+	return repo.findByFilter(&mongoDbFilter{
+		sort: &bson.D{{Key: "createdAt", Value: -1}},
+		conditions: &bson.D{
+			{Key: "bullionId", Value: bullionId},
+			{Key: "createdAt", Value: bson.D{{Key: "$gte", Value: startDate}, {Key: "$lte", Value: endDate}}},
+			{Key: "orderStatus", Value: bson.D{{Key: "$in", Value: *orderStatusArray}}},
+		},
+	})
+}
+
+func (repo *OrderRepoStruct) GetUsersOrderPaginated(userId string, page int64, limit int64) (*[]interfaces.OrderEntity, error) {
+	return repo.findByFilter(&mongoDbFilter{
+		sort: &bson.D{{Key: "createdAt", Value: -1}},
+		conditions: &bson.D{
+			{Key: "userId", Value: userId},
+		},
+		limit: limit,
+		skip:  page * limit,
+	})
+}
+
+func (repo *OrderRepoStruct) GetUsersOrderPaginatedWithOrderStatusArray(userId string, orderStatusArray *[]interfaces.OrderStatus, page int64, limit int64) (*[]interfaces.OrderEntity, error) {
+	return repo.findByFilter(&mongoDbFilter{
+		sort: &bson.D{{Key: "createdAt", Value: -1}},
+		conditions: &bson.D{
+			{Key: "userId", Value: userId},
+			{Key: "orderStatus", Value: bson.D{{Key: "$in", Value: *orderStatusArray}}},
+		},
+		limit: limit,
+		skip:  page * limit,
+	})
 }

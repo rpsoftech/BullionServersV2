@@ -60,10 +60,10 @@ type (
 	}
 )
 
-var AvailableForDelivery = []OrderStatus{OrderPlaced, LimitPassed, OrderPartialDelivered}
+var AvailableForDelivery = &[]OrderStatus{OrderPlaced, LimitPassed, OrderPartialDelivered}
 
 func (e *OrderEntity) DeliverWeight(weight int) (*OrderEntity, error) {
-	if !slices.Contains(AvailableForDelivery, e.OrderStatus) {
+	if !slices.Contains(*AvailableForDelivery, e.OrderStatus) {
 		return nil, &RequestError{
 			StatusCode: http.StatusBadRequest,
 			Code:       ERROR_INVALID_ORDER_STATUS_FOR_DELIVERY,
