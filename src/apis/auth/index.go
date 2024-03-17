@@ -11,7 +11,7 @@ func AddAuthPackages(router fiber.Router) {
 	router.Get("/bullion-details-by-short-name", apiGetBullionDetailsByShortName)
 	router.Get("/bullion-details-by-id", apiGetBullionDetailsById)
 	{
-		generalUserGroup := router.Group("general-user")
+		generalUserGroup := router.Group("/general-user")
 		generalUserGroup.Post("/register", apiRegisterNewGeneralUser)
 		generalUserGroup.Get("/get", apiGetGeneralUserDetailsByIdPassword)
 		generalUserGroup.Post("/send-for-approval", apiSendApprovalReqGeneralUser)
@@ -19,11 +19,11 @@ func AddAuthPackages(router fiber.Router) {
 		generalUserGroup.Post("/refresh-token", apiGeneralUSerRefreshToken)
 	}
 	{
-		adminAuthGroup := router.Group("admin")
+		adminAuthGroup := router.Group("/admin")
 		adminAuthGroup.Post("/login", apiAdminLogin)
 	}
 	{
-		tradeUserGroup := router.Group("trade-user")
+		tradeUserGroup := router.Group("/trade-user")
 		tradeUserGroup.Use(middleware.AllowOnlyValidTokenMiddleWare)
 		tradeUserGroup.Use(middleware.AllowAllUsers.Validate)
 		tradeUserGroup.Post("register", apiTradeUserRegister)
