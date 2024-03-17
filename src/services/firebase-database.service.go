@@ -32,7 +32,9 @@ func (s *firebaseDatabaseService) setPrivateData(base string, path []string, dat
 	}
 	return ref.Set(firebase.FirebaseCtx, data)
 }
-
+func (s *firebaseDatabaseService) GetPublicData(bullionId string, path []string, data interface{}) error {
+	return s.GetData("bullions/"+bullionId, path, data)
+}
 func (s *firebaseDatabaseService) GetData(base string, path []string, v interface{}) error {
 	ref := s.db.NewRef(base)
 	for _, child := range path {

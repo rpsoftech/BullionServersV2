@@ -8,7 +8,7 @@ import (
 func AddBankDetailsAPIs(router fiber.Router) {
 	router.Get("/getAll", apiGetBankDetails)
 	{
-		adminGroup := router.Group("", middleware.AllowOnlyBigAdmins.Validate)
+		adminGroup := router.Use(middleware.AllowOnlyBigAdmins.Validate)
 		adminGroup.Put("/add", apiAddNewBankDetails)
 		adminGroup.Patch("/update", apiUpdateBankDetails)
 		adminGroup.Delete("/delete", apiDeleteBankDetails)

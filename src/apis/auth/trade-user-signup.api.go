@@ -21,7 +21,7 @@ func apiTradeUserRegister(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	} else {
-		return c.JSON(fiber.Map{
+		return c.JSON(&fiber.Map{
 			"token": entity,
 		})
 	}
