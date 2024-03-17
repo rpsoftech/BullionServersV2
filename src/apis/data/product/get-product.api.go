@@ -33,11 +33,11 @@ func apiGetProducts(c *fiber.Ctx) (err error) {
 		return err
 	} else {
 		if productId != "" {
-			return c.JSON(fiber.Map{
+			return c.JSON(&fiber.Map{
 				"product": entity,
 			})
 		} else {
-			return c.JSON(fiber.Map{
+			return c.JSON(&fiber.Map{
 				"products": entity,
 			})
 		}

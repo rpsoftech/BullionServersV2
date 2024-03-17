@@ -8,7 +8,7 @@ import (
 func AddFeedsAndNotificationSection(router fiber.Router) {
 	router.Get("/getPaginated", apiGetFeedsApiPaginated)
 	{
-		adminGroup := router.Group("", middleware.AllowOnlyBigAdmins.Validate)
+		adminGroup := router.Use(middleware.AllowOnlyBigAdmins.Validate)
 		adminGroup.Post("/sendNotification", apiSendFeedAsNotification)
 		adminGroup.Post("/add", apiAddNewFeed)
 		adminGroup.Patch("/update", apiUpdateFeed)

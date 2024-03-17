@@ -25,7 +25,7 @@ func apiGetTradeGroupDetailsByBullionId(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	} else {
-		return c.JSON(fiber.Map{
+		return c.JSON(&fiber.Map{
 			"total": len(*entity),
 			"data":  entity,
 		})
@@ -72,7 +72,7 @@ func apiGetTradeGroupMapDetailsByGroupId(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	} else {
-		return c.JSON(fiber.Map{
+		return c.JSON(&fiber.Map{
 			"total": len(*entity),
 			"data":  entity,
 		})
