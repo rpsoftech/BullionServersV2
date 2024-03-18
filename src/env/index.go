@@ -13,7 +13,8 @@ type EnvInterface struct {
 	PORT                  int    `json:"PORT" validate:"required,port"`
 	DB_URL                string `json:"DB_URL" validate:"required,url"`
 	DB_NAME               string `json:"DB_NAME_KEY" validate:"required,min=3"`
-	REDIS_DB_URL          string `json:"REDIS_DB_URL" validate:"required"`
+	REDIS_DB_HOST         string `json:"REDIS_DB_HOST" validate:"required"`
+	REDIS_DB_PORT         int    `json:"REDIS_DB_PORT" validate:"required,port"`
 	REDIS_DB_PASSWORD     string `json:"REDIS_DB_PASSWORD" validate:"required"`
 	REDIS_DB_DATABASE     int    `json:"REDIS_DB_DATABASE" validate:"min=0,max=100"`
 	ACCESS_TOKEN_KEY      string `json:"ACCESS_TOKEN_KEY" validate:"required,min=100"`
@@ -36,12 +37,18 @@ func init() {
 		// ... handle error
 		panic(err)
 	}
+	redis_DB_PORT, err := strconv.Atoi(os.Getenv(redis_DB_PORT_KEY))
+	if err != nil {
+		// ... handle error
+		panic(err)
+	}
 	Env = &EnvInterface{
 		APP_ENV:               appEnv,
 		PORT:                  PORT,
 		DB_NAME:               os.Getenv(db_NAME_KEY),
 		DB_URL:                os.Getenv(db_URL_KEY),
-		REDIS_DB_URL:          os.Getenv(redis_DB_URL_KEY),
+		REDIS_DB_PORT:         redis_DB_PORT,
+		REDIS_DB_HOST:         os.Getenv(redis_DB_HOST_KEY),
 		REDIS_DB_PASSWORD:     os.Getenv(redis_DB_PASSWORD_KEY),
 		REDIS_DB_DATABASE:     redis_DB_DATABASE,
 		ACCESS_TOKEN_KEY:      os.Getenv(access_TOKEN_KEY),

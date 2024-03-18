@@ -39,6 +39,8 @@ func getOrderGeneralService() *orderGeneralService {
 }
 
 func (service *orderGeneralService) ValidateUserAndGroupMapWithWeight(user *interfaces.TradeUserEntity, groupMap *interfaces.TradeUserGroupMapEntity, group *interfaces.TradeUserGroupEntity, weight int) (bool, error) {
+
+	// Check for User Activation
 	if !user.IsActive {
 		return false, &interfaces.RequestError{
 			StatusCode: http.StatusUnauthorized,
@@ -51,6 +53,7 @@ func (service *orderGeneralService) ValidateUserAndGroupMapWithWeight(user *inte
 	if flags, err := service.flagService.GetFlags(user.BullionId); err != nil {
 		return false, err
 	} else if !flags.CanTrade {
+		// Check If Trading Is Disabled
 		return false, &interfaces.RequestError{
 			StatusCode: 400,
 			Code:       interfaces.ERROR_TRADING_IS_DISABLED,
@@ -58,6 +61,7 @@ func (service *orderGeneralService) ValidateUserAndGroupMapWithWeight(user *inte
 			Name:       "BULLION_NOT_ACTIVE",
 		}
 	}
+	// Check for Group Activation
 	if !group.IsActive {
 		return false, &interfaces.RequestError{
 			StatusCode: http.StatusUnauthorized,

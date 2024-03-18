@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -28,7 +29,7 @@ func InitRedisAndRedisClient() *RedisClientStruct {
 		return RedisClient
 	}
 	client := redis.NewClient(&redis.Options{
-		Addr:     env.Env.REDIS_DB_URL,
+		Addr:     fmt.Sprintf("%v:%d", env.Env.REDIS_DB_HOST, env.Env.REDIS_DB_PORT),
 		Password: env.Env.REDIS_DB_PASSWORD, // no password set
 		DB:       env.Env.REDIS_DB_DATABASE, // use default DB
 	})
