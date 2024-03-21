@@ -59,6 +59,9 @@ func (r *RedisClientStruct) PublishEvent(event *events.BaseEvent) {
 func (r *RedisClientStruct) GetStringData(key string) string {
 	return r.redisClient.Get(RedisCTX, key).Val()
 }
+func (r *RedisClientStruct) GetByteData(key string) ([]byte, error) {
+	return r.redisClient.Get(RedisCTX, key).Bytes()
+}
 
 func (r *RedisClientStruct) RemoveKey(key ...string) {
 	r.redisClient.Del(RedisCTX, key...)
