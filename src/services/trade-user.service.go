@@ -27,15 +27,23 @@ type tradeUserServiceStruct struct {
 var TradeUserService *tradeUserServiceStruct
 
 func init() {
-	TradeUserService = &tradeUserServiceStruct{
-		tradeUserRepo:      repos.TradeUserRepo,
-		accessTokenService: AccessTokenService,
-		eventBus:           getEventBusService(),
-		firebaseDb:         getFirebaseRealTimeDatabase(),
-		sendMsgService:     getSendMsgService(),
-		bullionService:     getBullionService(),
-		realtimeDatabase:   getFirebaseRealTimeDatabase(),
+	getTradeUserService()
+}
+
+func getTradeUserService() *tradeUserServiceStruct {
+	if TradeUserService == nil {
+		TradeUserService = &tradeUserServiceStruct{
+			tradeUserRepo:      repos.TradeUserRepo,
+			accessTokenService: AccessTokenService,
+			eventBus:           getEventBusService(),
+			firebaseDb:         getFirebaseRealTimeDatabase(),
+			sendMsgService:     getSendMsgService(),
+			bullionService:     getBullionService(),
+			realtimeDatabase:   getFirebaseRealTimeDatabase(),
+		}
+		println("Trade User Service Initialized")
 	}
+	return TradeUserService
 }
 
 func (service *tradeUserServiceStruct) VerifyAndSendOtpForNewUser(tradeUser *interfaces.TradeUserBase, bullionId string) (*string, error) {
@@ -268,6 +276,10 @@ func (service *tradeUserServiceStruct) LoginWithNumberAndPassword(number string,
 		}
 	}
 	return service.generateTokensForTradeUserWithPasswordMatching(tradeUser, password)
+}
+
+func (service *tradeUserServiceStruct) GetTradeUserById(id string) (*interfaces.TradeUserEntity, error) {
+	return service.tradeUserRepo.FindOne(id)
 }
 
 func (service *tradeUserServiceStruct) UpdateTradeUser(entity *interfaces.TradeUserEntity, adminId string) error {

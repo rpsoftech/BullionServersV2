@@ -32,7 +32,7 @@ services:
       - FIREBASE_JSON_STRING=${FIREBASE_JSON_STRING}
       - FIREBASE_DATABASE_URL=${FIREBASE_DATABASE_URL}
     ports:
-      - 5000:5000
+      - 5000:${PORT}
 
   redis:
     image: redis:alpine

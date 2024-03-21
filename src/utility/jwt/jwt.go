@@ -90,7 +90,7 @@ func (t *TokenService) VerifyToken(token string) (*GeneralUserAccessRefreshToken
 	}
 	claim, ok := claimRaw.Claims.(*GeneralUserAccessRefreshToken)
 
-	if !ok && err == nil {
+	if !ok {
 		err = &interfaces.RequestError{
 			StatusCode: 401,
 			Code:       interfaces.ERROR_INVALID_TOKEN,
@@ -155,7 +155,7 @@ func (t *TokenService) VerifyTokenGeneralPurpose(token string) (*GeneralPurposeT
 	}
 	claim, ok := claimRaw.Claims.(*GeneralPurposeTokenGeneration)
 
-	if !ok && err == nil {
+	if !ok {
 		err = &interfaces.RequestError{
 			StatusCode: 401,
 			Code:       interfaces.ERROR_INVALID_TOKEN,
