@@ -134,16 +134,15 @@ func (repo *TradeUserRepoStruct) findByFilter(filter *mongoDbFilter) (*[]interfa
 }
 
 func (repo *TradeUserRepoStruct) FindOne(id string) (*interfaces.TradeUserEntity, error) {
-	var result interfaces.TradeUserEntity
+	result := new(interfaces.TradeUserEntity)
 	if redisData := repo.redis.GetStringData(fmt.Sprintf("tradeUser/%s", id)); redisData != "" {
-		entity := new(interfaces.TradeUserEntity)
-		if err := json.Unmarshal([]byte(redisData), entity); err == nil {
-			return entity, err
+		if err := json.Unmarshal([]byte(redisData), result); err == nil {
+			return result, err
 		}
 	}
 	err := repo.collection.FindOne(mongodb.MongoCtx, bson.D{{
 		Key: "id", Value: id,
-	}}).Decode(&result)
+	}}).Decode(result)
 
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
@@ -163,8 +162,8 @@ func (repo *TradeUserRepoStruct) FindOne(id string) (*interfaces.TradeUserEntity
 			}
 		}
 	}
-	go repo.cacheDataToRedis(&result)
-	return &result, err
+	go repo.cacheDataToRedis(result)
+	return result, err
 }
 
 func (repo *TradeUserRepoStruct) cacheDataToRedis(entity *interfaces.TradeUserEntity) {

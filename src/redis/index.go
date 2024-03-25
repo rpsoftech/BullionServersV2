@@ -22,6 +22,7 @@ func init() {
 	if env.Env.APP_ENV == env.APP_ENV_DEVELOPE {
 		return
 	}
+	// RedisClient.redisClient.Subscribe()
 }
 
 func InitRedisAndRedisClient() *RedisClientStruct {
@@ -53,14 +54,18 @@ func DeferFunction() {
 	}
 }
 
+func (r *RedisClientStruct) SubscribeToChannels(channels ...string) *redis.PubSub {
+	return r.redisClient.Subscribe(RedisCTX, channels...)
+}
+
 func (r *RedisClientStruct) PublishEvent(event *events.BaseEvent) {
 	r.redisClient.Publish(RedisCTX, event.GetEventName(), event.GetPayloadString())
 }
+func (r *RedisClientStruct) GetHashValue(key string) map[string]string {
+	return r.redisClient.HGetAll(RedisCTX, key).Val()
+}
 func (r *RedisClientStruct) GetStringData(key string) string {
 	return r.redisClient.Get(RedisCTX, key).Val()
-}
-func (r *RedisClientStruct) GetByteData(key string) ([]byte, error) {
-	return r.redisClient.Get(RedisCTX, key).Bytes()
 }
 
 func (r *RedisClientStruct) RemoveKey(key ...string) {

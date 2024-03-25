@@ -41,7 +41,7 @@ func main() {
 			return c.Status(mappedError.StatusCode).JSON(mappedError)
 		},
 	})
-
+	// TODO Add middleware to recover from panics https://docs.gofiber.io/api/middleware/recover
 	app.Use(logger.New())
 	app.Use(middleware.TokenDecrypter)
 

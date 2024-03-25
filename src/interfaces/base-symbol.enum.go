@@ -16,6 +16,18 @@ const (
 	SYMBOL_INR         SymbolsEnum = "INR"
 )
 
+var SymbolsEnumArray = []SymbolsEnum{
+	SYMBOL_GOLD,
+	SYMBOL_SILVER,
+	SYMBOL_GOLD_MCX,
+	SYMBOL_SILVER_MCX,
+	SYMBOL_GOLD_NEXT,
+	SYMBOL_SILVER_NEXT,
+	SYMBOL_GOLD_SPOT,
+	SYMBOL_SILVER_SPOT,
+	SYMBOL_INR,
+}
+
 var (
 	symbolEnumMap = EnumValidatorBase{
 		Data: map[string]interface{}{
@@ -35,6 +47,15 @@ var (
 func init() {
 	validator.RegisterEnumValidatorFunc("SymbolsEnum", symbolEnumMap.Validate)
 }
+
+func SymbolsEnumFromString(d string) SymbolsEnum {
+	enumValue := symbolEnumMap.Data[d]
+	if enumValue != nil {
+		return enumValue.(SymbolsEnum)
+	}
+	return ""
+}
+
 func (s SymbolsEnum) String() string {
 	switch s {
 	case SYMBOL_GOLD:

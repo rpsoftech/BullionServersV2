@@ -41,6 +41,7 @@ type (
 		CalcSnapShot   *CalcSnapshotStruct `json:"calcSnapShot" bson:"calcSnapShot" validate:"required"`
 		CalcSnapShotId string              `json:"calcSnapShotId" bson:"calcSnapShotId" validate:"required,uuid"`
 		PgmSnapShot    *GroupPremiumBase   `json:"pgmSnapShot" bson:"pgmSnapShot" validate:"required"`
+		BankRateCalc   *BankRateCalcBase   `json:"bankRateCalc" bson:"bankRateCalc"`
 		McxPrice       float64             `json:"mcxPrice" bson:"mcxPrice" validate:"required"`
 		ExecutedOn     time.Time           `json:"executedOn" bson:"executedOn" validate:"required"`
 		McxOrderJSON   interface{}         `json:"mcxOrder,omitempty" bson:"mcxOrder,omitempty"`
