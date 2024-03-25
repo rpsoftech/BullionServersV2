@@ -56,3 +56,8 @@ func CreateNewProduct(productBase *ProductBaseStruct, calcSnapShot *CalcSnapshot
 	b.createNewId()
 	return b
 }
+
+func Calculate(symbol float64, snapshot *CshPremiumBuySellSnapshot) float64 {
+	price := symbol + float64(snapshot.Premium)
+	return price * (1 + float64(snapshot.Tax)/100)
+}
