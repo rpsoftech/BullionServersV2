@@ -23,7 +23,7 @@ func apiGetBullionDetailsByShortName(c *fiber.Ctx) error {
 	if entity, err := services.BullionDetailsService.GetBullionDetailsByShortName(shortName); err != nil {
 		return err
 	} else {
-		return c.JSON(entity)
+		return c.JSON(entity.BullionPublicInfo)
 	}
 }
 

@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -21,6 +22,7 @@ func init() {
 	if env.Env.APP_ENV == env.APP_ENV_DEVELOPE {
 		return
 	}
+	// RedisClient.redisClient.Subscribe()
 }
 
 func InitRedisAndRedisClient() *RedisClientStruct {
@@ -28,7 +30,7 @@ func InitRedisAndRedisClient() *RedisClientStruct {
 		return RedisClient
 	}
 	client := redis.NewClient(&redis.Options{
-		Addr:     env.Env.REDIS_DB_URL,
+		Addr:     fmt.Sprintf("%v:%d", env.Env.REDIS_DB_HOST, env.Env.REDIS_DB_PORT),
 		Password: env.Env.REDIS_DB_PASSWORD, // no password set
 		DB:       env.Env.REDIS_DB_DATABASE, // use default DB
 	})
@@ -52,8 +54,15 @@ func DeferFunction() {
 	}
 }
 
+func (r *RedisClientStruct) SubscribeToChannels(channels ...string) *redis.PubSub {
+	return r.redisClient.Subscribe(RedisCTX, channels...)
+}
+
 func (r *RedisClientStruct) PublishEvent(event *events.BaseEvent) {
 	r.redisClient.Publish(RedisCTX, event.GetEventName(), event.GetPayloadString())
+}
+func (r *RedisClientStruct) GetHashValue(key string) map[string]string {
+	return r.redisClient.HGetAll(RedisCTX, key).Val()
 }
 func (r *RedisClientStruct) GetStringData(key string) string {
 	return r.redisClient.Get(RedisCTX, key).Val()
@@ -63,5 +72,8 @@ func (r *RedisClientStruct) RemoveKey(key ...string) {
 	r.redisClient.Del(RedisCTX, key...)
 }
 func (r *RedisClientStruct) SetStringData(key string, value string, expiresIn int) {
-	r.redisClient.Set(RedisCTX, key, value, time.Duration(expiresIn)*time.Second)
+	r.SetStringDataWithExpiry(key, value, time.Duration(expiresIn)*time.Second)
+}
+func (r *RedisClientStruct) SetStringDataWithExpiry(key string, value string, expiresIn time.Duration) {
+	r.redisClient.Set(RedisCTX, key, value, expiresIn)
 }

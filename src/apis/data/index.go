@@ -14,6 +14,7 @@ import (
 func AddDataPackage(router fiber.Router) {
 	router.Use(middleware.AllowOnlyValidTokenMiddleWare)
 	router.Use(middleware.AllowAllUsers.Validate)
+	product.AddRateApi(router.Group("/rates"))
 	{
 		productGroup := router.Group("/product")
 		product.AddProduct(productGroup)

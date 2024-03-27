@@ -14,23 +14,24 @@ const (
 )
 
 var (
-	userRolesMap = map[string]UserRoles{
-		"RATE_ADMIN":   ROLE_RATE_ADMIN,
-		"SUPER_ADMIN":  ROLE_SUPER_ADMIN,
-		"ADMIN":        ROLE_ADMIN,
-		"GENERAL_USER": ROLE_GENERAL_USER,
-		"TRADE_USER":   ROLE_TRADE_USER,
-		"GOD":          ROLE_GOD,
+	userRolesMap = EnumValidatorBase{
+		Data: map[string]interface{}{
+			"RATE_ADMIN":   ROLE_RATE_ADMIN,
+			"SUPER_ADMIN":  ROLE_SUPER_ADMIN,
+			"ADMIN":        ROLE_ADMIN,
+			"GENERAL_USER": ROLE_GENERAL_USER,
+			"TRADE_USER":   ROLE_TRADE_USER,
+			"GOD":          ROLE_GOD,
+		},
 	}
 )
 
 func init() {
-	validator.RegisterEnumValidatorFunc("UserRoles", ValidateEnumUserRole)
+	validator.RegisterEnumValidatorFunc("UserRoles", userRolesMap.Validate)
 }
 
 func ValidateEnumUserRole(value string) bool {
-	_, ok := userRolesMap[value]
-	return ok
+	return userRolesMap.Validate(value)
 }
 
 func (s UserRoles) String() string {

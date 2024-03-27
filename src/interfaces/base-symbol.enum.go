@@ -16,27 +16,44 @@ const (
 	SYMBOL_INR         SymbolsEnum = "INR"
 )
 
+var SymbolsEnumArray = []SymbolsEnum{
+	SYMBOL_GOLD,
+	SYMBOL_SILVER,
+	SYMBOL_GOLD_MCX,
+	SYMBOL_SILVER_MCX,
+	SYMBOL_GOLD_NEXT,
+	SYMBOL_SILVER_NEXT,
+	SYMBOL_GOLD_SPOT,
+	SYMBOL_SILVER_SPOT,
+	SYMBOL_INR,
+}
+
 var (
-	symbolEnumMap = map[string]SymbolsEnum{
-		"GOLD":        SYMBOL_GOLD,
-		"SILVER":      SYMBOL_SILVER,
-		"GOLD_MCX":    SYMBOL_GOLD_MCX,
-		"SILVER_MCX":  SYMBOL_SILVER_MCX,
-		"GOLD_NEXT":   SYMBOL_GOLD_NEXT,
-		"SILVER_NEXT": SYMBOL_SILVER_NEXT,
-		"GOLD_SPOT":   SYMBOL_GOLD_SPOT,
-		"SILVER_SPOT": SYMBOL_SILVER_SPOT,
-		"INR":         SYMBOL_INR,
+	symbolEnumMap = EnumValidatorBase{
+		Data: map[string]interface{}{
+			"GOLD":        SYMBOL_GOLD,
+			"GOLD_MCX":    SYMBOL_GOLD_MCX,
+			"GOLD_SPOT":   SYMBOL_GOLD_SPOT,
+			"GOLD_NEXT":   SYMBOL_GOLD_NEXT,
+			"SILVER":      SYMBOL_SILVER,
+			"SILVER_MCX":  SYMBOL_SILVER_MCX,
+			"SILVER_NEXT": SYMBOL_SILVER_NEXT,
+			"SILVER_SPOT": SYMBOL_SILVER_SPOT,
+			"INR":         SYMBOL_INR,
+		},
 	}
 )
 
 func init() {
-	validator.RegisterEnumValidatorFunc("SymbolsEnum", ValidateEnumSymbolsEnum)
+	validator.RegisterEnumValidatorFunc("SymbolsEnum", symbolEnumMap.Validate)
 }
 
-func ValidateEnumSymbolsEnum(value string) bool {
-	_, ok := symbolEnumMap[value]
-	return ok
+func SymbolsEnumFromString(d string) SymbolsEnum {
+	enumValue := symbolEnumMap.Data[d]
+	if enumValue != nil {
+		return enumValue.(SymbolsEnum)
+	}
+	return ""
 }
 
 func (s SymbolsEnum) String() string {

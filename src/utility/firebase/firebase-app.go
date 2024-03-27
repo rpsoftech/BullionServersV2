@@ -33,6 +33,7 @@ func init() {
 		log.Fatalf("error initializing app: %v\n", err)
 	}
 	firebaseApp = app
+	log.Print("Firebase App initialized")
 	firebaseDb, err := firebaseApp.DatabaseWithURL(FirebaseCtx, env.Env.FIREBASE_DATABASE_URL)
 	if err != nil {
 		log.Fatalf("error initializing Firebase Database: %v\n", err)

@@ -1,6 +1,8 @@
 package interfaces
 
-import "github.com/rpsoftech/bullion-server/src/validator"
+import (
+	"github.com/rpsoftech/bullion-server/src/validator"
+)
 
 type BaseSymbolEnum string
 
@@ -10,19 +12,16 @@ const (
 )
 
 var (
-	baseSymbolEnumMap = map[string]BaseSymbolEnum{
-		"GOLD":   BASE_SYMBOL_GOLD,
-		"SILVER": BASE_SYMBOL_SILVER,
+	baseSymbolEnumMap = EnumValidatorBase{
+		Data: map[string]interface{}{
+			"GOLD":   BASE_SYMBOL_GOLD,
+			"SILVER": BASE_SYMBOL_SILVER,
+		},
 	}
 )
 
 func init() {
-	validator.RegisterEnumValidatorFunc("BaseSymbolEnum", ValidateBaseSymbolEnum)
-}
-
-func ValidateBaseSymbolEnum(value string) bool {
-	_, ok := baseSymbolEnumMap[value]
-	return ok
+	validator.RegisterEnumValidatorFunc("BaseSymbolEnum", baseSymbolEnumMap.Validate)
 }
 
 func (s BaseSymbolEnum) String() string {

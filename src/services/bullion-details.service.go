@@ -37,7 +37,8 @@ func (service *bullionDetailsService) GetBullionDetailsByShortName(shortName str
 	if err != nil {
 		return nil, err
 	}
-	service.bullionSiteInfoMapById[shortName] = bullion
+	service.bullionSiteInfoMapById[bullion.ID] = bullion
+	service.bullionSiteInfoMapByShortName[shortName] = bullion
 	return bullion, nil
 }
 func (service *bullionDetailsService) GetBullionDetailsByBullionId(id string) (*interfaces.BullionSiteInfoEntity, error) {
@@ -49,6 +50,7 @@ func (service *bullionDetailsService) GetBullionDetailsByBullionId(id string) (*
 		return nil, err
 	}
 	service.bullionSiteInfoMapById[id] = bullion
+	service.bullionSiteInfoMapByShortName[bullion.ShortName] = bullion
 	return bullion, nil
 }
 

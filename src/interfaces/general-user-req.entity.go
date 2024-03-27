@@ -7,7 +7,7 @@ type GeneralUserReqEntity struct {
 	Status        GeneralUserAuthStatus `bson:"status" json:"status" validate:"required,enum=GeneralUserAuthStatus"`
 }
 
-func CreateNewGeneralUserReq(generalUserId string, bullionId string, status GeneralUserAuthStatus) (r *GeneralUserReqEntity) {
+func CreateNewGeneralUserReq(generalUserId string, bullionId string, status GeneralUserAuthStatus) *GeneralUserReqEntity {
 	b := &GeneralUserReqEntity{
 		GeneralUserId: generalUserId,
 		BullionId:     bullionId,

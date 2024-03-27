@@ -1,9 +1,11 @@
 package repos
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/rpsoftech/bullion-server/src/env"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
@@ -68,6 +70,7 @@ func (repo *TradeUserRepoStruct) Save(entity *interfaces.TradeUserEntity) (*inte
 			err = nil
 		}
 	}
+	go repo.cacheDataToRedis(entity)
 	return entity, err
 }
 
@@ -131,11 +134,15 @@ func (repo *TradeUserRepoStruct) findByFilter(filter *mongoDbFilter) (*[]interfa
 }
 
 func (repo *TradeUserRepoStruct) FindOne(id string) (*interfaces.TradeUserEntity, error) {
-	var result interfaces.TradeUserEntity
-
+	result := new(interfaces.TradeUserEntity)
+	if redisData := repo.redis.GetStringData(fmt.Sprintf("tradeUser/%s", id)); redisData != "" {
+		if err := json.Unmarshal([]byte(redisData), result); err == nil {
+			return result, err
+		}
+	}
 	err := repo.collection.FindOne(mongodb.MongoCtx, bson.D{{
 		Key: "id", Value: id,
-	}}).Decode(&result)
+	}}).Decode(result)
 
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
@@ -155,9 +162,16 @@ func (repo *TradeUserRepoStruct) FindOne(id string) (*interfaces.TradeUserEntity
 			}
 		}
 	}
-	return &result, err
+	go repo.cacheDataToRedis(result)
+	return result, err
 }
 
+func (repo *TradeUserRepoStruct) cacheDataToRedis(entity *interfaces.TradeUserEntity) {
+	if entityStringBytes, err := json.Marshal(entity); err == nil {
+		entityString := string(entityStringBytes)
+		repo.redis.SetStringDataWithExpiry(fmt.Sprintf("tradeUser/%s", entity.ID), entityString, time.Duration(24)*time.Hour)
+	}
+}
 func (repo *TradeUserRepoStruct) findOneByCondition(bullionId string, condition *bson.E) (*interfaces.TradeUserEntity, error) {
 	var result interfaces.TradeUserEntity
 

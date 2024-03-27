@@ -11,25 +11,23 @@ const (
 )
 
 var (
-	calculateOnPriceTypeMap = map[string]CalculateOnPriceType{
-		"BID_ASK": CALCULATE_ON_BID_ASK,
-		"BID":     CALCULATE_ON_BID,
-		"ASK":     CALCULATE_ON_ASK,
+	calculateOnPriceTypeMap = EnumValidatorBase{
+		Data: map[string]interface{}{
+			"BID_ASK": CALCULATE_ON_BID_ASK,
+			"ASK":     CALCULATE_ON_ASK,
+			"BID":     CALCULATE_ON_BID,
+		},
 	}
 )
 
 func init() {
-	validator.RegisterEnumValidatorFunc("CalculateOnPriceType", ValidateEnumCalculateOnPriceType)
+	validator.RegisterEnumValidatorFunc("CalculateOnPriceType", calculateOnPriceTypeMap.Validate)
 }
 
 // ValidateEnumCalculateOnPriceType checks if the given value is a valid calculateOnPriceType.
 //
 // value: the value to be validated as a calculateOnPriceType.
 // Returns: true if the value is a valid calculateOnPriceType, false otherwise.
-func ValidateEnumCalculateOnPriceType(value string) bool {
-	_, ok := calculateOnPriceTypeMap[value]
-	return ok
-}
 
 func (s CalculateOnPriceType) String() string {
 	switch s {

@@ -6,11 +6,9 @@ import (
 	"github.com/rpsoftech/bullion-server/src/events"
 	"github.com/rpsoftech/bullion-server/src/interfaces"
 	"github.com/rpsoftech/bullion-server/src/mongodb/repos"
-	"github.com/rpsoftech/bullion-server/src/redis"
 )
 
 type tradeUserGroupServiceStruct struct {
-	redisRepo                     *redis.RedisClientStruct
 	eventBus                      *eventBusService
 	firebaseDb                    *firebaseDatabaseService
 	bullionService                *bullionDetailsService
@@ -31,7 +29,6 @@ func init() {
 func getTradeUserGroupService() *tradeUserGroupServiceStruct {
 	if TradeUserGroupService == nil {
 		TradeUserGroupService = &tradeUserGroupServiceStruct{
-			redisRepo:                     redis.InitRedisAndRedisClient(),
 			eventBus:                      getEventBusService(),
 			firebaseDb:                    getFirebaseRealTimeDatabase(),
 			bullionService:                getBullionService(),
