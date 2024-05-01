@@ -128,3 +128,11 @@ func (s SourceSymbolEnum) IsValid() bool {
 
 	return false
 }
+
+func (s SourceSymbolEnum) ToSymbolEnum() SymbolsEnum {
+	if SOURCE_SYMBOL_GOLD == s {
+		return SYMBOL_GOLD
+	} else {
+		return SYMBOL_SILVER
+	}
+}

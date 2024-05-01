@@ -12,6 +12,7 @@ type orderGeneralService struct {
 	firebaseDb      *firebaseDatabaseService
 	bullionService  *bullionDetailsService
 	flagService     *FlagServiceStruct
+	liveRateService *liveRateServiceStruct
 	groupService    *tradeUserGroupServiceStruct
 	orderRepo       *repos.OrderRepoStruct
 	bankRateService *bankRateService
@@ -32,6 +33,7 @@ func getOrderGeneralService() *orderGeneralService {
 			bullionService:  getBullionService(),
 			groupService:    getTradeUserGroupService(),
 			flagService:     getFlagService(),
+			liveRateService: getLiveRateService(),
 			userService:     getTradeUserService(),
 			bankRateService: getBankRateService(),
 			productService:  getProductService(),
@@ -165,7 +167,7 @@ func (service *orderGeneralService) findOrderDetailsAndValidate(userId string, g
 	service.ValidateUserAndGroupMapWithWeight(user, group, groupMap, weight)
 	return user, group, groupMap, nil
 }
-func (service *orderGeneralService) PlaceOrder(orderType interfaces.OrderStatus, userId string, groupId string, groupMapId string, weight int, price float64, placedBy string) (*interfaces.OrderEntity, error) {
+func (service *orderGeneralService) PlaceOrder(orderType interfaces.OrderStatus, userId string, groupId string, groupMapId string, buySell interfaces.BuySell, weight int, price float64, placedBy string) (*interfaces.OrderEntity, error) {
 
 	user, group, groupMap, err := service.findOrderDetailsAndValidate(userId, groupId, groupMapId, weight)
 	if err != nil {
@@ -178,8 +180,63 @@ func (service *orderGeneralService) PlaceOrder(orderType interfaces.OrderStatus,
 	}
 
 	// TODO Validate Pricing
+	priceReadKey := interfaces.PRICE_ASK
+	if product.CalculatedOnPriceOf == interfaces.CALCULATE_ON_BID {
+		priceReadKey = interfaces.PRICE_BID
+	} else if product.CalculatedOnPriceOf == interfaces.CALCULATE_ON_BID_ASK {
+		if buySell == interfaces.Sell {
+			priceReadKey = interfaces.PRICE_ASK
+		} else {
+			priceReadKey = interfaces.PRICE_BID
+		}
+	}
 
-	// product.CalculatedOnPriceOf
+	productSymbol := product.SourceSymbol.ToSymbolEnum()
+
+	if product.CalcPriceMethod == interfaces.CALCULATION_PRICE_TYPE_BANK {
+		if product.SourceSymbol == interfaces.SOURCE_SYMBOL_GOLD {
+			productSymbol = interfaces.SYMBOL_GOLD_SPOT
+		} else {
+			productSymbol = interfaces.SYMBOL_SILVER_SPOT
+		}
+	}
+
+	rate := service.liveRateService.GetLiveRate(productSymbol, priceReadKey)
+
+	if rate == 0 {
+		return nil, &interfaces.RequestError{
+			StatusCode: 400,
+			Code:       interfaces.ERROR_LIVE_RATE_NOT_FOUND,
+			Message:    "Live Rate Not Found",
+			Name:       "LIVE_RATE_NOT_FOUND",
+		}
+	}
+
+	if product.CalcPriceMethod == interfaces.CALCULATION_PRICE_TYPE_BANK {
+		bankRate, err := service.bankRateService.GetBankRateCalcByBullionId(group.BullionId)
+		if err != nil {
+			return nil, err
+		}
+		inrRate := service.liveRateService.GetLiveRate(interfaces.SYMBOL_INR, priceReadKey)
+		calcFunc := bankRate.GOLD_SPOT.CalculatePrice
+		if product.SourceSymbol == interfaces.SOURCE_SYMBOL_SILVER {
+			calcFunc = bankRate.SILVER_SPOT.CalculatePrice
+		}
+		rate = calcFunc(rate, inrRate)
+		// rate = bankRate.Rate
+	}
+	calcSnapshot := &product.CalcSnapshot.Sell
+	if buySell == interfaces.Buy {
+		calcSnapshot = &product.CalcSnapshot.Buy
+	}
+	finalRate := interfaces.Calculate(rate, calcSnapshot)
+
+	println("Final Rate", finalRate)
+	// order := &interfaces.OrderEntity{
+
+	// TODO Check Hedging And Place Order
+
+	// TODO Update Order Entity in DB
 
 	_, err = user.UpdateMarginAfterOrder(weight, product.SourceSymbol)
 	if err != nil {

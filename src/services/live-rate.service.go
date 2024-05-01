@@ -39,6 +39,14 @@ func (s *liveRateServiceStruct) GetLastRate() *interfaces.LiveRateData {
 	return &s.LastRateMap
 }
 
+func (s *liveRateServiceStruct) GetLiveRate(symbol interfaces.SymbolsEnum, priceKey interfaces.PriceKeyEnum) float64 {
+	rateMap := s.LastRateMap[symbol]
+	if len(rateMap) == 0 {
+		return 0
+	}
+	return rateMap[priceKey]
+}
+
 func (s *liveRateServiceStruct) lastRateReaderFromRedis() {
 	go func() {
 		for {

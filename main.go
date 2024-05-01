@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -28,6 +30,7 @@ func main() {
 	defer deferMainFunc()
 
 	app := fiber.New(fiber.Config{
+		ServerHeader: "Bullion Server V1.0.0",
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			mappedError, ok := err.(*interfaces.RequestError)
 			if !ok {
@@ -45,15 +48,18 @@ func main() {
 	app.Use(logger.New())
 	app.Use(middleware.TokenDecrypter)
 
-	app.Get("/token", func(c *fiber.Ctx) error {
-		a, _ := services.AccessTokenService.GenerateToken(jwt.GeneralUserAccessRefreshToken{
-			Role: interfaces.ROLE_ADMIN,
-			RegisteredClaims: &j.RegisteredClaims{
-				IssuedAt: j.NewNumericDate(time.Now()),
-			},
-		})
-		return c.SendString(a)
-	})
+	if env.Env.APP_ENV != env.APP_ENV_PRODUCTION {
+
+		app.Get("/token", func(c *fiber.Ctx) error {
+			a, _ := services.AccessTokenService.GenerateToken(jwt.GeneralUserAccessRefreshToken{
+				Role: interfaces.ROLE_ADMIN,
+				RegisteredClaims: &j.RegisteredClaims{
+					IssuedAt: j.NewNumericDate(time.Now()),
+				},
+			})
+			return c.SendString(a)
+		}).Name("Temp Admin Access Token")
+	}
 	// repos.BullionSiteInfoRepo.Save(interfaces.CreateNewBullionSiteInfo("Akshat Bullion", "https://akshatbullion.com").AddGeneralUserInfo(true, true))
 	// app.Get("/", func(c *fiber.Ctx) error {
 	// bull := repos.BullionSiteInfoRepo.FindOne("ad3cee16-e8d7-4a27-a060-46d99c133273")
@@ -71,6 +77,10 @@ func main() {
 	if env.Env.APP_ENV == env.APP_ENV_LOCAL || env.Env.APP_ENV == env.APP_ENV_DEVELOPE {
 		hostAndPort = "127.0.0.1"
 	}
+	// Print the router stack in JSON format
+	data, _ := json.MarshalIndent(app.Stack(), "", "  ")
+	fmt.Println(string(data))
+
 	hostAndPort = hostAndPort + ":" + strconv.Itoa(env.Env.PORT)
 	app.Listen(hostAndPort)
 	// log.Fatal(app.Listen(":" + strconv.Itoa(env.Env.PORT)))
