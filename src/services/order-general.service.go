@@ -8,14 +8,15 @@ import (
 )
 
 type orderGeneralService struct {
-	eventBus       *eventBusService
-	firebaseDb     *firebaseDatabaseService
-	bullionService *bullionDetailsService
-	flagService    *FlagServiceStruct
-	groupService   *tradeUserGroupServiceStruct
-	orderRepo      *repos.OrderRepoStruct
-	userService    *tradeUserServiceStruct
-	productService *productService
+	eventBus        *eventBusService
+	firebaseDb      *firebaseDatabaseService
+	bullionService  *bullionDetailsService
+	flagService     *FlagServiceStruct
+	groupService    *tradeUserGroupServiceStruct
+	orderRepo       *repos.OrderRepoStruct
+	bankRateService *bankRateService
+	userService     *tradeUserServiceStruct
+	productService  *productService
 }
 
 var OrderGeneralService *orderGeneralService
@@ -26,14 +27,15 @@ func init() {
 func getOrderGeneralService() *orderGeneralService {
 	if OrderGeneralService == nil {
 		OrderGeneralService = &orderGeneralService{
-			eventBus:       getEventBusService(),
-			firebaseDb:     getFirebaseRealTimeDatabase(),
-			bullionService: getBullionService(),
-			groupService:   getTradeUserGroupService(),
-			flagService:    getFlagService(),
-			userService:    getTradeUserService(),
-			productService: getProductService(),
-			orderRepo:      repos.OrderRepo,
+			eventBus:        getEventBusService(),
+			firebaseDb:      getFirebaseRealTimeDatabase(),
+			bullionService:  getBullionService(),
+			groupService:    getTradeUserGroupService(),
+			flagService:     getFlagService(),
+			userService:     getTradeUserService(),
+			bankRateService: getBankRateService(),
+			productService:  getProductService(),
+			orderRepo:       repos.OrderRepo,
 		}
 		println("Order General Service Initialized")
 	}
@@ -177,6 +179,8 @@ func (service *orderGeneralService) PlaceOrder(orderType interfaces.OrderStatus,
 
 	// TODO Validate Pricing
 
+	// product.CalculatedOnPriceOf
+
 	_, err = user.UpdateMarginAfterOrder(weight, product.SourceSymbol)
 	if err != nil {
 		return nil, err
@@ -187,3 +191,8 @@ func (service *orderGeneralService) PlaceOrder(orderType interfaces.OrderStatus,
 	// return service.orderRepo.PlaceOrder(orderType, user, group, groupMap, price, placedBy)
 	// return service.orderRepo.PlaceOrder(orderType, user, group, groupMap, price, placedBy)
 }
+
+// check user is valid
+// check group is valid
+// check group map is valid
+// check for volume

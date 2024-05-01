@@ -4,13 +4,25 @@ import "github.com/rpsoftech/bullion-server/src/validator"
 
 type CalculateOnPriceType string
 
+type CalculationPriceMethod string
+
 const (
-	CALCULATE_ON_BID_ASK CalculateOnPriceType = "BID_ASK"
-	CALCULATE_ON_BID     CalculateOnPriceType = "BID"
-	CALCULATE_ON_ASK     CalculateOnPriceType = "ASK"
+	CALCULATION_PRICE_TYPE_FIX  CalculationPriceMethod = "FIX"
+	CALCULATION_PRICE_TYPE_BANK CalculationPriceMethod = "BANK"
+	CALCULATION_PRICE_TYPE_EXEC CalculationPriceMethod = "EXEC"
+	CALCULATE_ON_BID_ASK        CalculateOnPriceType   = "BID_ASK"
+	CALCULATE_ON_BID            CalculateOnPriceType   = "BID"
+	CALCULATE_ON_ASK            CalculateOnPriceType   = "ASK"
 )
 
 var (
+	calculationPriceMethodMap = EnumValidatorBase{
+		Data: map[string]interface{}{
+			"FIX":  CALCULATION_PRICE_TYPE_FIX,
+			"BANK": CALCULATION_PRICE_TYPE_BANK,
+			"EXEC": CALCULATION_PRICE_TYPE_EXEC,
+		},
+	}
 	calculateOnPriceTypeMap = EnumValidatorBase{
 		Data: map[string]interface{}{
 			"BID_ASK": CALCULATE_ON_BID_ASK,
@@ -22,6 +34,7 @@ var (
 
 func init() {
 	validator.RegisterEnumValidatorFunc("CalculateOnPriceType", calculateOnPriceTypeMap.Validate)
+	validator.RegisterEnumValidatorFunc("CalculationPriceMethod", calculationPriceMethodMap.Validate)
 }
 
 // ValidateEnumCalculateOnPriceType checks if the given value is a valid calculateOnPriceType.
@@ -50,5 +63,28 @@ func (s CalculateOnPriceType) IsValid() bool {
 		return true
 	}
 
+	return false
+}
+
+func (s CalculationPriceMethod) String() string {
+	switch s {
+	case CALCULATION_PRICE_TYPE_FIX:
+		return "FIX"
+	case CALCULATION_PRICE_TYPE_BANK:
+		return "BANK"
+	case CALCULATION_PRICE_TYPE_EXEC:
+		return "EXEC"
+	}
+	return "unknown"
+}
+
+func (s CalculationPriceMethod) IsValid() bool {
+	switch s {
+	case
+		CALCULATION_PRICE_TYPE_FIX,
+		CALCULATION_PRICE_TYPE_BANK,
+		CALCULATION_PRICE_TYPE_EXEC:
+		return true
+	}
 	return false
 }

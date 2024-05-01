@@ -13,8 +13,7 @@ type (
 	ProductBaseStruct struct {
 		BullionId           string               `bson:"bullionId" json:"bullionId" validate:"required,uuid"`
 		Name                string               `bson:"name" json:"name" validate:"required"`
-		SourceSymbol        SymbolsEnum          `bson:"sourceSymbol" json:"sourceSymbol" validate:"required,enum=SymbolsEnum"`
-		CalculationSymbol   SymbolsEnum          `bson:"calculationSymbol" json:"calculationSymbol" validate:"required,enum=SymbolsEnum"`
+		SourceSymbol        SourceSymbolEnum     `bson:"sourceSymbol" json:"sourceSymbol" validate:"required,enum=SourceSymbolEnum"`
 		IsActive            bool                 `bson:"isActive" json:"isActive" validate:"boolean"`
 		IsHedging           bool                 `bson:"isHedging" json:"isHedging" validate:"boolean"`
 		FloatPoint          int                  `bson:"floatPoint" json:"floatPoint" validate:"min=0,max=4"`

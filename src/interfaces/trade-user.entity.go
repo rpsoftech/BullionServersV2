@@ -58,11 +58,11 @@ func (user *TradeUserEntity) DeletePassword() *TradeUserEntity {
 	return user
 }
 
-func (user *TradeUserEntity) UpdateMarginAfterOrder(weight int, symbol SymbolsEnum) (*TradeUserEntity, error) {
+func (user *TradeUserEntity) UpdateMarginAfterOrder(weight int, symbol SourceSymbolEnum) (*TradeUserEntity, error) {
 	availableMargin := 0
-	if symbol == SYMBOL_GOLD {
+	if symbol == SOURCE_SYMBOL_GOLD {
 		availableMargin = user.AllotedMargins.Gold - user.UsedMargins.Gold
-	} else if symbol == SYMBOL_SILVER {
+	} else if symbol == SOURCE_SYMBOL_SILVER {
 		availableMargin = user.AllotedMargins.Silver - user.UsedMargins.Silver
 	}
 
@@ -76,9 +76,9 @@ func (user *TradeUserEntity) UpdateMarginAfterOrder(weight int, symbol SymbolsEn
 		}
 	}
 
-	if symbol == SYMBOL_GOLD {
+	if symbol == SOURCE_SYMBOL_GOLD {
 		user.UsedMargins.Gold = user.UsedMargins.Gold + weight
-	} else if symbol == SYMBOL_SILVER {
+	} else if symbol == SOURCE_SYMBOL_SILVER {
 		user.UsedMargins.Silver = user.UsedMargins.Silver + weight
 	}
 	return user, nil
