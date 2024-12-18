@@ -18,7 +18,7 @@ type GeneralUserEntity struct {
 	GeneralUser        `bson:"inline"`
 }
 
-func CreateNewGeneralUser(user GeneralUser) (r *GeneralUserEntity) {
+func CreateNewGeneralUser(user GeneralUser) *GeneralUserEntity {
 	b := &GeneralUserEntity{
 		UserRolesInterface: UserRolesInterface{
 			Role: ROLE_GENERAL_USER,

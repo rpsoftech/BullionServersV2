@@ -52,6 +52,17 @@ func (r *TradeUserGroupMapEntity) CreateNew() *TradeUserGroupMapEntity {
 	return r
 }
 
+func (r *TradeUserGroupMapEntity) ValidateVolume(weight int) bool {
+	if weight < r.GroupVolumeBase.OneClick {
+		return false
+	} else if weight > r.GroupVolumeBase.Total {
+		return false
+	} else if weight == r.GroupVolumeBase.OneClick || weight == r.GroupVolumeBase.Total {
+		return true
+	}
+	return (weight-r.GroupVolumeBase.OneClick)%r.GroupVolumeBase.Step == 0
+}
+
 func (r *TradeUserGroupMapBase) UpdateDetails(base *TradeUserGroupMapBase) *TradeUserGroupMapBase {
 	r.IsActive = base.IsActive
 	r.CanTrade = base.CanTrade
