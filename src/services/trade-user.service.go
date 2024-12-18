@@ -327,6 +327,9 @@ func (service *tradeUserServiceStruct) generateTokensForTradeUserWithPasswordMat
 	return service.generateTokensForTradeUser(tradeUser)
 }
 
+func (service *tradeUserServiceStruct) FindAndReturnAllInActiveTradeUsers(bullionId string) (*[]interfaces.TradeUserEntity, error) {
+	return service.tradeUserRepo.FindAllInActiveUser(bullionId)
+}
 func (service *tradeUserServiceStruct) FindOneUserById(id string) (*interfaces.TradeUserEntity, error) {
 	return service.tradeUserRepo.FindOne(id)
 }
