@@ -11,14 +11,14 @@ type (
 		Sell CshPremiumBuySellSnapshot `bson:"sell" json:"sell" validate:"required"`
 	}
 	ProductBaseStruct struct {
-		BullionId           string               `bson:"bullionId" json:"bullionId" validate:"required,uuid"`
-		Name                string               `bson:"name" json:"name" validate:"required"`
-		SourceSymbol        SymbolsEnum          `bson:"sourceSymbol" json:"sourceSymbol" validate:"required,enum=SymbolsEnum"`
-		CalculationSymbol   SymbolsEnum          `bson:"calculationSymbol" json:"calculationSymbol" validate:"required,enum=SymbolsEnum"`
-		IsActive            bool                 `bson:"isActive" json:"isActive" validate:"boolean"`
-		IsHedging           bool                 `bson:"isHedging" json:"isHedging" validate:"boolean"`
-		FloatPoint          int                  `bson:"floatPoint" json:"floatPoint" validate:"min=0,max=4"`
-		CalculatedOnPriceOf CalculateOnPriceType `bson:"calculatedOnPriceOf" json:"calculatedOnPriceOf" validate:"required,enum=CalculateOnPriceType"`
+		BullionId           string                 `bson:"bullionId" json:"bullionId" validate:"required,uuid"`
+		Name                string                 `bson:"name" json:"name" validate:"required"`
+		SourceSymbol        SourceSymbolEnum       `bson:"sourceSymbol" json:"sourceSymbol" validate:"required,enum=SourceSymbolEnum"`
+		IsActive            bool                   `bson:"isActive" json:"isActive" validate:"boolean"`
+		IsHedging           bool                   `bson:"isHedging" json:"isHedging" validate:"boolean"`
+		FloatPoint          int                    `bson:"floatPoint" json:"floatPoint" validate:"min=0,max=4"`
+		CalcPriceMethod     CalculationPriceMethod `bson:"calcPriceMethod" json:"calcPriceMethod" validate:"required,enum=CalculationPriceMethod"`
+		CalculatedOnPriceOf CalculateOnPriceType   `bson:"calculatedOnPriceOf" json:"calculatedOnPriceOf" validate:"required,enum=CalculateOnPriceType"`
 	}
 
 	ProductEntity struct {
@@ -46,7 +46,7 @@ type (
 	}
 )
 
-func CreateNewProduct(productBase *ProductBaseStruct, calcSnapShot *CalcSnapshotStruct, sequence int) (r *ProductEntity) {
+func CreateNewProduct(productBase *ProductBaseStruct, calcSnapShot *CalcSnapshotStruct, sequence int) *ProductEntity {
 	b := &ProductEntity{
 		ProductBaseStruct: productBase,
 		CalcSnapshot:      calcSnapShot,
@@ -55,4 +55,9 @@ func CreateNewProduct(productBase *ProductBaseStruct, calcSnapShot *CalcSnapshot
 	}
 	b.createNewId()
 	return b
+}
+
+func Calculate(symbol float64, snapshot *CshPremiumBuySellSnapshot) float64 {
+	price := symbol + float64(snapshot.Premium)
+	return price * (1 + float64(snapshot.Tax)/100)
 }

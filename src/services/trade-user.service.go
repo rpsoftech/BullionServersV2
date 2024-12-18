@@ -27,15 +27,23 @@ type tradeUserServiceStruct struct {
 var TradeUserService *tradeUserServiceStruct
 
 func init() {
-	TradeUserService = &tradeUserServiceStruct{
-		tradeUserRepo:      repos.TradeUserRepo,
-		accessTokenService: AccessTokenService,
-		eventBus:           getEventBusService(),
-		firebaseDb:         getFirebaseRealTimeDatabase(),
-		sendMsgService:     getSendMsgService(),
-		bullionService:     getBullionService(),
-		realtimeDatabase:   getFirebaseRealTimeDatabase(),
+	getTradeUserService()
+}
+
+func getTradeUserService() *tradeUserServiceStruct {
+	if TradeUserService == nil {
+		TradeUserService = &tradeUserServiceStruct{
+			tradeUserRepo:      repos.TradeUserRepo,
+			accessTokenService: AccessTokenService,
+			eventBus:           getEventBusService(),
+			firebaseDb:         getFirebaseRealTimeDatabase(),
+			sendMsgService:     getSendMsgService(),
+			bullionService:     getBullionService(),
+			realtimeDatabase:   getFirebaseRealTimeDatabase(),
+		}
+		println("Trade User Service Initialized")
 	}
+	return TradeUserService
 }
 
 func (service *tradeUserServiceStruct) VerifyAndSendOtpForNewUser(tradeUser *interfaces.TradeUserBase, bullionId string) (*string, error) {
@@ -209,7 +217,9 @@ func (service *tradeUserServiceStruct) RegisterNewTradeUser(base *interfaces.Tra
 	if err := utility.ValidateReqInput(entity); err != nil {
 		return nil, err
 	}
-	service.tradeUserRepo.Save(entity)
+	if _, err := service.tradeUserRepo.Save(entity); err != nil {
+		return nil, err
+	}
 	service.firebaseDb.setPrivateData("tradeUsersNumbers", []string{entity.BullionId}, newUserNumber)
 	go service.afterSuccessFullRegistration(entity.ID)
 	return entity, nil
@@ -270,6 +280,10 @@ func (service *tradeUserServiceStruct) LoginWithNumberAndPassword(number string,
 	return service.generateTokensForTradeUserWithPasswordMatching(tradeUser, password)
 }
 
+func (service *tradeUserServiceStruct) GetTradeUserById(id string) (*interfaces.TradeUserEntity, error) {
+	return service.tradeUserRepo.FindOne(id)
+}
+
 func (service *tradeUserServiceStruct) UpdateTradeUser(entity *interfaces.TradeUserEntity, adminId string) error {
 	user, err := service.tradeUserRepo.FindOne(entity.ID)
 	if err != nil {
@@ -286,7 +300,9 @@ func (service *tradeUserServiceStruct) UpdateTradeUser(entity *interfaces.TradeU
 	user.TradeUserBase = entity.TradeUserBase
 	user.TradeUserAdvanced.IsActive = entity.TradeUserAdvanced.IsActive
 	user.TradeUserMargins = entity.TradeUserMargins
-	service.tradeUserRepo.Save(user)
+	if _, err := service.tradeUserRepo.Save(entity); err != nil {
+		return err
+	}
 	service.eventBus.Publish(events.CreateTradeUserUpdated(entity.BullionId, user, adminId))
 	return nil
 }
@@ -329,7 +345,10 @@ func (service *tradeUserServiceStruct) TradeUserChangeStatus(id string, bullionI
 		return err
 	}
 	entity.IsActive = isActive
-	service.tradeUserRepo.Save(entity)
+
+	if _, err := service.tradeUserRepo.Save(entity); err != nil {
+		return err
+	}
 	if isActive {
 		service.eventBus.Publish(events.CreateTradeUserActivatedEvent(entity.BullionId, entity, adminId))
 	} else {

@@ -69,7 +69,10 @@ func (service *generalUserService) RegisterNew(bullionId string, user interface{
 		return nil, err
 	}
 
-	service.GeneralUserRepo.Save(entity)
+	_, err = service.GeneralUserRepo.Save(entity)
+	if err != nil {
+		return nil, err
+	}
 
 	_, err = service.sendApprovalRequest(entity, Bullion)
 	if err != nil {
