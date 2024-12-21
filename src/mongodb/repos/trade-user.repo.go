@@ -151,7 +151,7 @@ func (repo *TradeUserRepoStruct) FindOne(id string) (*interfaces.TradeUserEntity
 	result := new(interfaces.TradeUserEntity)
 	if redisData := repo.redis.GetStringData(fmt.Sprintf("tradeUser/%s", id)); redisData != "" {
 		if err := json.Unmarshal([]byte(redisData), result); err == nil {
-			result.RevertTimeStamps()
+			result.RestoreTimeStamp()
 			return result, err
 		}
 	}

@@ -74,7 +74,7 @@ func (repo *BankRateCalcRepoStruct) FindOneByBullionId(id string) (*interfaces.B
 	result := new(interfaces.BankRateCalcEntity)
 	if redisData := repo.redis.GetStringData(fmt.Sprintf("%s/%s", bankRateRedisCollection, id)); redisData != "" {
 		if err := json.Unmarshal([]byte(redisData), result); err == nil {
-			result.RevertTimeStamps()
+			result.RestoreTimeStamp()
 			return result, err
 		}
 	}

@@ -32,11 +32,6 @@ type BaseEntity struct {
 // 	return json.Marshal(base)
 // }
 
-func (b *BaseEntity) RevertTimeStamps() *BaseEntity {
-	b.CreatedAt = b.CreatedAtExported
-	b.ModifiedAt = b.ModifiedAtExported
-	return b
-}
 func (b *BaseEntity) AddTimeStamps() *BaseEntity {
 	b.CreatedAtExported = b.CreatedAt
 	b.ModifiedAtExported = b.ModifiedAt
@@ -51,7 +46,7 @@ func (b *BaseEntity) createNewId() *BaseEntity {
 	id := uuid.New().String()
 	b.ID = id
 	b.CreatedAt = time.Now()
-	b.ModifiedAt = time.Now()
+	b.ModifiedAt = b.CreatedAt
 	return b
 }
 
