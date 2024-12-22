@@ -41,6 +41,7 @@ func init() {
 }
 
 func (repo *BankRateCalcRepoStruct) cacheDataToRedis(entity *interfaces.BankRateCalcEntity) {
+	entity.AddTimeStamps()
 	if entityStringBytes, err := json.Marshal(entity); err == nil {
 		entityString := string(entityStringBytes)
 		repo.redis.SetStringDataWithExpiry(fmt.Sprintf("%s/%s", bankRateRedisCollection, entity.BullionId), entityString, time.Duration(24)*time.Hour)
@@ -73,6 +74,7 @@ func (repo *BankRateCalcRepoStruct) FindOneByBullionId(id string) (*interfaces.B
 	result := new(interfaces.BankRateCalcEntity)
 	if redisData := repo.redis.GetStringData(fmt.Sprintf("%s/%s", bankRateRedisCollection, id)); redisData != "" {
 		if err := json.Unmarshal([]byte(redisData), result); err == nil {
+			result.RestoreTimeStamp()
 			return result, err
 		}
 	}

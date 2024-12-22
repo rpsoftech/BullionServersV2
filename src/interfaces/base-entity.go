@@ -46,7 +46,7 @@ func (b *BaseEntity) createNewId() *BaseEntity {
 	id := uuid.New().String()
 	b.ID = id
 	b.CreatedAt = time.Now()
-	b.ModifiedAt = time.Now()
+	b.ModifiedAt = b.CreatedAt
 	return b
 }
 
