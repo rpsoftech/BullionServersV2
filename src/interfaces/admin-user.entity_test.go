@@ -37,6 +37,7 @@ func TestAdminUserEntity(t *testing.T) {
 		if e.UserRolesInterface.Role != ROLE_ADMIN {
 			t.Fatalf("UserRolesInterface Role is not ROLE_ADMIN")
 		}
+		testBaseEntityCreateNewId(t, e.BaseEntity)
 		t.Run("password match", func(t *testing.T) {
 			if !e.MatchPassword("password") {
 				t.Fatalf("Password does not match")

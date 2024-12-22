@@ -5,30 +5,36 @@ import (
 	"time"
 )
 
+func testBaseEntityCreateNewId(t *testing.T, c *BaseEntity) {
+
+	if c.ID == "" {
+		t.Fatalf("Id is empty")
+	}
+
+	if c.CreatedAt.IsZero() {
+		t.Fatalf("CreatedAt is empty")
+	}
+	if c.ModifiedAt.IsZero() {
+		t.Fatalf("ModifiedAt is empty")
+	}
+	if !c.CreatedAtExported.IsZero() {
+		t.Fatalf("CreatedAtExported is not empty %d", c.CreatedAtExported.Unix())
+	}
+	if !c.ModifiedAtExported.IsZero() {
+		t.Fatalf("ModifiedAtExported is not empty")
+	}
+}
+
 func TestBaseEntity(t *testing.T) {
 	c := &BaseEntity{}
 	c.createNewId()
 	t.Run("Create New ID", func(t *testing.T) {
 		id := c.ID
 		c.createNewId()
-		if c.ID == "" {
-			t.Fatalf("Id is empty")
-		}
 		if c.ID == id {
 			t.Fatalf("Id Should Be Different")
 		}
-		if c.CreatedAt.IsZero() {
-			t.Fatalf("CreatedAt is empty")
-		}
-		if c.ModifiedAt.IsZero() {
-			t.Fatalf("ModifiedAt is empty")
-		}
-		if !c.CreatedAtExported.IsZero() {
-			t.Fatalf("CreatedAtExported is not empty %d", c.CreatedAtExported.Unix())
-		}
-		if !c.ModifiedAtExported.IsZero() {
-			t.Fatalf("ModifiedAtExported is not empty")
-		}
+		testBaseEntityCreateNewId(t, c)
 	})
 	t.Run("AddTimeStamps", func(t *testing.T) {
 		now := time.Now()
