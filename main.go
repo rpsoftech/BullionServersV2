@@ -41,6 +41,9 @@ func main() {
 					Name:    "Global Error Handler Function",
 				})
 			}
+			if mappedError.LogTheDetails {
+				//Todo: Store The Details Of the Error With Body And Other Extra Details Like AUTH KEY AND ETC
+			}
 			return c.Status(mappedError.StatusCode).JSON(mappedError)
 		},
 	})
