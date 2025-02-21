@@ -133,10 +133,25 @@ func (repo *TradeUserRepoStruct) findByFilter(filter *mongoDbFilter) (*[]interfa
 	return &result, err
 }
 
+func (repo *TradeUserRepoStruct) FindAllInActiveUser(bullionId string) (*[]interfaces.TradeUserEntity, error) {
+	return repo.findByFilter(&mongoDbFilter{
+		conditions: &bson.D{
+			{
+				Key: "$and",
+				Value: bson.A{
+					bson.D{{Key: "bullionId", Value: bullionId}},
+					bson.D{{Key: "isActive", Value: false}},
+				},
+			},
+		},
+	})
+}
+
 func (repo *TradeUserRepoStruct) FindOne(id string) (*interfaces.TradeUserEntity, error) {
 	result := new(interfaces.TradeUserEntity)
 	if redisData := repo.redis.GetStringData(fmt.Sprintf("tradeUser/%s", id)); redisData != "" {
 		if err := json.Unmarshal([]byte(redisData), result); err == nil {
+			result.RestoreTimeStamp()
 			return result, err
 		}
 	}
@@ -167,6 +182,7 @@ func (repo *TradeUserRepoStruct) FindOne(id string) (*interfaces.TradeUserEntity
 }
 
 func (repo *TradeUserRepoStruct) cacheDataToRedis(entity *interfaces.TradeUserEntity) {
+	entity.AddTimeStamps()
 	if entityStringBytes, err := json.Marshal(entity); err == nil {
 		entityString := string(entityStringBytes)
 		repo.redis.SetStringDataWithExpiry(fmt.Sprintf("tradeUser/%s", entity.ID), entityString, time.Duration(24)*time.Hour)

@@ -1,11 +1,8 @@
 package user
 
-import (
-	"github.com/gofiber/fiber/v2"
-	"github.com/rpsoftech/bullion-server/src/middleware"
-)
+import "github.com/gofiber/fiber/v2"
 
 func AddUserOrderApis(router fiber.Router) {
-	router.Use(middleware.AllowAllAdminsAndTradeUsers.Validate)
-	// router.Put("/placeMarketOrder",)
+
+	// router.Use(middleware.AllowAllAdminsAndTradeUsers.Validate)
 }

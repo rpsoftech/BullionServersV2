@@ -300,7 +300,9 @@ func (service *tradeUserServiceStruct) UpdateTradeUser(entity *interfaces.TradeU
 	user.TradeUserBase = entity.TradeUserBase
 	user.TradeUserAdvanced.IsActive = entity.TradeUserAdvanced.IsActive
 	user.TradeUserMargins = entity.TradeUserMargins
-	if _, err := service.tradeUserRepo.Save(entity); err != nil {
+	// TODO: Password Entity
+	// user.Password = entity.Password
+	if _, err := service.tradeUserRepo.Save(user); err != nil {
 		return err
 	}
 	service.eventBus.Publish(events.CreateTradeUserUpdated(entity.BullionId, user, adminId))
@@ -327,6 +329,9 @@ func (service *tradeUserServiceStruct) generateTokensForTradeUserWithPasswordMat
 	return service.generateTokensForTradeUser(tradeUser)
 }
 
+func (service *tradeUserServiceStruct) FindAndReturnAllInActiveTradeUsers(bullionId string) (*[]interfaces.TradeUserEntity, error) {
+	return service.tradeUserRepo.FindAllInActiveUser(bullionId)
+}
 func (service *tradeUserServiceStruct) FindOneUserById(id string) (*interfaces.TradeUserEntity, error) {
 	return service.tradeUserRepo.FindOne(id)
 }
