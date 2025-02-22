@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -39,6 +41,9 @@ func main() {
 					Name:    "Global Error Handler Function",
 				})
 			}
+			if mappedError.LogTheDetails {
+				//Todo: Store The Details Of the Error With Body And Other Extra Details Like AUTH KEY AND ETC
+			}
 			return c.Status(mappedError.StatusCode).JSON(mappedError)
 		},
 	})
@@ -75,6 +80,9 @@ func main() {
 	if env.Env.APP_ENV == env.APP_ENV_LOCAL || env.Env.APP_ENV == env.APP_ENV_DEVELOPE {
 		hostAndPort = "127.0.0.1"
 	}
+	// Print the router stack in JSON format
+	data, _ := json.MarshalIndent(app.Stack(), "", "  ")
+	fmt.Println(string(data))
 
 	hostAndPort = hostAndPort + ":" + strconv.Itoa(env.Env.PORT)
 	app.Listen(hostAndPort)

@@ -44,29 +44,7 @@ func getOrderGeneralService() *orderGeneralService {
 	return OrderGeneralService
 }
 
-func (service *orderGeneralService) ValidateUserAndGroupMapWithWeight(user *interfaces.TradeUserEntity, group *interfaces.TradeUserGroupEntity, groupMap *interfaces.TradeUserGroupMapEntity, weight int) (bool, error) {
-
-	// Check for User Activation
-	if !user.IsActive {
-		return false, &interfaces.RequestError{
-			StatusCode: http.StatusUnauthorized,
-			Code:       interfaces.ERROR_PERMISSION_NOT_ALLOWED,
-			Message:    "Account Is Not Active Please Contact Admin",
-			Name:       "ERROR_PERMISSION_NOT_ALLOWED",
-		}
-	}
-
-	if flags, err := service.flagService.GetFlags(user.BullionId); err != nil {
-		return false, err
-	} else if !flags.CanTrade {
-		// Check If Trading Is Disabled
-		return false, &interfaces.RequestError{
-			StatusCode: 400,
-			Code:       interfaces.ERROR_TRADING_IS_DISABLED,
-			Message:    "Trading is disabled. Contact User",
-			Name:       "BULLION_NOT_ACTIVE",
-		}
-	}
+func (service *orderGeneralService) ValidateUserGroupForTrade(group *interfaces.TradeUserGroupEntity) (bool, error) {
 	// Check for Group Activation
 	if !group.IsActive {
 		return false, &interfaces.RequestError{
@@ -85,7 +63,10 @@ func (service *orderGeneralService) ValidateUserAndGroupMapWithWeight(user *inte
 			Name:       "GROUP_NOT_ACTIVE",
 		}
 	}
+	return true, nil
+}
 
+func (service *orderGeneralService) ValidateUserAndGroupMapWithWeight(groupMap *interfaces.TradeUserGroupMapEntity, weight int) (bool, error) {
 	// Check for Group Map Activation
 	if !groupMap.IsActive {
 		return false, &interfaces.RequestError{
@@ -134,6 +115,28 @@ func (service *orderGeneralService) findOrderDetailsAndValidate(userId string, g
 			Code:       interfaces.ERROR_PERMISSION_NOT_ALLOWED,
 			Message:    "MissMatch Group Id",
 			Name:       "MISS_MATCH_GROUP_ID",
+			Extra:      "Solution Logout And Relogin",
+		}
+	}
+	// Check for User Activation
+	if !user.IsActive {
+		return nil, nil, nil, &interfaces.RequestError{
+			StatusCode: http.StatusUnauthorized,
+			Code:       interfaces.ERROR_PERMISSION_NOT_ALLOWED,
+			Message:    "Account Is Not Active Please Contact Admin",
+			Name:       "ERROR_PERMISSION_NOT_ALLOWED",
+		}
+	}
+
+	if flags, err := service.flagService.GetFlags(user.BullionId); err != nil {
+		return nil, nil, nil, err
+	} else if !flags.CanTrade {
+		// Check If Trading Is Disabled
+		return nil, nil, nil, &interfaces.RequestError{
+			StatusCode: 400,
+			Code:       interfaces.ERROR_TRADING_IS_DISABLED,
+			Message:    "Trading is disabled. Contact User",
+			Name:       "BULLION_NOT_ACTIVE",
 		}
 	}
 	// Get Group
@@ -141,7 +144,9 @@ func (service *orderGeneralService) findOrderDetailsAndValidate(userId string, g
 	if err != nil {
 		return nil, nil, nil, err
 	}
-
+	if valid, err := service.ValidateUserGroupForTrade(group); !valid && err != nil {
+		return nil, nil, nil, err
+	}
 	// Get Group Map
 	groupMaps, err := service.groupService.GetGroupMapByGroupId(groupId, user.BullionId)
 	if err != nil {
@@ -161,10 +166,14 @@ func (service *orderGeneralService) findOrderDetailsAndValidate(userId string, g
 			Code:       interfaces.ERROR_GROUP_MAP_NOT_FOUND,
 			Message:    "Group Map Not Found",
 			Name:       "GROUP_MAP_NOT_FOUND",
+			Extra:      "Solution Logout And Relogin",
 		}
 
 	}
-	service.ValidateUserAndGroupMapWithWeight(user, group, groupMap, weight)
+	if valid, err := service.ValidateUserAndGroupMapWithWeight(groupMap, weight); !valid && err != nil {
+		return nil, nil, nil, err
+	}
+
 	return user, group, groupMap, nil
 }
 func (service *orderGeneralService) PlaceOrder(orderType interfaces.OrderStatus, userId string, groupId string, groupMapId string, buySell interfaces.BuySell, weight int, price float64, placedBy string) (*interfaces.OrderEntity, error) {
@@ -179,61 +188,30 @@ func (service *orderGeneralService) PlaceOrder(orderType interfaces.OrderStatus,
 		return nil, err
 	}
 
-	// TODO Validate Pricing
-	priceReadKey := interfaces.PRICE_ASK
-	if product.CalculatedOnPriceOf == interfaces.CALCULATE_ON_BID {
-		priceReadKey = interfaces.PRICE_BID
-	} else if product.CalculatedOnPriceOf == interfaces.CALCULATE_ON_BID_ASK {
-		if buySell == interfaces.Sell {
-			priceReadKey = interfaces.PRICE_ASK
-		} else {
-			priceReadKey = interfaces.PRICE_BID
-		}
-	}
-
-	productSymbol := product.SourceSymbol.ToSymbolEnum()
-
-	if product.CalcPriceMethod == interfaces.CALCULATION_PRICE_TYPE_BANK {
-		if product.SourceSymbol == interfaces.SOURCE_SYMBOL_GOLD {
-			productSymbol = interfaces.SYMBOL_GOLD_SPOT
-		} else {
-			productSymbol = interfaces.SYMBOL_SILVER_SPOT
-		}
-	}
-
-	rate := service.liveRateService.GetLiveRate(productSymbol, priceReadKey)
-
-	if rate == 0 {
-		return nil, &interfaces.RequestError{
-			StatusCode: 400,
-			Code:       interfaces.ERROR_LIVE_RATE_NOT_FOUND,
-			Message:    "Live Rate Not Found",
-			Name:       "LIVE_RATE_NOT_FOUND",
-		}
-	}
-
-	if product.CalcPriceMethod == interfaces.CALCULATION_PRICE_TYPE_BANK {
-		bankRate, err := service.bankRateService.GetBankRateCalcByBullionId(group.BullionId)
-		if err != nil {
-			return nil, err
-		}
-		inrRate := service.liveRateService.GetLiveRate(interfaces.SYMBOL_INR, priceReadKey)
-		calcFunc := bankRate.GOLD_SPOT.CalculatePrice
-		if product.SourceSymbol == interfaces.SOURCE_SYMBOL_SILVER {
-			calcFunc = bankRate.SILVER_SPOT.CalculatePrice
-		}
-		rate = calcFunc(rate, inrRate)
-		// rate = bankRate.Rate
-	}
-	calcSnapshot := &product.CalcSnapshot.Sell
-	if buySell == interfaces.Buy {
-		calcSnapshot = &product.CalcSnapshot.Buy
-	}
-	finalRate := interfaces.Calculate(rate, calcSnapshot)
-
+	// Validate Pricing
+	finalRate, err := service.calCulateAndReturnFinalRateForOrder(product, group, groupMap, buySell)
 	println("Final Rate", finalRate)
-	// order := &interfaces.OrderEntity{
-
+	order := &interfaces.OrderEntity{
+		BaseEntity: &interfaces.BaseEntity{},
+		OrderBase: &interfaces.OrderBase{
+			BullionId:   group.BullionId,
+			OrderType:   interfaces.OrderType(orderType),
+			BuySell:     buySell,
+			ProductName: product.Name,
+		},
+		LimitWatcherRequired: &interfaces.LimitWatcherRequired{
+			ProductId:         product.ID,
+			GroupId:           group.ID,
+			ProductGroupMapId: groupMap.ID,
+			Volume:            float64(weight),
+			Weight:            weight,
+		},
+		// DeliveryData: ,
+		// Identity: ,
+		// AfterSuccessOrder: ,
+	}
+	println("Order", order)
+	// order.BaseEntity.
 	// TODO Check Hedging And Place Order
 
 	// TODO Update Order Entity in DB
@@ -247,6 +225,71 @@ func (service *orderGeneralService) PlaceOrder(orderType interfaces.OrderStatus,
 	return nil, nil
 	// return service.orderRepo.PlaceOrder(orderType, user, group, groupMap, price, placedBy)
 	// return service.orderRepo.PlaceOrder(orderType, user, group, groupMap, price, placedBy)
+}
+
+func (service *orderGeneralService) calCulateAndReturnFinalRateForOrder(product *interfaces.ProductEntity, group *interfaces.TradeUserGroupEntity, groupMap *interfaces.TradeUserGroupMapEntity, buySell interfaces.BuySell) (float64, error) {
+	priceReadKey := interfaces.PRICE_ASK
+	if product.CalculatedOnPriceOf == interfaces.CALCULATE_ON_BID {
+		priceReadKey = interfaces.PRICE_BID
+	} else if product.CalculatedOnPriceOf == interfaces.CALCULATE_ON_BID_ASK {
+		if buySell == interfaces.Sell {
+			priceReadKey = interfaces.PRICE_ASK
+		} else {
+			priceReadKey = interfaces.PRICE_BID
+		}
+	}
+
+	productSymbol := product.SourceSymbol.ToSymbolEnum()
+
+	groupPremium := group.Gold
+
+	if product.CalcPriceMethod == interfaces.CALCULATION_PRICE_TYPE_BANK {
+		if product.SourceSymbol == interfaces.SOURCE_SYMBOL_GOLD {
+			productSymbol = interfaces.SYMBOL_GOLD_SPOT
+		} else {
+			productSymbol = interfaces.SYMBOL_SILVER_SPOT
+			groupPremium = group.Silver
+		}
+	}
+
+	rate := service.liveRateService.GetLiveRate(productSymbol, priceReadKey)
+
+	if rate == 0 {
+		return 0, &interfaces.RequestError{
+			StatusCode: 400,
+			Code:       interfaces.ERROR_LIVE_RATE_NOT_FOUND,
+			Message:    "Live Rate Not Found",
+			Name:       "LIVE_RATE_NOT_FOUND",
+		}
+	}
+
+	if product.CalcPriceMethod == interfaces.CALCULATION_PRICE_TYPE_BANK {
+		bankRate, err := service.bankRateService.GetBankRateCalcByBullionId(group.BullionId)
+		if err != nil {
+			return 0, err
+		}
+		inrRate := service.liveRateService.GetLiveRate(interfaces.SYMBOL_INR, priceReadKey)
+		calcFunc := bankRate.GOLD_SPOT.CalculatePrice
+		if product.SourceSymbol == interfaces.SOURCE_SYMBOL_SILVER {
+			calcFunc = bankRate.SILVER_SPOT.CalculatePrice
+		}
+		rate = calcFunc(rate, inrRate)
+		// rate = bankRate.Rate
+	}
+
+	// Extra Premium For Group
+	extraPremium := groupMap.Sell + groupPremium.Sell
+
+	calcSnapshot := &product.CalcSnapshot.Sell
+
+	if buySell == interfaces.Buy {
+		calcSnapshot = &product.CalcSnapshot.Buy
+		extraPremium = groupMap.Buy + groupPremium.Buy
+	}
+
+	finalRate := interfaces.Calculate(rate+extraPremium, calcSnapshot)
+	return finalRate, nil
+	// return service.orderRepo.GetOrderById(orderId)
 }
 
 // check user is valid
