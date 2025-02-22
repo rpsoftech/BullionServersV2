@@ -43,8 +43,7 @@ func (b *BaseEntity) RestoreTimeStamp() *BaseEntity {
 	return b
 }
 func (b *BaseEntity) createNewId() *BaseEntity {
-	id := uuid.New().String()
-	b.ID = id
+	b.ID = uuid.New().String()
 	b.CreatedAt = time.Now()
 	b.ModifiedAt = b.CreatedAt
 	return b

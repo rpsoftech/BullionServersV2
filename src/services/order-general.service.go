@@ -179,61 +179,30 @@ func (service *orderGeneralService) PlaceOrder(orderType interfaces.OrderStatus,
 		return nil, err
 	}
 
-	// TODO Validate Pricing
-	priceReadKey := interfaces.PRICE_ASK
-	if product.CalculatedOnPriceOf == interfaces.CALCULATE_ON_BID {
-		priceReadKey = interfaces.PRICE_BID
-	} else if product.CalculatedOnPriceOf == interfaces.CALCULATE_ON_BID_ASK {
-		if buySell == interfaces.Sell {
-			priceReadKey = interfaces.PRICE_ASK
-		} else {
-			priceReadKey = interfaces.PRICE_BID
-		}
-	}
-
-	productSymbol := product.SourceSymbol.ToSymbolEnum()
-
-	if product.CalcPriceMethod == interfaces.CALCULATION_PRICE_TYPE_BANK {
-		if product.SourceSymbol == interfaces.SOURCE_SYMBOL_GOLD {
-			productSymbol = interfaces.SYMBOL_GOLD_SPOT
-		} else {
-			productSymbol = interfaces.SYMBOL_SILVER_SPOT
-		}
-	}
-
-	rate := service.liveRateService.GetLiveRate(productSymbol, priceReadKey)
-
-	if rate == 0 {
-		return nil, &interfaces.RequestError{
-			StatusCode: 400,
-			Code:       interfaces.ERROR_LIVE_RATE_NOT_FOUND,
-			Message:    "Live Rate Not Found",
-			Name:       "LIVE_RATE_NOT_FOUND",
-		}
-	}
-
-	if product.CalcPriceMethod == interfaces.CALCULATION_PRICE_TYPE_BANK {
-		bankRate, err := service.bankRateService.GetBankRateCalcByBullionId(group.BullionId)
-		if err != nil {
-			return nil, err
-		}
-		inrRate := service.liveRateService.GetLiveRate(interfaces.SYMBOL_INR, priceReadKey)
-		calcFunc := bankRate.GOLD_SPOT.CalculatePrice
-		if product.SourceSymbol == interfaces.SOURCE_SYMBOL_SILVER {
-			calcFunc = bankRate.SILVER_SPOT.CalculatePrice
-		}
-		rate = calcFunc(rate, inrRate)
-		// rate = bankRate.Rate
-	}
-	calcSnapshot := &product.CalcSnapshot.Sell
-	if buySell == interfaces.Buy {
-		calcSnapshot = &product.CalcSnapshot.Buy
-	}
-	finalRate := interfaces.Calculate(rate, calcSnapshot)
-
+	// Validate Pricing
+	finalRate, err := service.calCulateAndReturnFinalRateForOrder(product, group, groupMap, buySell)
 	println("Final Rate", finalRate)
-	// order := &interfaces.OrderEntity{
-
+	order := &interfaces.OrderEntity{
+		BaseEntity: &interfaces.BaseEntity{},
+		OrderBase: &interfaces.OrderBase{
+			BullionId:   group.BullionId,
+			OrderType:   interfaces.OrderType(orderType),
+			BuySell:     buySell,
+			ProductName: product.Name,
+		},
+		LimitWatcherRequired: &interfaces.LimitWatcherRequired{
+			ProductId:         product.ID,
+			GroupId:           group.ID,
+			ProductGroupMapId: groupMap.ID,
+			Volume:            float64(weight),
+			Weight:            weight,
+		},
+		// DeliveryData: ,
+		// Identity: ,
+		// AfterSuccessOrder: ,
+	}
+	println("Order", order)
+	// order.BaseEntity.
 	// TODO Check Hedging And Place Order
 
 	// TODO Update Order Entity in DB
@@ -247,6 +216,71 @@ func (service *orderGeneralService) PlaceOrder(orderType interfaces.OrderStatus,
 	return nil, nil
 	// return service.orderRepo.PlaceOrder(orderType, user, group, groupMap, price, placedBy)
 	// return service.orderRepo.PlaceOrder(orderType, user, group, groupMap, price, placedBy)
+}
+
+func (service *orderGeneralService) calCulateAndReturnFinalRateForOrder(product *interfaces.ProductEntity, group *interfaces.TradeUserGroupEntity, groupMap *interfaces.TradeUserGroupMapEntity, buySell interfaces.BuySell) (float64, error) {
+	priceReadKey := interfaces.PRICE_ASK
+	if product.CalculatedOnPriceOf == interfaces.CALCULATE_ON_BID {
+		priceReadKey = interfaces.PRICE_BID
+	} else if product.CalculatedOnPriceOf == interfaces.CALCULATE_ON_BID_ASK {
+		if buySell == interfaces.Sell {
+			priceReadKey = interfaces.PRICE_ASK
+		} else {
+			priceReadKey = interfaces.PRICE_BID
+		}
+	}
+
+	productSymbol := product.SourceSymbol.ToSymbolEnum()
+
+	groupPremium := group.Gold
+
+	if product.CalcPriceMethod == interfaces.CALCULATION_PRICE_TYPE_BANK {
+		if product.SourceSymbol == interfaces.SOURCE_SYMBOL_GOLD {
+			productSymbol = interfaces.SYMBOL_GOLD_SPOT
+		} else {
+			productSymbol = interfaces.SYMBOL_SILVER_SPOT
+			groupPremium = group.Silver
+		}
+	}
+
+	rate := service.liveRateService.GetLiveRate(productSymbol, priceReadKey)
+
+	if rate == 0 {
+		return 0, &interfaces.RequestError{
+			StatusCode: 400,
+			Code:       interfaces.ERROR_LIVE_RATE_NOT_FOUND,
+			Message:    "Live Rate Not Found",
+			Name:       "LIVE_RATE_NOT_FOUND",
+		}
+	}
+
+	if product.CalcPriceMethod == interfaces.CALCULATION_PRICE_TYPE_BANK {
+		bankRate, err := service.bankRateService.GetBankRateCalcByBullionId(group.BullionId)
+		if err != nil {
+			return 0, err
+		}
+		inrRate := service.liveRateService.GetLiveRate(interfaces.SYMBOL_INR, priceReadKey)
+		calcFunc := bankRate.GOLD_SPOT.CalculatePrice
+		if product.SourceSymbol == interfaces.SOURCE_SYMBOL_SILVER {
+			calcFunc = bankRate.SILVER_SPOT.CalculatePrice
+		}
+		rate = calcFunc(rate, inrRate)
+		// rate = bankRate.Rate
+	}
+
+	// Extra Premium For Group
+	extraPremium := groupMap.Sell + groupPremium.Sell
+
+	calcSnapshot := &product.CalcSnapshot.Sell
+
+	if buySell == interfaces.Buy {
+		calcSnapshot = &product.CalcSnapshot.Buy
+		extraPremium = groupMap.Buy + groupPremium.Buy
+	}
+
+	finalRate := interfaces.Calculate(rate+extraPremium, calcSnapshot)
+	return finalRate, nil
+	// return service.orderRepo.GetOrderById(orderId)
 }
 
 // check user is valid

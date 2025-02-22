@@ -11,6 +11,8 @@ type (
 	TradeUserGroupEntity struct {
 		*BaseEntity         `bson:"inline"`
 		*TradeUserGroupBase `bson:"inline"`
+		Gold                *GroupPremiumBase `bson:"gold" json:"gold" validate:"required"`
+		Silver              *GroupPremiumBase `bson:"silver" json:"silver" validate:"required"`
 	}
 
 	TradeUserGroupMapEntity struct {
