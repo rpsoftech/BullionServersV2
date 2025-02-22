@@ -17,11 +17,12 @@ const (
 )
 
 type RequestError struct {
-	StatusCode int    `json:"-"`
-	Code       int    `json:"code"`
-	Message    string `json:"message"`
-	Name       string `json:"name"`
-	Extra      any    `json:"extra,omitempty"`
+	StatusCode    int    `json:"-"`
+	Code          int    `json:"code"`
+	Message       string `json:"message"`
+	Name          string `json:"name"`
+	Extra         any    `json:"extra,omitempty"`
+	LogTheDetails bool   `json:"-"`
 }
 
 func (r *RequestError) Error() string {
