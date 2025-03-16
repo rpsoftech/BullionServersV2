@@ -4,6 +4,10 @@ package proto;
 
 option go_package = "src/limit-server";
 
+enum BuySell {
+    BUY = 0;
+    SELL = 1;
+}
 message UplinkPlaceLimitRequest {
     string reqId = 1;
     string bullionId = 2;
@@ -22,7 +26,30 @@ message UplinkPlaceLimitResponse {
     string message = 3;
 }
 
+message PlaceOrderHedgingRequest {
+    string reqId = 1;
+    string bullionId = 2;
+    string baseSymbole = 3;
+    float price = 4;
+    float volume = 5;
+    BuySell buySell = 6;
+    string secret = 7;
+
+}
+message PlaceOrderHedgingResponse {
+    string reqId = 1;
+    bool success = 2;
+    string dealNo = 3;
+    float price = 4;
+    string baseSymbole = 5;
+    float volume = 6;
+    string secret = 7;
+    BuySell buySell = 8;
+    string extras = 9;
+}
+
 service LimitServer {
+    rpc PlaceOrderHedgingServer(stream PlaceOrderHedgingResponse) returns (stream PlaceOrderHedgingRequest);
     rpc PlaceLimit(UplinkPlaceLimitRequest) returns (UplinkPlaceLimitResponse);
     rpc PlaceLimitStream(stream UplinkPlaceLimitRequest) returns (stream UplinkPlaceLimitResponse);
 }

@@ -19,14 +19,16 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	LimitServer_PlaceLimit_FullMethodName       = "/proto.LimitServer/PlaceLimit"
-	LimitServer_PlaceLimitStream_FullMethodName = "/proto.LimitServer/PlaceLimitStream"
+	LimitServer_PlaceOrderHedgingServer_FullMethodName = "/proto.LimitServer/PlaceOrderHedgingServer"
+	LimitServer_PlaceLimit_FullMethodName              = "/proto.LimitServer/PlaceLimit"
+	LimitServer_PlaceLimitStream_FullMethodName        = "/proto.LimitServer/PlaceLimitStream"
 )
 
 // LimitServerClient is the client API for LimitServer service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type LimitServerClient interface {
+	PlaceOrderHedgingServer(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[PlaceOrderHedgingResponse, PlaceOrderHedgingRequest], error)
 	PlaceLimit(ctx context.Context, in *UplinkPlaceLimitRequest, opts ...grpc.CallOption) (*UplinkPlaceLimitResponse, error)
 	PlaceLimitStream(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[UplinkPlaceLimitRequest, UplinkPlaceLimitResponse], error)
 }
@@ -38,6 +40,19 @@ type limitServerClient struct {
 func NewLimitServerClient(cc grpc.ClientConnInterface) LimitServerClient {
 	return &limitServerClient{cc}
 }
+
+func (c *limitServerClient) PlaceOrderHedgingServer(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[PlaceOrderHedgingResponse, PlaceOrderHedgingRequest], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &LimitServer_ServiceDesc.Streams[0], LimitServer_PlaceOrderHedgingServer_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[PlaceOrderHedgingResponse, PlaceOrderHedgingRequest]{ClientStream: stream}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type LimitServer_PlaceOrderHedgingServerClient = grpc.BidiStreamingClient[PlaceOrderHedgingResponse, PlaceOrderHedgingRequest]
 
 func (c *limitServerClient) PlaceLimit(ctx context.Context, in *UplinkPlaceLimitRequest, opts ...grpc.CallOption) (*UplinkPlaceLimitResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
@@ -51,7 +66,7 @@ func (c *limitServerClient) PlaceLimit(ctx context.Context, in *UplinkPlaceLimit
 
 func (c *limitServerClient) PlaceLimitStream(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[UplinkPlaceLimitRequest, UplinkPlaceLimitResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &LimitServer_ServiceDesc.Streams[0], LimitServer_PlaceLimitStream_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &LimitServer_ServiceDesc.Streams[1], LimitServer_PlaceLimitStream_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -66,6 +81,7 @@ type LimitServer_PlaceLimitStreamClient = grpc.BidiStreamingClient[UplinkPlaceLi
 // All implementations must embed UnimplementedLimitServerServer
 // for forward compatibility.
 type LimitServerServer interface {
+	PlaceOrderHedgingServer(grpc.BidiStreamingServer[PlaceOrderHedgingResponse, PlaceOrderHedgingRequest]) error
 	PlaceLimit(context.Context, *UplinkPlaceLimitRequest) (*UplinkPlaceLimitResponse, error)
 	PlaceLimitStream(grpc.BidiStreamingServer[UplinkPlaceLimitRequest, UplinkPlaceLimitResponse]) error
 	mustEmbedUnimplementedLimitServerServer()
@@ -78,6 +94,9 @@ type LimitServerServer interface {
 // pointer dereference when methods are called.
 type UnimplementedLimitServerServer struct{}
 
+func (UnimplementedLimitServerServer) PlaceOrderHedgingServer(grpc.BidiStreamingServer[PlaceOrderHedgingResponse, PlaceOrderHedgingRequest]) error {
+	return status.Errorf(codes.Unimplemented, "method PlaceOrderHedgingServer not implemented")
+}
 func (UnimplementedLimitServerServer) PlaceLimit(context.Context, *UplinkPlaceLimitRequest) (*UplinkPlaceLimitResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PlaceLimit not implemented")
 }
@@ -104,6 +123,13 @@ func RegisterLimitServerServer(s grpc.ServiceRegistrar, srv LimitServerServer) {
 	}
 	s.RegisterService(&LimitServer_ServiceDesc, srv)
 }
+
+func _LimitServer_PlaceOrderHedgingServer_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(LimitServerServer).PlaceOrderHedgingServer(&grpc.GenericServerStream[PlaceOrderHedgingResponse, PlaceOrderHedgingRequest]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type LimitServer_PlaceOrderHedgingServerServer = grpc.BidiStreamingServer[PlaceOrderHedgingResponse, PlaceOrderHedgingRequest]
 
 func _LimitServer_PlaceLimit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UplinkPlaceLimitRequest)
@@ -143,6 +169,12 @@ var LimitServer_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "PlaceOrderHedgingServer",
+			Handler:       _LimitServer_PlaceOrderHedgingServer_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
 		{
 			StreamName:    "PlaceLimitStream",
 			Handler:       _LimitServer_PlaceLimitStream_Handler,

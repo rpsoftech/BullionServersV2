@@ -56,6 +56,11 @@ func (s *LimitServerService) PlaceLimitStream(stream grpc.BidiStreamingServer[Up
 		// }
 	}
 }
+
+func (s *LimitServerService) PlaceOrderHedgingServer(stream grpc.BidiStreamingServer[PlaceOrderHedgingResponse, PlaceOrderHedgingRequest]) error {
+	panic("unimplemented")
+}
+
 func (s *LimitServerService) PlaceLimit(_ context.Context, request *UplinkPlaceLimitRequest) (*UplinkPlaceLimitResponse, error) {
 	bullionId, weight, price := request.GetBullionId(), request.GetWeight(), request.GetPrice()
 	println(bullionId, weight, price)
