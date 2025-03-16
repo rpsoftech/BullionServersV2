@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package proto;
 
-option go_package = "github.com/rpsoftech/bullion-server/proto/limit-server";
+option go_package = "src/limit-server";
 
 message UplinkPlaceLimitRequest {
     string reqId = 1;

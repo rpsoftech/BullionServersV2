@@ -37,3 +37,4 @@ To run this project, you will need to add the following environment variables to
 
 - [Keyur Shah](https://www.github.com/keyurboss)
 
+protoc proto/limit-server.proto --go_out=. --go-grpc_out=.

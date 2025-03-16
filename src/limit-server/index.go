@@ -1,25 +1,17 @@
-package limitserver
+package limit_server
 
 import (
 	"context"
+	"io"
 	"net"
 
-	proto "github.com/rpsoftech/bullion-server/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
-type LimitServerServer struct{}
+type LimitServerService struct{}
 
-func (LimitServerServer) PlaceLimit(context.Context, *proto.UplinkPlaceLimitRequest) (*proto.UplinkPlaceLimitResponse, error) {
-	panic("unimplemented")
-}
-func (LimitServerServer) testEmbeddedByValue() {}
-func (LimitServerServer) PlaceLimitStream(grpc.BidiStreamingServer[proto.UplinkPlaceLimitRequest, proto.UplinkPlaceLimitResponse]) error {
-	panic("unimplemented")
-}
-
-func (LimitServerServer) mustEmbedUnimplementedLimitServerServer() {
+func (LimitServerService) mustEmbedUnimplementedLimitServerServer() {
 	panic("unimplemented")
 }
 
@@ -31,8 +23,8 @@ func Start() {
 	srv := grpc.NewServer(
 	// grpc.UnaryInterceptor()
 	)
-	// proto.re
-	proto.RegisterLimitServerServer(srv, &LimitServerServer{})
+	// re
+	RegisterLimitServerServer(srv, &LimitServerService{})
 	reflection.Register(srv)
 
 	if e := srv.Serve(lis); e != nil {
@@ -40,20 +32,36 @@ func Start() {
 	}
 }
 
-// func (s *LimitServer) mustEmbedUnimplementedLimitServerServer() {}
-// func (s *LimitServer) PlaceLimitStream(a grpc.BidiStreamingServer[*proto.UplinkPlaceLimitRequest, *proto.UplinkPlaceLimitResponse]) error {
-// 	return nil
-// }
-
-// // func (s *LimitServer) PlaceLimit(context.Context, *UplinkPlaceLimitRequest) (*UplinkPlaceLimitResponse, error) {
-// // }
-
-// func (s *LimitServer) PlaceLimit(_ context.Context, request *proto.UplinkPlaceLimitRequest) (*proto.UplinkPlaceLimitResponse, error) {
-// 	bullionId, weight, price := request.GetBullionId(), request.GetWeight(), request.GetPrice()
-// 	println(bullionId, weight, price)
-// 	return &proto.UplinkPlaceLimitResponse{
-// 		ReqId:   request.GetReqId(),
-// 		Success: true,
-// 		Message: "",
-// 	}, nil
-// }
+func (s *LimitServerService) PlaceLimitStream(stream grpc.BidiStreamingServer[UplinkPlaceLimitRequest, UplinkPlaceLimitResponse]) error {
+	// panic("unimplemented")
+	for {
+		request, err := stream.Recv()
+		bullionId, weight, price := request.GetBullionId(), request.GetWeight(), request.GetPrice()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		println(bullionId, weight, price)
+		stream.Send(&UplinkPlaceLimitResponse{
+			ReqId:   request.GetReqId(),
+			Success: true,
+			Message: "",
+		})
+		// for _, note := range s.routeNotes[key] {
+		// 	if err := stream.Send(note); err != nil {
+		// 		return err
+		// 	}
+		// }
+	}
+}
+func (s *LimitServerService) PlaceLimit(_ context.Context, request *UplinkPlaceLimitRequest) (*UplinkPlaceLimitResponse, error) {
+	bullionId, weight, price := request.GetBullionId(), request.GetWeight(), request.GetPrice()
+	println(bullionId, weight, price)
+	return &UplinkPlaceLimitResponse{
+		ReqId:   request.GetReqId(),
+		Success: true,
+		Message: "",
+	}, nil
+}
