@@ -4,20 +4,35 @@ import (
 	"context"
 	"net"
 
-	"github.com/gofiber/recipes/fiber-grpc/proto"
+	proto "github.com/rpsoftech/bullion-server/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
-type LimitServer struct{}
+type LimitServerServer struct{}
+
+func (LimitServerServer) PlaceLimit(context.Context, *proto.UplinkPlaceLimitRequest) (*proto.UplinkPlaceLimitResponse, error) {
+	panic("unimplemented")
+}
+func (LimitServerServer) testEmbeddedByValue() {}
+func (LimitServerServer) PlaceLimitStream(grpc.BidiStreamingServer[proto.UplinkPlaceLimitRequest, proto.UplinkPlaceLimitResponse]) error {
+	panic("unimplemented")
+}
+
+func (LimitServerServer) mustEmbedUnimplementedLimitServerServer() {
+	panic("unimplemented")
+}
 
 func Start() {
 	lis, err := net.Listen("tcp", ":4040")
 	if err != nil {
 		panic(err)
 	}
-	srv := grpc.NewServer()
-	proto.RegisterAddServiceServer(srv, &LimitServer{})
+	srv := grpc.NewServer(
+	// grpc.UnaryInterceptor()
+	)
+	// proto.re
+	proto.RegisterLimitServerServer(srv, &LimitServerServer{})
 	reflection.Register(srv)
 
 	if e := srv.Serve(lis); e != nil {
@@ -25,18 +40,20 @@ func Start() {
 	}
 }
 
-func (s *LimitServer) Add(_ context.Context, request *proto.Request) (*proto.Response, error) {
-	a, b := request.GetA(), request.GetB()
+// func (s *LimitServer) mustEmbedUnimplementedLimitServerServer() {}
+// func (s *LimitServer) PlaceLimitStream(a grpc.BidiStreamingServer[*proto.UplinkPlaceLimitRequest, *proto.UplinkPlaceLimitResponse]) error {
+// 	return nil
+// }
 
-	result := a + b
+// // func (s *LimitServer) PlaceLimit(context.Context, *UplinkPlaceLimitRequest) (*UplinkPlaceLimitResponse, error) {
+// // }
 
-	return &proto.Response{Result: result}, nil
-}
-
-func (s *LimitServer) Multiply(_ context.Context, request *proto.Request) (*proto.Response, error) {
-	a, b := request.GetA(), request.GetB()
-
-	result := a * b
-
-	return &proto.Response{Result: result}, nil
-}
+// func (s *LimitServer) PlaceLimit(_ context.Context, request *proto.UplinkPlaceLimitRequest) (*proto.UplinkPlaceLimitResponse, error) {
+// 	bullionId, weight, price := request.GetBullionId(), request.GetWeight(), request.GetPrice()
+// 	println(bullionId, weight, price)
+// 	return &proto.UplinkPlaceLimitResponse{
+// 		ReqId:   request.GetReqId(),
+// 		Success: true,
+// 		Message: "",
+// 	}, nil
+// }

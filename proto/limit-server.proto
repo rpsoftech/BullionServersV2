@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "github.com/rpsoftech/bullion-server/proto/limit-server";
+
+message UplinkPlaceLimitRequest {
+    string reqId = 1;
+    string bullionId = 2;
+    string productGroupMapId = 3;
+    int32 weight = 4;
+    float price = 6;
+    string userId = 7;
+    string productId = 9;
+    string groupId = 8;
+    string productGroupId = 10;
+}
+
+message UplinkPlaceLimitResponse {
+    string reqId = 1;
+    bool success = 2;
+    string message = 3;
+}
+
+service LimitServer {
+    rpc PlaceLimit(UplinkPlaceLimitRequest) returns (UplinkPlaceLimitResponse);
+    rpc PlaceLimitStream(stream UplinkPlaceLimitRequest) returns (stream UplinkPlaceLimitResponse);
+}
