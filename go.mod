@@ -12,7 +12,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/redis/go-redis/v9 v9.7.0
+	github.com/redis/go-redis/v9 v9.7.3
 	go.mongodb.org/mongo-driver v1.17.1
 	golang.org/x/crypto v0.31.0
 	google.golang.org/api v0.210.0
