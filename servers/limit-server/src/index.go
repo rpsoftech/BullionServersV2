@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 
+	interceptor "github.com/rpsoftech/bullion-server/servers/limit-server/src/Interceptor"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
@@ -21,6 +22,9 @@ func Start() {
 		panic(err)
 	}
 	srv := grpc.NewServer(
+		grpc.UnaryInterceptor(interceptor.OAuth2Interceptor),
+	// grpc.MaxConcurrentStreams(3),
+	// grpc.
 	// grpc.UnaryInterceptor()
 	)
 	// re
@@ -28,7 +32,7 @@ func Start() {
 	reflection.Register(srv)
 
 	if e := srv.Serve(lis); e != nil {
-		panic(err)
+		panic(e)
 	}
 }
 
