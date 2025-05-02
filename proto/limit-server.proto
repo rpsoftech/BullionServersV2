@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package proto;
 
-option go_package = "servers/limit-server/src";
+option go_package = "protocode/limit-server";
 
 enum BuySell {
     BUY = 0;

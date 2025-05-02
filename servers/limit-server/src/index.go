@@ -5,12 +5,15 @@ import (
 	"io"
 	"net"
 
+	limitserver "github.com/rpsoftech/bullion-server/protocode/limit-server"
 	interceptor "github.com/rpsoftech/bullion-server/servers/limit-server/src/Interceptor"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
-type LimitServerService struct{}
+type LimitServerService struct {
+	*limitserver.LimitServerServer
+}
 
 func (LimitServerService) mustEmbedUnimplementedLimitServerServer() {
 	panic("unimplemented")
@@ -28,7 +31,7 @@ func Start() {
 	// grpc.UnaryInterceptor()
 	)
 	// re
-	RegisterLimitServerServer(srv, &LimitServerService{})
+	limitserver.RegisterLimitServerServer(srv, &LimitServerService{})
 	reflection.Register(srv)
 
 	if e := srv.Serve(lis); e != nil {
@@ -36,7 +39,7 @@ func Start() {
 	}
 }
 
-func (s *LimitServerService) PlaceLimitStream(stream grpc.BidiStreamingServer[UplinkPlaceLimitRequest, UplinkPlaceLimitResponse]) error {
+func (s *LimitServerService) PlaceLimitStream(stream grpc.BidiStreamingServer[limitserver.UplinkPlaceLimitRequest, limitserver.UplinkPlaceLimitResponse]) error {
 	// panic("unimplemented")
 	for {
 		request, err := stream.Recv()
@@ -48,7 +51,7 @@ func (s *LimitServerService) PlaceLimitStream(stream grpc.BidiStreamingServer[Up
 			return err
 		}
 		println(bullionId, weight, price)
-		stream.Send(&UplinkPlaceLimitResponse{
+		stream.Send(&limitserver.UplinkPlaceLimitResponse{
 			ReqId:   request.GetReqId(),
 			Success: true,
 			Message: "",
@@ -61,14 +64,14 @@ func (s *LimitServerService) PlaceLimitStream(stream grpc.BidiStreamingServer[Up
 	}
 }
 
-func (s *LimitServerService) PlaceOrderHedgingServer(stream grpc.BidiStreamingServer[PlaceOrderHedgingResponse, PlaceOrderHedgingRequest]) error {
+func (s *LimitServerService) PlaceOrderHedgingServer(stream grpc.BidiStreamingServer[limitserver.PlaceOrderHedgingResponse, limitserver.PlaceOrderHedgingRequest]) error {
 	panic("unimplemented")
 }
 
-func (s *LimitServerService) PlaceLimit(_ context.Context, request *UplinkPlaceLimitRequest) (*UplinkPlaceLimitResponse, error) {
+func (s *LimitServerService) PlaceLimit(_ context.Context, request *limitserver.UplinkPlaceLimitRequest) (*limitserver.UplinkPlaceLimitResponse, error) {
 	bullionId, weight, price := request.GetBullionId(), request.GetWeight(), request.GetPrice()
 	println(bullionId, weight, price)
-	return &UplinkPlaceLimitResponse{
+	return &limitserver.UplinkPlaceLimitResponse{
 		ReqId:   request.GetReqId(),
 		Success: true,
 		Message: "",

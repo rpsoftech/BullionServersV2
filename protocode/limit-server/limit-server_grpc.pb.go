@@ -4,7 +4,7 @@
 // - protoc             v5.29.3
 // source: proto/limit-server.proto
 
-package limit_server
+package limitserver
 
 import (
 	context "context"
